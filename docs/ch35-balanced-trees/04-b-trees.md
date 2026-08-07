@@ -95,9 +95,9 @@ keys we will build in a moment:
 
 ```mermaid
 flowchart TD
-    root["10 | 20"]
-    a["5 | 6 | 7"]
-    b["12 | 17"]
+    root["10 · 20"]
+    a["5 · 6 · 7"]
+    b["12 · 17"]
     c["30"]
     root --- a
     root --- b
@@ -345,8 +345,10 @@ search(99) -> (False, 2)
 
 The last line is the point of the whole section: two hundred thousand keys
 inserted in the worst possible order for a binary tree, and every lookup is
-**three block reads**. A red-black tree on the same data would be seventeen
-levels deep — seventeen potential disk seeks.
+**three block reads**. *Any* binary tree over 200 000 nodes must be at least
+17 edges deep — $2^{17} - 1 = 131\,071$ is not enough room — so even a
+perfectly balanced AVL or red-black tree would touch at least 18 nodes, and
+on disk that is 18 block reads against the B-tree's 3.
 
 ## Deletion: borrow from a sibling, or merge with one
 
@@ -536,7 +538,7 @@ access pattern disks are fastest at.
 ```mermaid
 flowchart TD
     r["107"]
-    i1["103 | 105"]
+    i1["103 · 105"]
     i2["109"]
     l1["101 102"]
     l2["103 104"]
@@ -691,10 +693,12 @@ The range query cost three blocks to descend to the leaf holding 104, then
 three more leaves along the `next` chain — the last of them only to discover
 that 109 is past the end. Six blocks for five rows. On a plain B-tree the
 same query would have to walk back up and down the tree between consecutive
-matches; on a B+ tree it is a straight line. **That is why every relational
-database's default index is a B+ tree** — `CREATE INDEX` in PostgreSQL,
-MySQL/InnoDB, and SQLite all build one, and the file systems NTFS, HFS+, and
-Btrfs (the "B-tree file system") organise their directories the same way.
+matches; on a B+ tree it is a straight line. **That is why the default index
+of a relational database is a B+ tree** — PostgreSQL's default index type is
+literally spelled `btree` and is a B+ tree, and MySQL's InnoDB engine stores
+every table and every secondary index as one. File systems make the same
+choice for directories: NTFS indexes them with B+ trees, and Btrfs is named
+for the B-trees it is built out of.
 
 ## The whole family, priced
 

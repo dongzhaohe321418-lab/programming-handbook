@@ -387,13 +387,12 @@ rotations performed: 26
 still sorted: True
 ```
 
-Thirty-one keys
-arriving in the single worst possible order, and the AVL tree is a
-*perfect* tree of height 4 — the theoretical minimum, since
-$\log_2 32 = 5$ levels. The plain BST is a 31-node chain. Twenty-six
-rotations bought a sixfold reduction in the worst-case search, and the
-in-order traversal is untouched, exactly as [35.1](01-rotations.md)
-guaranteed.
+Thirty-one keys arriving in the single worst possible order, and the AVL
+tree is a *perfect* tree of height 4 — the theoretical minimum, since 31
+nodes need $\log_2 32 = 5$ levels. The plain BST is a 31-node chain.
+Twenty-six rotations bought a sixfold reduction in the worst-case search,
+and the in-order traversal came through untouched, exactly as
+[35.1](01-rotations.md) guaranteed.
 
 ## Deletion, and its honest price
 

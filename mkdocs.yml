@@ -303,6 +303,13 @@ nav:
           - 26.3 The decoder-only stack: ch26-llm-internals/03-decoder-stack.md
           - 26.4 Sampling — how text is chosen: ch26-llm-internals/04-sampling.md
           - Exercises: ch26-llm-internals/exercises.md
+      - Chapter 27 · Serving Models — Inference Infrastructure:
+          - Overview: ch27-inference/index.md
+          - 27.1 The KV cache: ch27-inference/01-kv-cache.md
+          - 27.2 Batching, PagedAttention, chunked prefill: ch27-inference/02-batching.md
+          - 27.3 Latency, throughput, and streaming: ch27-inference/03-latency-streaming.md
+          - 27.4 Quantization and deployment: ch27-inference/04-quantization-deploy.md
+          - Exercises: ch27-inference/exercises.md
   - VI · Programming III:
       - Overview: part6-overview.md
       - Chapter 35 · Balanced Search Trees:
@@ -312,6 +319,18 @@ nav:
           - 35.3 Red-black trees: ch35-balanced-trees/03-red-black.md
           - 35.4 B-trees and the disk: ch35-balanced-trees/04-b-trees.md
           - Exercises: ch35-balanced-trees/exercises.md
+      - Chapter 37 · Graphs:
+          - Overview: ch37-graphs/index.md
+          - 37.1 Representing graphs: ch37-graphs/01-representations.md
+          - 37.2 Breadth-first and depth-first search: ch37-graphs/02-traversal.md
+          - 37.3 Shortest paths: ch37-graphs/03-shortest-paths.md
+          - 37.4 Minimum spanning trees: ch37-graphs/04-mst.md
+          - Exercises: ch37-graphs/exercises.md
+      - Chapter 38 · Sorting in Linear Time:
+          - Overview: ch38-linear-sorting/index.md
+          - 38.1 The comparison lower bound: ch38-linear-sorting/01-lower-bound.md
+          - 38.2 Counting, radix, and bucket sort: ch38-linear-sorting/02-counting-radix-bucket.md
+          - Exercises: ch38-linear-sorting/exercises.md
   - Projects:
       - Project 1 · Number-Systems Toolkit: projects/01-number-tool/README.md
       - Project 2 · Text Adventure (OOP): projects/02-text-adventure/README.md

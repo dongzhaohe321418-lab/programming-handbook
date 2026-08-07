@@ -16,14 +16,14 @@ before running anything.
 flowchart TD
     subgraph A["(a)"]
         a1((30)) --- a2((20))
-        a1 --- an1[" "]
+        a1 --- an1["nil"]
         a2 --- a3((10))
-        a2 --- an2[" "]
+        a2 --- an2["nil"]
     end
     subgraph B["(b)"]
-        b1((10)) --- bn1[" "]
+        b1((10)) --- bn1["nil"]
         b1 --- b2((20))
-        b2 --- bn2[" "]
+        b2 --- bn2["nil"]
         b2 --- b3((30))
     end
 ```
@@ -32,15 +32,15 @@ flowchart TD
 flowchart TD
     subgraph C["(c)"]
         c1((30)) --- c2((10))
-        c1 --- cn1[" "]
-        c2 --- cn2[" "]
+        c1 --- cn1["nil"]
+        c2 --- cn2["nil"]
         c2 --- c3((20))
     end
     subgraph D["(d)"]
-        d1((10)) --- dn1[" "]
+        d1((10)) --- dn1["nil"]
         d1 --- d2((30))
         d2 --- d3((20))
-        d2 --- dn2[" "]
+        d2 --- dn2["nil"]
     end
 ```
 
