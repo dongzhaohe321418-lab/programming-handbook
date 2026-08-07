@@ -1,0 +1,2148 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="A zero-foundation, textbook-grade open handbook on programming and computer systems — from bits and binary to data structures and algorithms, with Python you can run in the browser.">
+      
+      
+        <meta name="author" content="Zhaohe Dong">
+      
+      
+        <link rel="canonical" href="https://dongzhaohe321418-lab.github.io/programming-handbook/appendix/B-big-o/">
+      
+      
+        <link rel="prev" href="../A-python-java/">
+      
+      
+        <link rel="next" href="../C-glossary/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/favicon.svg">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>B · Big-O reference - Programming & Computer Systems Handbook</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter:300,300i,400,400i,700,700i%7CJetBrains+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Inter";--md-code-font:"JetBrains Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/extra.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="teal" data-md-color-accent="teal">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#b-big-o-reference" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="Programming &amp; Computer Systems Handbook" class="md-header__button md-logo" aria-label="Programming & Computer Systems Handbook" data-md-component="logo">
+      
+  <img src="../../assets/favicon.svg" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Programming & Computer Systems Handbook
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              B · Big-O reference
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="teal" data-md-color-accent="teal"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="teal" data-md-color-accent="teal"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+          <a href="javascript:void(0)" class="md-search__icon md-icon" title="Share" aria-label="Share" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+            
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91s2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08"/></svg>
+          </a>
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/dongzhaohe321418-lab/programming-handbook" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    dongzhaohe321418-lab/programming-handbook
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../how-to-use/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Start Here
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../ch00-machine/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  I · The Machine
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../ch02-data/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  II · Programming I
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../ch15-inheritance/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  III · Programming II
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../ch23-os/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  IV · Systems & Practice
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../projects/01-number-tool/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Projects
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../A-python-java/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Appendix
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="Programming &amp; Computer Systems Handbook" class="md-nav__button md-logo" aria-label="Programming & Computer Systems Handbook" data-md-component="logo">
+      
+  <img src="../../assets/favicon.svg" alt="logo">
+
+    </a>
+    Programming & Computer Systems Handbook
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/dongzhaohe321418-lab/programming-handbook" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    dongzhaohe321418-lab/programming-handbook
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../how-to-use/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Start Here
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../ch00-machine/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    I · The Machine
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../ch02-data/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    II · Programming I
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../ch15-inheritance/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    III · Programming II
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../ch23-os/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    IV · Systems & Practice
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../projects/01-number-tool/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Projects
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_8" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_8" id="__nav_8_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Appendix
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_8">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Appendix
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../A-python-java/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    A · Python ↔ Java cheat sheet
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    B · Big-O reference
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    B · Big-O reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#the-growth-families" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The growth families
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#picture-the-growth" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Picture the growth
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-pythons-built-ins-cost" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What Python's built-ins cost
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-javas-collections-cost" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What Java's collections cost
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#part-iii-structures-at-a-glance" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Part III structures at a glance
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sorting-and-searching" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Sorting and searching
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#how-big-can-n-get-the-back-of-the-envelope" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How big can \(n\) get? — the back of the envelope
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../C-glossary/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    C · Glossary
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../D-reading/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    D · Further reading
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#the-growth-families" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The growth families
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#picture-the-growth" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Picture the growth
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-pythons-built-ins-cost" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What Python's built-ins cost
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-javas-collections-cost" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What Java's collections cost
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#part-iii-structures-at-a-glance" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Part III structures at a glance
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sorting-and-searching" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Sorting and searching
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#how-big-can-n-get-the-back-of-the-envelope" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How big can \(n\) get? — the back of the envelope
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+                
+
+
+
+  
+
+
+  <nav class="md-path" aria-label="Navigation" >
+    <ol class="md-path__list">
+      
+        
+  
+  
+    <li class="md-path__item">
+      <a href="../.." class="md-path__link">
+        
+  <span class="md-ellipsis">
+    Home
+  </span>
+
+      </a>
+    </li>
+  
+
+      
+      
+        
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="../A-python-java/" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    Appendix
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ol>
+  </nav>
+
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+    <a href="https://github.com/dongzhaohe321418-lab/programming-handbook/edit/main/docs/appendix/B-big-o.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75z"/></svg>
+    </a>
+  
+  
+    
+      
+    
+    <a href="https://github.com/dongzhaohe321418-lab/programming-handbook/raw/main/docs/appendix/B-big-o.md" title="View source of this page" class="md-content__button md-icon">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3m0 8a5 5 0 0 1-5-5 5 5 0 0 1 5-5 5 5 0 0 1 5 5 5 5 0 0 1-5 5m0-12.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5"/></svg>
+    </a>
+  
+
+
+<h1 id="b-big-o-reference">B · Big-O reference<a class="headerlink" href="#b-big-o-reference" title="Permanent link">&para;</a></h1>
+<p>The whole book's complexity knowledge on one page. Costs are for the usual
+implementations, <strong>average case unless marked otherwise</strong>; "amortized"
+means occasional expensive operations averaged over many cheap ones
+(<a href="../../ch09-collections/02-dynamic-lists/">Chapter 9.2</a>). If any notation
+here looks unfamiliar, <a href="../../ch16-complexity/01-big-o/">Chapter 16.1</a> is
+the full story.</p>
+<h2 id="the-growth-families">The growth families<a class="headerlink" href="#the-growth-families" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Notation</th>
+<th>Name</th>
+<th>Plain-English intuition</th>
+<th>Where you met it</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><span class="arithmatex">\(O(1)\)</span></td>
+<td>constant</td>
+<td>same cost whether <span class="arithmatex">\(n\)</span> is 10 or 10 million</td>
+<td>stack push/pop (<a href="../../ch19-stacks-queues/02-stacks/">Ch 19.2</a>), <code>dict</code> lookup (<a href="../../ch14-beyond/01-collections-tour/">Ch 14.1</a>)</td>
+</tr>
+<tr>
+<td><span class="arithmatex">\(O(\log n)\)</span></td>
+<td>logarithmic</td>
+<td>halve the problem at every step</td>
+<td>binary search (<a href="../../ch22-sorting/03-searching/">Ch 22.3</a>), balanced BST (<a href="../../ch20-bst/02-bst-ops/">Ch 20.2</a>)</td>
+</tr>
+<tr>
+<td><span class="arithmatex">\(O(n)\)</span></td>
+<td>linear</td>
+<td>touch everything once</td>
+<td>linear search, list traversal (<a href="../../ch07-arrays/02-traversal-patterns/">Ch 7.2</a>)</td>
+</tr>
+<tr>
+<td><span class="arithmatex">\(O(n \log n)\)</span></td>
+<td>linearithmic</td>
+<td>sort territory: <span class="arithmatex">\(\log n\)</span> passes over <span class="arithmatex">\(n\)</span> items</td>
+<td>merge sort (<a href="../../ch22-sorting/02-merge-quick/">Ch 22.2</a>), heapsort (<a href="../../ch21-heaps/02-priority-queues/">Ch 21.2</a>)</td>
+</tr>
+<tr>
+<td><span class="arithmatex">\(O(n^2)\)</span></td>
+<td>quadratic</td>
+<td>compare every pair</td>
+<td>selection/insertion sort (<a href="../../ch22-sorting/01-elementary-sorts/">Ch 22.1</a>), nested loops (<a href="../../ch06-loops/03-nested-break-continue/">Ch 6.3</a>)</td>
+</tr>
+<tr>
+<td><span class="arithmatex">\(O(2^n)\)</span></td>
+<td>exponential</td>
+<td>try every subset</td>
+<td>naive recursive Fibonacci (<a href="../../ch17-recursion/02-classic-recursion/">Ch 17.2</a>)</td>
+</tr>
+<tr>
+<td><span class="arithmatex">\(O(n!)\)</span></td>
+<td>factorial</td>
+<td>try every ordering</td>
+<td>brute-forcing all routes through <span class="arithmatex">\(n\)</span> cities</td>
+</tr>
+</tbody>
+</table>
+<p>The whole zoo, with worked examples:
+<a href="../../ch16-complexity/03-complexity-zoo/">Chapter 16.3</a>.</p>
+<h2 id="picture-the-growth">Picture the growth<a class="headerlink" href="#picture-the-growth" title="Permanent link">&para;</a></h2>
+<p>One picture explains why the family matters more than the constant.
+Every curve here is drawn as if one step costs the same — watch what
+happens anyway:</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="n">n</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">30</span><span class="p">,</span> <span class="mi">300</span><span class="p">)</span>
+</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>
+</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">7</span><span class="p">,</span> <span class="mf">4.5</span><span class="p">))</span>
+</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ones_like</span><span class="p">(</span><span class="n">n</span><span class="p">),</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;$O(1)$&quot;</span><span class="p">)</span>
+</span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">log2</span><span class="p">(</span><span class="n">n</span><span class="p">),</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;$O(</span><span class="se">\\</span><span class="s2">log n)$&quot;</span><span class="p">)</span>
+</span><span id="__span-0-9"><a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;$O(n)$&quot;</span><span class="p">)</span>
+</span><span id="__span-0-10"><a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">n</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">log2</span><span class="p">(</span><span class="n">n</span><span class="p">),</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;$O(n </span><span class="se">\\</span><span class="s2">log n)$&quot;</span><span class="p">)</span>
+</span><span id="__span-0-11"><a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">n</span> <span class="o">**</span> <span class="mi">2</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;$O(n^2)$&quot;</span><span class="p">)</span>
+</span><span id="__span-0-12"><a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="mf">2.0</span> <span class="o">**</span> <span class="n">n</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;$O(2^n)$&quot;</span><span class="p">)</span>
+</span><span id="__span-0-13"><a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="n">plt</span><span class="o">.</span><span class="n">ylim</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">200</span><span class="p">)</span>
+</span><span id="__span-0-14"><a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a><span class="n">plt</span><span class="o">.</span><span class="n">xlim</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">30</span><span class="p">)</span>
+</span><span id="__span-0-15"><a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a><span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">&quot;n  (input size)&quot;</span><span class="p">)</span>
+</span><span id="__span-0-16"><a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a><span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">&quot;basic operations&quot;</span><span class="p">)</span>
+</span><span id="__span-0-17"><a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a><span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s2">&quot;Growth families: by n = 30 the race is already over&quot;</span><span class="p">)</span>
+</span><span id="__span-0-18"><a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a><span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="s2">&quot;upper left&quot;</span><span class="p">)</span>
+</span><span id="__span-0-19"><a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a><span class="n">plt</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.3</span><span class="p">)</span>
+</span></code></pre></div>
+<p><span class="arithmatex">\(O(2^n)\)</span> exits through the ceiling before <span class="arithmatex">\(n\)</span> reaches 8; <span class="arithmatex">\(O(n^2)\)</span> follows
+by <span class="arithmatex">\(n \approx 14\)</span>; the three curves you can still see at the right edge —
+constant, logarithmic, linear(ish) — are the ones that scale. Measuring
+this for real, with timers: <a href="../../ch16-complexity/02-timing/">Chapter 16.2</a>.</p>
+<h2 id="what-pythons-built-ins-cost">What Python's built-ins cost<a class="headerlink" href="#what-pythons-built-ins-cost" title="Permanent link">&para;</a></h2>
+<p><code>list</code> (a dynamic array — <a href="../../ch09-collections/02-dynamic-lists/">Ch 9.2</a>):</p>
+<table>
+<thead>
+<tr>
+<th>Operation</th>
+<th>Cost</th>
+<th>Note</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>xs[i]</code>, <code>xs[i] = v</code></td>
+<td><span class="arithmatex">\(O(1)\)</span></td>
+<td>direct index arithmetic</td>
+</tr>
+<tr>
+<td><code>xs.append(v)</code></td>
+<td><span class="arithmatex">\(O(1)\)</span> amortized</td>
+<td>occasional resize-and-copy</td>
+</tr>
+<tr>
+<td><code>xs.pop()</code> (end)</td>
+<td><span class="arithmatex">\(O(1)\)</span></td>
+<td></td>
+</tr>
+<tr>
+<td><code>xs.pop(0)</code>, <code>xs.insert(0, v)</code></td>
+<td><span class="arithmatex">\(O(n)\)</span></td>
+<td>shifts every element — use <code>deque</code></td>
+</tr>
+<tr>
+<td><code>v in xs</code>, <code>xs.index(v)</code></td>
+<td><span class="arithmatex">\(O(n)\)</span></td>
+<td>linear scan</td>
+</tr>
+<tr>
+<td><code>xs[a:b]</code> slice</td>
+<td><span class="arithmatex">\(O(b-a)\)</span></td>
+<td>copies the slice</td>
+</tr>
+<tr>
+<td><code>xs + ys</code></td>
+<td><span class="arithmatex">\(O(n+m)\)</span></td>
+<td>copies both</td>
+</tr>
+<tr>
+<td><code>xs.sort()</code>, <code>sorted(xs)</code></td>
+<td><span class="arithmatex">\(O(n \log n)\)</span></td>
+<td>Timsort; see the sorting table</td>
+</tr>
+<tr>
+<td><code>len(xs)</code></td>
+<td><span class="arithmatex">\(O(1)\)</span></td>
+<td>stored, not counted</td>
+</tr>
+</tbody>
+</table>
+<p><code>dict</code> and <code>set</code> (hash tables — <a href="../../ch14-beyond/01-collections-tour/">Ch 14.1</a>):</p>
+<table>
+<thead>
+<tr>
+<th>Operation</th>
+<th>Cost</th>
+<th>Note</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>d[k]</code>, <code>d[k] = v</code>, <code>del d[k]</code></td>
+<td><span class="arithmatex">\(O(1)\)</span> avg</td>
+<td><span class="arithmatex">\(O(n)\)</span> worst with pathological collisions</td>
+</tr>
+<tr>
+<td><code>k in d</code>, <code>v in s</code>, <code>s.add(v)</code></td>
+<td><span class="arithmatex">\(O(1)\)</span> avg</td>
+<td>the reason membership tests love sets</td>
+</tr>
+<tr>
+<td>iterate all items</td>
+<td><span class="arithmatex">\(O(n)\)</span></td>
+<td></td>
+</tr>
+<tr>
+<td><code>len(d)</code></td>
+<td><span class="arithmatex">\(O(1)\)</span></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p><code>collections.deque</code> (the proper queue —
+<a href="../../ch19-stacks-queues/03-queues/">Ch 19.3</a>):</p>
+<table>
+<thead>
+<tr>
+<th>Operation</th>
+<th>Cost</th>
+<th>Note</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>append</code>, <code>appendleft</code>, <code>pop</code>, <code>popleft</code></td>
+<td><span class="arithmatex">\(O(1)\)</span></td>
+<td>both ends, always</td>
+</tr>
+<tr>
+<td><code>dq[i]</code> in the middle</td>
+<td><span class="arithmatex">\(O(n)\)</span></td>
+<td>it is not an array — don't index it</td>
+</tr>
+</tbody>
+</table>
+<p><code>str</code> (immutable — <a href="../../ch03-functions/02-strings/">Ch 3.2</a>):</p>
+<table>
+<thead>
+<tr>
+<th>Operation</th>
+<th>Cost</th>
+<th>Note</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>len(s)</code>, <code>s[i]</code></td>
+<td><span class="arithmatex">\(O(1)\)</span></td>
+<td></td>
+</tr>
+<tr>
+<td><code>s + t</code></td>
+<td><span class="arithmatex">\(O(n+m)\)</span></td>
+<td>builds a brand-new string</td>
+</tr>
+<tr>
+<td><code>sub in s</code>, <code>s.find(sub)</code></td>
+<td><span class="arithmatex">\(O(n)\)</span> typical</td>
+<td></td>
+</tr>
+<tr>
+<td><code>"".join(parts)</code></td>
+<td><span class="arithmatex">\(O(\text{total length})\)</span></td>
+<td>the right way to assemble strings</td>
+</tr>
+<tr>
+<td><code>s += piece</code> in a loop</td>
+<td><span class="arithmatex">\(O(n^2)\)</span> overall</td>
+<td>the wrong way — each <code>+=</code> recopies</td>
+</tr>
+</tbody>
+</table>
+<h2 id="what-javas-collections-cost">What Java's collections cost<a class="headerlink" href="#what-javas-collections-cost" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Structure</th>
+<th>Access</th>
+<th>Add at end</th>
+<th>Add/remove at front</th>
+<th>Search</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>ArrayList</code></td>
+<td><span class="arithmatex">\(O(1)\)</span> <code>get(i)</code></td>
+<td><span class="arithmatex">\(O(1)\)</span> amortized</td>
+<td><span class="arithmatex">\(O(n)\)</span></td>
+<td><span class="arithmatex">\(O(n)\)</span></td>
+<td>Java's <code>list</code></td>
+</tr>
+<tr>
+<td><code>LinkedList</code></td>
+<td><span class="arithmatex">\(O(n)\)</span> <code>get(i)</code></td>
+<td><span class="arithmatex">\(O(1)\)</span></td>
+<td><span class="arithmatex">\(O(1)\)</span></td>
+<td><span class="arithmatex">\(O(n)\)</span></td>
+<td>doubly linked (<a href="../../ch18-linked-lists/03-doubly-linked/">Ch 18.3</a>)</td>
+</tr>
+<tr>
+<td><code>HashMap</code> / <code>HashSet</code></td>
+<td><span class="arithmatex">\(O(1)\)</span> avg by key</td>
+<td><span class="arithmatex">\(O(1)\)</span> avg <code>put</code>/<code>add</code></td>
+<td>—</td>
+<td><span class="arithmatex">\(O(1)\)</span> avg</td>
+<td>worst <span class="arithmatex">\(O(n)\)</span>; no ordering</td>
+</tr>
+<tr>
+<td><code>TreeMap</code> / <code>TreeSet</code></td>
+<td><span class="arithmatex">\(O(\log n)\)</span></td>
+<td><span class="arithmatex">\(O(\log n)\)</span></td>
+<td>—</td>
+<td><span class="arithmatex">\(O(\log n)\)</span></td>
+<td>red-black tree; keys stay sorted (<a href="../../ch25-next/01-cs400-preview/">Ch 25.1</a>)</td>
+</tr>
+<tr>
+<td><code>ArrayDeque</code></td>
+<td>ends only, <span class="arithmatex">\(O(1)\)</span></td>
+<td><span class="arithmatex">\(O(1)\)</span></td>
+<td><span class="arithmatex">\(O(1)\)</span></td>
+<td><span class="arithmatex">\(O(n)\)</span></td>
+<td>stack <em>and</em> queue of choice</td>
+</tr>
+<tr>
+<td><code>PriorityQueue</code></td>
+<td><span class="arithmatex">\(O(1)\)</span> <code>peek</code></td>
+<td><span class="arithmatex">\(O(\log n)\)</span> <code>offer</code></td>
+<td><span class="arithmatex">\(O(\log n)\)</span> <code>poll</code></td>
+<td><span class="arithmatex">\(O(n)\)</span></td>
+<td>binary heap (<a href="../../ch21-heaps/">Ch 21</a>)</td>
+</tr>
+</tbody>
+</table>
+<h2 id="part-iii-structures-at-a-glance">Part III structures at a glance<a class="headerlink" href="#part-iii-structures-at-a-glance" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Structure</th>
+<th>Operation</th>
+<th>Typical</th>
+<th>Worst</th>
+<th>Taught in</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Singly linked list</td>
+<td>prepend / remove head</td>
+<td><span class="arithmatex">\(O(1)\)</span></td>
+<td><span class="arithmatex">\(O(1)\)</span></td>
+<td><a href="../../ch18-linked-lists/02-singly-linked/">Ch 18.2</a></td>
+</tr>
+<tr>
+<td></td>
+<td>append with tail pointer</td>
+<td><span class="arithmatex">\(O(1)\)</span></td>
+<td><span class="arithmatex">\(O(1)\)</span></td>
+<td></td>
+</tr>
+<tr>
+<td></td>
+<td>find / index / append without tail</td>
+<td><span class="arithmatex">\(O(n)\)</span></td>
+<td><span class="arithmatex">\(O(n)\)</span></td>
+<td></td>
+</tr>
+<tr>
+<td>Doubly linked list</td>
+<td>insert/remove at either end</td>
+<td><span class="arithmatex">\(O(1)\)</span></td>
+<td><span class="arithmatex">\(O(1)\)</span></td>
+<td><a href="../../ch18-linked-lists/03-doubly-linked/">Ch 18.3</a></td>
+</tr>
+<tr>
+<td></td>
+<td>remove a node you already hold</td>
+<td><span class="arithmatex">\(O(1)\)</span></td>
+<td><span class="arithmatex">\(O(1)\)</span></td>
+<td></td>
+</tr>
+<tr>
+<td>Stack</td>
+<td>push / pop / peek</td>
+<td><span class="arithmatex">\(O(1)\)</span></td>
+<td><span class="arithmatex">\(O(1)\)</span></td>
+<td><a href="../../ch19-stacks-queues/02-stacks/">Ch 19.2</a></td>
+</tr>
+<tr>
+<td>Queue</td>
+<td>enqueue / dequeue</td>
+<td><span class="arithmatex">\(O(1)\)</span></td>
+<td><span class="arithmatex">\(O(1)\)</span></td>
+<td><a href="../../ch19-stacks-queues/03-queues/">Ch 19.3</a></td>
+</tr>
+<tr>
+<td>BST — <strong>balanced</strong></td>
+<td>search / insert / delete</td>
+<td><span class="arithmatex">\(O(\log n)\)</span></td>
+<td><span class="arithmatex">\(O(\log n)\)</span></td>
+<td><a href="../../ch20-bst/02-bst-ops/">Ch 20.2</a></td>
+</tr>
+<tr>
+<td>BST — <strong>degenerate</strong></td>
+<td>search / insert / delete</td>
+<td>—</td>
+<td><span class="arithmatex">\(O(n)\)</span></td>
+<td><a href="../../ch20-bst/03-traversals-balance/">Ch 20.3</a></td>
+</tr>
+<tr>
+<td>Any binary tree</td>
+<td>full traversal</td>
+<td><span class="arithmatex">\(O(n)\)</span></td>
+<td><span class="arithmatex">\(O(n)\)</span></td>
+<td><a href="../../ch20-bst/03-traversals-balance/">Ch 20.3</a></td>
+</tr>
+<tr>
+<td>Binary heap</td>
+<td>peek min/max</td>
+<td><span class="arithmatex">\(O(1)\)</span></td>
+<td><span class="arithmatex">\(O(1)\)</span></td>
+<td><a href="../../ch21-heaps/01-heap-property/">Ch 21.1</a></td>
+</tr>
+<tr>
+<td></td>
+<td>push / pop</td>
+<td><span class="arithmatex">\(O(\log n)\)</span></td>
+<td><span class="arithmatex">\(O(\log n)\)</span></td>
+<td></td>
+</tr>
+<tr>
+<td></td>
+<td>build from <span class="arithmatex">\(n\)</span> items (heapify)</td>
+<td><span class="arithmatex">\(O(n)\)</span></td>
+<td><span class="arithmatex">\(O(n)\)</span></td>
+<td></td>
+</tr>
+<tr>
+<td>Hash table</td>
+<td>get / put / delete</td>
+<td><span class="arithmatex">\(O(1)\)</span> avg</td>
+<td><span class="arithmatex">\(O(n)\)</span></td>
+<td><a href="../../ch14-beyond/01-collections-tour/">Ch 14.1</a></td>
+</tr>
+</tbody>
+</table>
+<p>The balanced-vs-degenerate BST gap is the punchline of
+<a href="../../ch20-bst/">Chapter 20</a>: the <em>shape</em> of the tree, not the code,
+decides which column you live in.</p>
+<h2 id="sorting-and-searching">Sorting and searching<a class="headerlink" href="#sorting-and-searching" title="Permanent link">&para;</a></h2>
+<p>The algorithms of <a href="../../ch22-sorting/">Chapter 22</a>, plus the two
+library sorts you actually call. <strong>Stable</strong> means equal items keep their
+original order — why that matters is in
+<a href="../../ch22-sorting/01-elementary-sorts/">Chapter 22.1</a>.</p>
+<table>
+<thead>
+<tr>
+<th>Algorithm</th>
+<th>Best</th>
+<th>Average</th>
+<th>Worst</th>
+<th>Extra space</th>
+<th>Stable?</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Selection sort</td>
+<td><span class="arithmatex">\(O(n^2)\)</span></td>
+<td><span class="arithmatex">\(O(n^2)\)</span></td>
+<td><span class="arithmatex">\(O(n^2)\)</span></td>
+<td><span class="arithmatex">\(O(1)\)</span></td>
+<td>no</td>
+</tr>
+<tr>
+<td>Insertion sort</td>
+<td><span class="arithmatex">\(O(n)\)</span></td>
+<td><span class="arithmatex">\(O(n^2)\)</span></td>
+<td><span class="arithmatex">\(O(n^2)\)</span></td>
+<td><span class="arithmatex">\(O(1)\)</span></td>
+<td>yes</td>
+</tr>
+<tr>
+<td>Bubble sort (early exit)</td>
+<td><span class="arithmatex">\(O(n)\)</span></td>
+<td><span class="arithmatex">\(O(n^2)\)</span></td>
+<td><span class="arithmatex">\(O(n^2)\)</span></td>
+<td><span class="arithmatex">\(O(1)\)</span></td>
+<td>yes</td>
+</tr>
+<tr>
+<td>Merge sort</td>
+<td><span class="arithmatex">\(O(n \log n)\)</span></td>
+<td><span class="arithmatex">\(O(n \log n)\)</span></td>
+<td><span class="arithmatex">\(O(n \log n)\)</span></td>
+<td><span class="arithmatex">\(O(n)\)</span></td>
+<td>yes</td>
+</tr>
+<tr>
+<td>Quicksort</td>
+<td><span class="arithmatex">\(O(n \log n)\)</span></td>
+<td><span class="arithmatex">\(O(n \log n)\)</span></td>
+<td><span class="arithmatex">\(O(n^2)\)</span></td>
+<td><span class="arithmatex">\(O(\log n)\)</span> avg</td>
+<td>no</td>
+</tr>
+<tr>
+<td>Heapsort (<a href="../../ch21-heaps/02-priority-queues/">Ch 21.2</a>)</td>
+<td><span class="arithmatex">\(O(n \log n)\)</span></td>
+<td><span class="arithmatex">\(O(n \log n)\)</span></td>
+<td><span class="arithmatex">\(O(n \log n)\)</span></td>
+<td><span class="arithmatex">\(O(1)\)</span></td>
+<td>no</td>
+</tr>
+<tr>
+<td>Timsort — Python's <code>sort()</code>/<code>sorted()</code></td>
+<td><span class="arithmatex">\(O(n)\)</span></td>
+<td><span class="arithmatex">\(O(n \log n)\)</span></td>
+<td><span class="arithmatex">\(O(n \log n)\)</span></td>
+<td><span class="arithmatex">\(O(n)\)</span></td>
+<td>yes</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition info">
+<p class="admonition-title">Java corner</p>
+<p><code>Arrays.sort</code> uses dual-pivot quicksort for primitives (fast, not
+stable — irrelevant for <code>int</code>s, which are indistinguishable when
+equal) and a Timsort variant for objects, where stability <em>is</em>
+observable and guaranteed. <code>Collections.sort</code> is the object case.</p>
+</div>
+<p>Searching (<a href="../../ch22-sorting/03-searching/">Chapter 22.3</a>):</p>
+<table>
+<thead>
+<tr>
+<th>Algorithm</th>
+<th>Cost</th>
+<th>Requirement</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Linear search</td>
+<td><span class="arithmatex">\(O(n)\)</span></td>
+<td>none — works on anything</td>
+</tr>
+<tr>
+<td>Binary search</td>
+<td><span class="arithmatex">\(O(\log n)\)</span></td>
+<td>data <strong>sorted</strong>, with <span class="arithmatex">\(O(1)\)</span> indexing</td>
+</tr>
+</tbody>
+</table>
+<p>Binary search on a <em>linked</em> list is still <span class="arithmatex">\(O(n)\)</span> — jumping to the middle
+costs a walk. The precondition is two-part: sorted <strong>and</strong> random-access.</p>
+<h2 id="how-big-can-n-get-the-back-of-the-envelope">How big can <span class="arithmatex">\(n\)</span> get? — the back of the envelope<a class="headerlink" href="#how-big-can-n-get-the-back-of-the-envelope" title="Permanent link">&para;</a></h2>
+<p>Rule of thumb: a tight loop runs very roughly <span class="arithmatex">\(10^7\)</span>–<span class="arithmatex">\(10^8\)</span> simple steps
+per second in Python, and <span class="arithmatex">\(10^8\)</span>–<span class="arithmatex">\(10^9\)</span> in Java or C. To guess whether an
+approach can finish in about a second, match your <span class="arithmatex">\(n\)</span> to the worst
+complexity you can afford:</p>
+<table>
+<thead>
+<tr>
+<th>If <span class="arithmatex">\(n\)</span> is up to…</th>
+<th>You can afford…</th>
+<th>Feel</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>~10</td>
+<td><span class="arithmatex">\(O(n!)\)</span></td>
+<td>try every ordering</td>
+</tr>
+<tr>
+<td>~20</td>
+<td><span class="arithmatex">\(O(2^n)\)</span></td>
+<td>try every subset</td>
+</tr>
+<tr>
+<td>~500</td>
+<td><span class="arithmatex">\(O(n^3)\)</span></td>
+<td>triple nested loop</td>
+</tr>
+<tr>
+<td>~10,000</td>
+<td><span class="arithmatex">\(O(n^2)\)</span></td>
+<td>double nested loop</td>
+</tr>
+<tr>
+<td>~1,000,000</td>
+<td><span class="arithmatex">\(O(n \log n)\)</span></td>
+<td>sort it and go</td>
+</tr>
+<tr>
+<td>~100,000,000</td>
+<td><span class="arithmatex">\(O(n)\)</span></td>
+<td>one pass, nothing fancy</td>
+</tr>
+<tr>
+<td>anything at all</td>
+<td><span class="arithmatex">\(O(\log n)\)</span>, <span class="arithmatex">\(O(1)\)</span></td>
+<td>effectively free</td>
+</tr>
+</tbody>
+</table>
+<p>These are order-of-magnitude estimates, not promises — constants,
+languages, and hardware shift every boundary. But when a problem says
+"<span class="arithmatex">\(n\)</span> can be one million" and your plan is a double loop, this table is
+telling you, politely, to think again.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+  <script>var tabs=__md_get("__tabs");if(Array.isArray(tabs))e:for(var set of document.querySelectorAll(".tabbed-set")){var labels=set.querySelector(".tabbed-labels");for(var tab of tabs)for(var label of labels.getElementsByTagName("label"))if(label.innerText.trim()===tab){var input=document.getElementById(label.htmlFor);input.checked=!0;continue e}}</script>
+
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+      
+      <nav class="md-footer__inner md-grid" aria-label="Footer" >
+        
+          
+          <a href="../A-python-java/" class="md-footer__link md-footer__link--prev" aria-label="Previous: A · Python ↔ Java cheat sheet">
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+            </div>
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              <div class="md-ellipsis">
+                A · Python ↔ Java cheat sheet
+              </div>
+            </div>
+          </a>
+        
+        
+          
+          <a href="../C-glossary/" class="md-footer__link md-footer__link--next" aria-label="Next: C · Glossary">
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              <div class="md-ellipsis">
+                C · Glossary
+              </div>
+            </div>
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11z"/></svg>
+            </div>
+          </a>
+        
+      </nav>
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      Text licensed under <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>;
+code under <a href="https://opensource.org/licenses/MIT">MIT</a>.
+
+    </div>
+  
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://github.com/dongzhaohe321418-lab" target="_blank" rel="noopener" title="github.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+      <div class="md-progress" data-md-component="progress" role="progressbar"></div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.instant", "navigation.instant.progress", "navigation.tracking", "navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.prune", "navigation.path", "navigation.top", "navigation.indexes", "navigation.footer", "header.autohide", "search.suggest", "search.highlight", "search.share", "content.code.copy", "content.code.annotate", "content.code.select", "content.tabs.link", "content.action.edit", "content.action.view", "content.tooltips", "toc.follow"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+        <script src="../../assets/javascripts/mathjax.js"></script>
+      
+        <script src="https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js"></script>
+      
+        <script src="../../assets/javascripts/run_python.js"></script>
+      
+    
+  </body>
+</html>

@@ -1,0 +1,306 @@
+site_name: Programming & Computer Systems Handbook
+site_description: A zero-foundation, textbook-grade open handbook on programming and computer systems — from bits and binary to data structures and algorithms, with Python you can run in the browser.
+site_author: Zhaohe Dong
+site_url: https://dongzhaohe321418-lab.github.io/programming-handbook/
+repo_url: https://github.com/dongzhaohe321418-lab/programming-handbook
+repo_name: dongzhaohe321418-lab/programming-handbook
+edit_uri: edit/main/docs/
+
+copyright: |
+  Text licensed under <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>;
+  code under <a href="https://opensource.org/licenses/MIT">MIT</a>.
+
+theme:
+  name: material
+  language: en
+  favicon: assets/favicon.svg
+  logo: assets/favicon.svg
+  features:
+    - navigation.instant
+    - navigation.instant.progress
+    - navigation.tracking
+    - navigation.tabs
+    - navigation.tabs.sticky
+    - navigation.sections
+    - navigation.prune
+    - navigation.path
+    - navigation.top
+    - navigation.indexes
+    - navigation.footer
+    - header.autohide
+    - search.suggest
+    - search.highlight
+    - search.share
+    - content.code.copy
+    - content.code.annotate
+    - content.code.select
+    - content.tabs.link
+    - content.action.edit
+    - content.action.view
+    - content.tooltips
+    - toc.follow
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: teal
+      accent: teal
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: teal
+      accent: teal
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  font:
+    text: Inter
+    code: JetBrains Mono
+  icon:
+    repo: fontawesome/brands/github
+    edit: material/pencil
+    view: material/eye
+
+markdown_extensions:
+  - abbr
+  - admonition
+  - attr_list
+  - def_list
+  - footnotes
+  - md_in_html
+  - tables
+  - toc:
+      permalink: true
+      toc_depth: 3
+  - pymdownx.arithmatex:
+      generic: true
+  - pymdownx.betterem
+  - pymdownx.caret
+  - pymdownx.details
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.keys
+  - pymdownx.mark
+  - pymdownx.smartsymbols
+  - pymdownx.snippets
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - pymdownx.tilde
+
+extra_javascript:
+  - assets/javascripts/mathjax.js
+  - https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js
+  # pyodide.js is loaded at runtime by run_python.js, which prefers the
+  # self-hosted copy in assets/pyodide/ and falls back across jsDelivr
+  # mirrors for reliability on networks that block cdn.jsdelivr.net.
+  - assets/javascripts/run_python.js
+
+extra_css:
+  - assets/stylesheets/extra.css
+
+plugins:
+  - search:
+      separator: '[\s\-,:!=\[\]()"`/]+|\.(?!\d)|&[lg]t;|(?!\b)(?=[A-Z][a-z])'
+  - tags
+  - social:
+      enabled: !ENV [CI, false]
+      cards: true
+      cards_layout_options:
+        background_color: "#00695c"
+        color: "#ffffff"
+        font_family: Inter
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/dongzhaohe321418-lab
+  generator: false
+
+nav:
+  - Home: index.md
+  - Start Here:
+      - How to use: how-to-use.md
+      - Learning Path: learning-path.md
+      - Python and Java: python-vs-java.md
+      - Try in Jupyter (in browser): try-in-jupyter.md
+  - I · The Machine:
+      - Chapter 0 · How Computers Work:
+          - Overview: ch00-machine/index.md
+          - 0.1 What is a computer, really: ch00-machine/01-hardware.md
+          - 0.2 Bits, binary, and how data is stored: ch00-machine/02-binary.md
+          - 0.3 What is a program — compilers and interpreters: ch00-machine/03-programs.md
+          - Exercises: ch00-machine/exercises.md
+      - Chapter 1 · Tools of the Trade:
+          - Overview: ch01-tools/index.md
+          - 1.1 The command line: ch01-tools/01-command-line.md
+          - 1.2 Installing and running Python: ch01-tools/02-python-setup.md
+          - 1.3 Git and version control, first taste: ch01-tools/03-git.md
+          - Exercises: ch01-tools/exercises.md
+  - II · Programming I:
+      - Chapter 2 · Values, Types, and Expressions:
+          - Overview: ch02-data/index.md
+          - 2.1 Variables and types: ch02-data/01-variables-types.md
+          - 2.2 Number systems: ch02-data/02-number-systems.md
+          - 2.3 Operators, precedence, and modulo: ch02-data/03-operators.md
+          - 2.4 The math library and reading input: ch02-data/04-math-input.md
+          - Exercises: ch02-data/exercises.md
+      - Chapter 3 · Functions and Objects:
+          - Overview: ch03-functions/index.md
+          - 3.1 Using objects and their methods: ch03-functions/01-using-objects.md
+          - 3.2 Strings: ch03-functions/02-strings.md
+          - 3.3 Writing your own functions: ch03-functions/03-writing-functions.md
+          - 3.4 Formatting output: ch03-functions/04-output-formatting.md
+          - Exercises: ch03-functions/exercises.md
+      - Chapter 4 · Making Decisions:
+          - Overview: ch04-branching/index.md
+          - 4.1 Booleans and logic: ch04-branching/01-booleans-logic.md
+          - 4.2 if, elif, else: ch04-branching/02-if-else.md
+          - 4.3 Equality vs identity: ch04-branching/03-equality-identity.md
+          - 4.4 switch/match, debugging, and style: ch04-branching/04-switch-style-debug.md
+          - Exercises: ch04-branching/exercises.md
+      - Chapter 5 · Under the Hood:
+          - Overview: ch05-under-the-hood/index.md
+          - 5.1 Overflow and floating-point pitfalls: ch05-under-the-hood/01-numeric-pitfalls.md
+          - 5.2 Short-circuits, compound assignment, gotchas: ch05-under-the-hood/02-shortcuts-gotchas.md
+          - 5.3 The stack and the heap: ch05-under-the-hood/03-stack-heap.md
+          - 5.4 Overloading, chaining, and imports: ch05-under-the-hood/04-overloading-imports.md
+          - Exercises: ch05-under-the-hood/exercises.md
+      - Chapter 6 · Loops:
+          - Overview: ch06-loops/index.md
+          - 6.1 while and do-while: ch06-loops/01-while.md
+          - 6.2 for loops and ranges: ch06-loops/02-for.md
+          - 6.3 Nested loops, break, continue: ch06-loops/03-nested-break-continue.md
+          - 6.4 Bitwise operators and enums: ch06-loops/04-bitwise-enums.md
+          - Exercises: ch06-loops/exercises.md
+      - Chapter 7 · Arrays and Lists:
+          - Overview: ch07-arrays/index.md
+          - 7.1 Arrays vs Python lists: ch07-arrays/01-arrays-vs-lists.md
+          - 7.2 Traversal patterns and parallel arrays: ch07-arrays/02-traversal-patterns.md
+          - Exercises: ch07-arrays/exercises.md
+      - Chapter 8 · Grids, Algorithms, and Testing:
+          - Overview: ch08-grids/index.md
+          - 8.1 Two-dimensional arrays: ch08-grids/01-2d-arrays.md
+          - 8.2 Arrays and functions together: ch08-grids/02-arrays-functions.md
+          - 8.3 First algorithms — sort and search: ch08-grids/03-first-algorithms.md
+          - 8.4 Unit testing: ch08-grids/04-unit-testing.md
+          - Exercises: ch08-grids/exercises.md
+      - Chapter 9 · Collections and Memory:
+          - Overview: ch09-collections/index.md
+          - 9.1 Values vs references: ch09-collections/01-references.md
+          - 9.2 Dynamic lists — ArrayList and list: ch09-collections/02-dynamic-lists.md
+          - 9.3 Objects in memory — two views of OOP: ch09-collections/03-objects-in-memory.md
+          - Exercises: ch09-collections/exercises.md
+      - Chapter 10 · The Command Line and Exceptions:
+          - Overview: ch10-exceptions/index.md
+          - 10.1 Command-line programs and arguments: ch10-exceptions/01-cli-programs.md
+          - 10.2 Exceptions — try, except, finally: ch10-exceptions/02-exceptions.md
+          - 10.3 Reading stack traces: ch10-exceptions/03-stack-traces.md
+          - Exercises: ch10-exceptions/exercises.md
+      - Chapter 11 · Files:
+          - Overview: ch11-files/index.md
+          - 11.1 Paths and the file system: ch11-files/01-paths.md
+          - 11.2 Reading and writing files: ch11-files/02-read-write.md
+          - Exercises: ch11-files/exercises.md
+      - Chapter 12 · Writing Your Own Classes:
+          - Overview: ch12-classes/index.md
+          - 12.1 Anatomy of a class: ch12-classes/01-class-anatomy.md
+          - 12.2 Worked examples — Dog, WeatherStation: ch12-classes/02-worked-examples.md
+          - Exercises: ch12-classes/exercises.md
+      - Chapter 13 · Class Design and UML:
+          - Overview: ch13-design/index.md
+          - 13.1 Encapsulation and access control: ch13-design/01-encapsulation.md
+          - 13.2 UML class diagrams: ch13-design/02-uml.md
+          - 13.3 Multi-class systems: ch13-design/03-multi-class.md
+          - Exercises: ch13-design/exercises.md
+      - Chapter 14 · Beyond the Basics:
+          - Overview: ch14-beyond/index.md
+          - 14.1 Sets, maps, and dictionaries: ch14-beyond/01-collections-tour.md
+          - 14.2 Comparing algorithms: ch14-beyond/02-choosing-algorithms.md
+          - 14.3 GUIs and other directions: ch14-beyond/03-guis-and-beyond.md
+          - Exercises: ch14-beyond/exercises.md
+  - III · Programming II:
+      - Chapter 15 · Inheritance and Interfaces:
+          - Overview: ch15-inheritance/index.md
+          - 15.1 Inheritance: ch15-inheritance/01-inheritance.md
+          - 15.2 Polymorphism and casting: ch15-inheritance/02-polymorphism.md
+          - 15.3 Interfaces and abstract classes: ch15-inheritance/03-interfaces.md
+          - Exercises: ch15-inheritance/exercises.md
+      - Chapter 16 · Algorithm Analysis:
+          - Overview: ch16-complexity/index.md
+          - 16.1 Big-O notation: ch16-complexity/01-big-o.md
+          - 16.2 Measuring running time: ch16-complexity/02-timing.md
+          - 16.3 The complexity zoo: ch16-complexity/03-complexity-zoo.md
+          - Exercises: ch16-complexity/exercises.md
+      - Chapter 17 · Recursion:
+          - Overview: ch17-recursion/index.md
+          - 17.1 The call stack: ch17-recursion/01-call-stack.md
+          - 17.2 Classic recursive problems: ch17-recursion/02-classic-recursion.md
+          - 17.3 Recursion vs iteration: ch17-recursion/03-vs-iteration.md
+          - Exercises: ch17-recursion/exercises.md
+      - Chapter 18 · ADTs and Linked Lists:
+          - Overview: ch18-linked-lists/index.md
+          - 18.1 Abstract data types and generics: ch18-linked-lists/01-adts-generics.md
+          - 18.2 Singly linked lists: ch18-linked-lists/02-singly-linked.md
+          - 18.3 Doubly linked lists: ch18-linked-lists/03-doubly-linked.md
+          - Exercises: ch18-linked-lists/exercises.md
+      - Chapter 19 · Iterators, Stacks, and Queues:
+          - Overview: ch19-stacks-queues/index.md
+          - 19.1 Iterators: ch19-stacks-queues/01-iterators.md
+          - 19.2 Stacks: ch19-stacks-queues/02-stacks.md
+          - 19.3 Queues: ch19-stacks-queues/03-queues.md
+          - Exercises: ch19-stacks-queues/exercises.md
+      - Chapter 20 · Binary Search Trees:
+          - Overview: ch20-bst/index.md
+          - 20.1 Tree vocabulary: ch20-bst/01-tree-vocab.md
+          - 20.2 BST operations: ch20-bst/02-bst-ops.md
+          - 20.3 Traversals and the balance problem: ch20-bst/03-traversals-balance.md
+          - Exercises: ch20-bst/exercises.md
+      - Chapter 21 · Heaps and Priority Queues:
+          - Overview: ch21-heaps/index.md
+          - 21.1 The heap property: ch21-heaps/01-heap-property.md
+          - 21.2 Priority queues and heapsort: ch21-heaps/02-priority-queues.md
+          - Exercises: ch21-heaps/exercises.md
+      - Chapter 22 · Sorting and Searching:
+          - Overview: ch22-sorting/index.md
+          - 22.1 Elementary sorts: ch22-sorting/01-elementary-sorts.md
+          - 22.2 Merge sort and quicksort: ch22-sorting/02-merge-quick.md
+          - 22.3 Searching: ch22-sorting/03-searching.md
+          - Exercises: ch22-sorting/exercises.md
+  - IV · Systems & Practice:
+      - Chapter 23 · Memory, Processes, and the OS:
+          - Overview: ch23-os/index.md
+          - 23.1 What an operating system does: ch23-os/01-os-processes.md
+          - 23.2 The memory layout of a program: ch23-os/02-memory-layout.md
+          - 23.3 Interpreters and virtual machines: ch23-os/03-interpreters-vms.md
+          - Exercises: ch23-os/exercises.md
+      - Chapter 24 · Engineering Practice:
+          - Overview: ch24-practice/index.md
+          - 24.1 A real Git workflow: ch24-practice/01-git-workflow.md
+          - 24.2 Testing beyond the basics: ch24-practice/02-testing.md
+          - 24.3 Style, reviews, and readable code: ch24-practice/03-style-review.md
+          - Exercises: ch24-practice/exercises.md
+      - Chapter 25 · The Road Ahead:
+          - Overview: ch25-next/index.md
+          - 25.1 A preview of Programming III: ch25-next/01-cs400-preview.md
+          - 25.2 Your roadmap: ch25-next/02-roadmap.md
+  - Projects:
+      - Project 1 · Number-Systems Toolkit: projects/01-number-tool/README.md
+      - Project 2 · Text Adventure (OOP): projects/02-text-adventure/README.md
+      - Project 3 · Data-Structures Library: projects/03-data-structures-library/README.md
+      - Project 4 · Sorting Visualizer: projects/04-sorting-visualizer/README.md
+  - Appendix:
+      - A · Python ↔ Java cheat sheet: appendix/A-python-java.md
+      - B · Big-O reference: appendix/B-big-o.md
+      - C · Glossary: appendix/C-glossary.md
+      - D · Further reading: appendix/D-reading.md

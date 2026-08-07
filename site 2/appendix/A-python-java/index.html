@@ -1,0 +1,2689 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="A zero-foundation, textbook-grade open handbook on programming and computer systems — from bits and binary to data structures and algorithms, with Python you can run in the browser.">
+      
+      
+        <meta name="author" content="Zhaohe Dong">
+      
+      
+        <link rel="canonical" href="https://dongzhaohe321418-lab.github.io/programming-handbook/appendix/A-python-java/">
+      
+      
+        <link rel="prev" href="../../projects/04-sorting-visualizer/">
+      
+      
+        <link rel="next" href="../B-big-o/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/favicon.svg">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>A · Python ↔ Java cheat sheet - Programming & Computer Systems Handbook</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter:300,300i,400,400i,700,700i%7CJetBrains+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Inter";--md-code-font:"JetBrains Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/extra.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="teal" data-md-color-accent="teal">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#a-python-java-cheat-sheet" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="Programming &amp; Computer Systems Handbook" class="md-header__button md-logo" aria-label="Programming & Computer Systems Handbook" data-md-component="logo">
+      
+  <img src="../../assets/favicon.svg" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Programming & Computer Systems Handbook
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              A · Python ↔ Java cheat sheet
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="teal" data-md-color-accent="teal"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="teal" data-md-color-accent="teal"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+          <a href="javascript:void(0)" class="md-search__icon md-icon" title="Share" aria-label="Share" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+            
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91s2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08"/></svg>
+          </a>
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/dongzhaohe321418-lab/programming-handbook" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    dongzhaohe321418-lab/programming-handbook
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../how-to-use/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Start Here
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../ch00-machine/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  I · The Machine
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../ch02-data/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  II · Programming I
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../ch15-inheritance/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  III · Programming II
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../ch23-os/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  IV · Systems & Practice
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../projects/01-number-tool/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Projects
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="./" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Appendix
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="Programming &amp; Computer Systems Handbook" class="md-nav__button md-logo" aria-label="Programming & Computer Systems Handbook" data-md-component="logo">
+      
+  <img src="../../assets/favicon.svg" alt="logo">
+
+    </a>
+    Programming & Computer Systems Handbook
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/dongzhaohe321418-lab/programming-handbook" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    dongzhaohe321418-lab/programming-handbook
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../how-to-use/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Start Here
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../ch00-machine/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    I · The Machine
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../ch02-data/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    II · Programming I
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../ch15-inheritance/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    III · Programming II
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    
+  
+  
+  
+    <a href="../../ch23-os/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    IV · Systems & Practice
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../projects/01-number-tool/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Projects
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_8" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_8" id="__nav_8_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Appendix
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_8">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Appendix
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    A · Python ↔ Java cheat sheet
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    A · Python ↔ Java cheat sheet
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#program-skeleton-and-entry-point" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Program skeleton and entry point
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#printing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Printing
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#variables-and-types" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Variables and types
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#conversions-and-casting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Conversions and casting
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#operators" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Operators
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#strings" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Strings
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#control-flow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Control flow
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#loops" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Loops
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#collections" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Collections
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#functions-and-methods" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Functions and methods
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#object-oriented-programming" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Object-oriented programming
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#exceptions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Exceptions
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#file-io" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        File I/O
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#naming-conventions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Naming conventions
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#false-friends" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        False friends
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../B-big-o/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    B · Big-O reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../C-glossary/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    C · Glossary
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../D-reading/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    D · Further reading
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#program-skeleton-and-entry-point" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Program skeleton and entry point
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#printing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Printing
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#variables-and-types" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Variables and types
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#conversions-and-casting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Conversions and casting
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#operators" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Operators
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#strings" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Strings
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#control-flow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Control flow
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#loops" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Loops
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#collections" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Collections
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#functions-and-methods" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Functions and methods
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#object-oriented-programming" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Object-oriented programming
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#exceptions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Exceptions
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#file-io" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        File I/O
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#naming-conventions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Naming conventions
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#false-friends" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        False friends
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+                
+
+
+
+  
+
+
+  <nav class="md-path" aria-label="Navigation" >
+    <ol class="md-path__list">
+      
+        
+  
+  
+    <li class="md-path__item">
+      <a href="../.." class="md-path__link">
+        
+  <span class="md-ellipsis">
+    Home
+  </span>
+
+      </a>
+    </li>
+  
+
+      
+      
+        
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="./" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    Appendix
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ol>
+  </nav>
+
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+    <a href="https://github.com/dongzhaohe321418-lab/programming-handbook/edit/main/docs/appendix/A-python-java.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75z"/></svg>
+    </a>
+  
+  
+    
+      
+    
+    <a href="https://github.com/dongzhaohe321418-lab/programming-handbook/raw/main/docs/appendix/A-python-java.md" title="View source of this page" class="md-content__button md-icon">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3m0 8a5 5 0 0 1-5-5 5 5 0 0 1 5-5 5 5 0 0 1 5 5 5 5 0 0 1-5 5m0-12.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5"/></svg>
+    </a>
+  
+
+
+<h1 id="a-python-java-cheat-sheet">A · Python ↔ Java cheat sheet<a class="headerlink" href="#a-python-java-cheat-sheet" title="Permanent link">&para;</a></h1>
+<p>Everything in one place: the Python you learned here on the left, the Java
+from a typical university course on the right. Python facts hold for
+CPython 3.11+; Java facts hold for Java 17. Rows link to the chapter that
+explains the <em>why</em> whenever the difference is deeper than spelling. Skim it
+now, bookmark it, and come back every time your two languages blur.</p>
+<h2 id="program-skeleton-and-entry-point">Program skeleton and entry point<a class="headerlink" href="#program-skeleton-and-entry-point" title="Permanent link">&para;</a></h2>
+<p>Python runs a file top to bottom; Java runs the <code>main</code> method of the class
+you name.</p>
+<div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><input id="__tabbed_1_2" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1">Python</label><label for="__tabbed_1_2">Java</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<div class="language-python highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c1"># hello.py — the file itself is the program</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Hello!&quot;</span><span class="p">)</span>
+</span></code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="language-java highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1">// Hello.java — code must live in a class; main is the entry point</span>
+</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">Hello</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kd">static</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="n">String</span><span class="o">[]</span><span class="w"> </span><span class="n">args</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-1-4"><a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="w">        </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="s">&quot;Hello!&quot;</span><span class="p">);</span>
+</span><span id="__span-1-5"><a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="w">    </span><span class="p">}</span>
+</span><span id="__span-1-6"><a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="p">}</span>
+</span></code></pre></div>
+</div>
+</div>
+</div>
+<p>Run with <code>python hello.py</code> versus <code>javac Hello.java</code> then <code>java Hello</code> —
+Java's separate compile step is explained in
+<a href="../../ch00-machine/03-programs/">Chapter 0.3</a>.</p>
+<h2 id="printing">Printing<a class="headerlink" href="#printing" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>What</th>
+<th>Python</th>
+<th>Java</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Print with newline</td>
+<td><code>print("hi")</code></td>
+<td><code>System.out.println("hi");</code></td>
+</tr>
+<tr>
+<td>Print without newline</td>
+<td><code>print("hi", end="")</code></td>
+<td><code>System.out.print("hi");</code></td>
+</tr>
+<tr>
+<td>Print several values</td>
+<td><code>print(x, y)</code> (space-separated)</td>
+<td><code>System.out.println(x + " " + y);</code></td>
+</tr>
+<tr>
+<td>Formatted print</td>
+<td><code>print(f"{x:.2f}")</code></td>
+<td><code>System.out.printf("%.2f%n", x);</code></td>
+</tr>
+</tbody>
+</table>
+<h2 id="variables-and-types">Variables and types<a class="headerlink" href="#variables-and-types" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>What</th>
+<th>Python</th>
+<th>Java</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Declare + assign</td>
+<td><code>x = 7</code></td>
+<td><code>int x = 7;</code> (or <code>var x = 7;</code> for locals)</td>
+</tr>
+<tr>
+<td>Reassign to another type</td>
+<td><code>x = "hi"</code> — allowed</td>
+<td>compile error — the type is fixed</td>
+</tr>
+<tr>
+<td>Integer</td>
+<td><code>int</code> — unlimited size</td>
+<td><code>int</code> — 32-bit (<code>long</code> — 64-bit)</td>
+</tr>
+<tr>
+<td>Real number</td>
+<td><code>float</code> (64-bit)</td>
+<td><code>double</code> (64-bit); <code>float</code> is the 32-bit one</td>
+</tr>
+<tr>
+<td>Boolean</td>
+<td><code>True</code> / <code>False</code> (type <code>bool</code>)</td>
+<td><code>true</code> / <code>false</code> (type <code>boolean</code>)</td>
+</tr>
+<tr>
+<td>Text</td>
+<td><code>str</code> — <code>"hi"</code> or <code>'hi'</code></td>
+<td><code>String</code> — <code>"hi"</code> only</td>
+</tr>
+<tr>
+<td>Single character</td>
+<td>no such type — a length-1 <code>str</code></td>
+<td><code>char</code> — <code>'h'</code> with single quotes</td>
+</tr>
+<tr>
+<td>"Nothing"</td>
+<td><code>None</code></td>
+<td><code>null</code></td>
+</tr>
+<tr>
+<td>Constant</td>
+<td><code>TAX_RATE = 0.08</code> (convention only)</td>
+<td><code>final double TAX_RATE = 0.08;</code> (enforced)</td>
+</tr>
+<tr>
+<td>Comment</td>
+<td><code># comment</code></td>
+<td><code>// comment</code> or <code>/* block */</code></td>
+</tr>
+<tr>
+<td>Doc comment</td>
+<td><code>"""docstring"""</code></td>
+<td><code>/** Javadoc */</code></td>
+</tr>
+</tbody>
+</table>
+<p>Typing styles — dynamic versus static — are contrasted in
+<a href="../../ch02-data/01-variables-types/">Chapter 2.1</a>; integer size limits and
+overflow in <a href="../../ch05-under-the-hood/01-numeric-pitfalls/">Chapter 5.1</a>.</p>
+<h2 id="conversions-and-casting">Conversions and casting<a class="headerlink" href="#conversions-and-casting" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>What</th>
+<th>Python</th>
+<th>Java</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>String → int</td>
+<td><code>int("42")</code></td>
+<td><code>Integer.parseInt("42")</code></td>
+</tr>
+<tr>
+<td>String → real</td>
+<td><code>float("3.5")</code></td>
+<td><code>Double.parseDouble("3.5")</code></td>
+</tr>
+<tr>
+<td>Number → string</td>
+<td><code>str(42)</code></td>
+<td><code>String.valueOf(42)</code> or <code>"" + 42</code></td>
+</tr>
+<tr>
+<td>Real → int (truncate)</td>
+<td><code>int(3.9)</code> → <code>3</code></td>
+<td><code>(int) 3.9</code> → <code>3</code></td>
+</tr>
+<tr>
+<td>Int → real</td>
+<td><code>float(7)</code></td>
+<td>happens implicitly: <code>double d = 7;</code></td>
+</tr>
+<tr>
+<td>Rounding</td>
+<td><code>round(2.7)</code> → <code>3</code></td>
+<td><code>Math.round(2.7)</code> → <code>3</code></td>
+</tr>
+<tr>
+<td>Failed parse raises</td>
+<td><code>ValueError</code></td>
+<td><code>NumberFormatException</code></td>
+</tr>
+</tbody>
+</table>
+<p>Beware <code>round()</code> on halves — see <a href="#false-friends">false friends</a> below.</p>
+<h2 id="operators">Operators<a class="headerlink" href="#operators" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>What</th>
+<th>Python</th>
+<th>Java</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Add, subtract, multiply</td>
+<td><code>+  -  *</code></td>
+<td><code>+  -  *</code></td>
+</tr>
+<tr>
+<td>Division (see false friends!)</td>
+<td><code>/</code> always real; <code>//</code> floors</td>
+<td><code>/</code> truncates for ints, real for doubles</td>
+</tr>
+<tr>
+<td>Remainder / modulo</td>
+<td><code>%</code> (sign follows the divisor)</td>
+<td><code>%</code> (sign follows the dividend)</td>
+</tr>
+<tr>
+<td>Power</td>
+<td><code>x ** 2</code></td>
+<td><code>Math.pow(x, 2)</code> (returns <code>double</code>)</td>
+</tr>
+<tr>
+<td>Increment</td>
+<td><code>x += 1</code> (no <code>++</code>)</td>
+<td><code>x++</code> or <code>x += 1</code></td>
+</tr>
+<tr>
+<td>Compound assign</td>
+<td><code>+=  -=  *=  /=</code></td>
+<td>same</td>
+</tr>
+<tr>
+<td>Comparison</td>
+<td><code>==  !=  &lt;  &lt;=  &gt;  &gt;=</code></td>
+<td>same spelling — but see <code>==</code> below</td>
+</tr>
+<tr>
+<td>Logical and, or, not</td>
+<td><code>and</code> <code>or</code> <code>not</code></td>
+<td><code>&amp;&amp;</code> <code>&#124;&#124;</code> <code>!</code></td>
+</tr>
+<tr>
+<td>Ternary / conditional</td>
+<td><code>a if cond else b</code></td>
+<td><code>cond ? a : b</code></td>
+</tr>
+<tr>
+<td>Bitwise</td>
+<td><code>&amp; &#124; ^ ~ &lt;&lt; &gt;&gt;</code></td>
+<td>same, plus <code>&gt;&gt;&gt;</code> (unsigned shift)</td>
+</tr>
+<tr>
+<td>Chained comparison</td>
+<td><code>0 &lt;= x &lt; 10</code></td>
+<td>not allowed — write <code>0 &lt;= x &amp;&amp; x &lt; 10</code></td>
+</tr>
+</tbody>
+</table>
+<p>Precedence and modulo behaviour:
+<a href="../../ch02-data/03-operators/">Chapter 2.3</a>; short-circuiting:
+<a href="../../ch05-under-the-hood/02-shortcuts-gotchas/">Chapter 5.2</a>; bitwise
+operators: <a href="../../ch06-loops/04-bitwise-enums/">Chapter 6.4</a>.</p>
+<h2 id="strings">Strings<a class="headerlink" href="#strings" title="Permanent link">&para;</a></h2>
+<p>Immutable in both languages: every "change" builds a new string
+(<a href="../../ch03-functions/02-strings/">Chapter 3.2</a>).</p>
+<table>
+<thead>
+<tr>
+<th>What</th>
+<th>Python</th>
+<th>Java</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Length</td>
+<td><code>len(s)</code></td>
+<td><code>s.length()</code></td>
+</tr>
+<tr>
+<td>Character at index</td>
+<td><code>s[0]</code></td>
+<td><code>s.charAt(0)</code></td>
+</tr>
+<tr>
+<td>Substring (end exclusive)</td>
+<td><code>s[2:5]</code></td>
+<td><code>s.substring(2, 5)</code></td>
+</tr>
+<tr>
+<td>Upper / lower case</td>
+<td><code>s.upper()</code> / <code>s.lower()</code></td>
+<td><code>s.toUpperCase()</code> / <code>s.toLowerCase()</code></td>
+</tr>
+<tr>
+<td>Trim whitespace</td>
+<td><code>s.strip()</code></td>
+<td><code>s.strip()</code> (or older <code>s.trim()</code>)</td>
+</tr>
+<tr>
+<td>Find position</td>
+<td><code>s.find("ab")</code> → <code>-1</code> if absent</td>
+<td><code>s.indexOf("ab")</code> → <code>-1</code> if absent</td>
+</tr>
+<tr>
+<td>Contains</td>
+<td><code>"ab" in s</code></td>
+<td><code>s.contains("ab")</code></td>
+</tr>
+<tr>
+<td>Starts / ends with</td>
+<td><code>s.startswith("a")</code> / <code>s.endswith("z")</code></td>
+<td><code>s.startsWith("a")</code> / <code>s.endsWith("z")</code></td>
+</tr>
+<tr>
+<td>Replace all</td>
+<td><code>s.replace("a", "b")</code></td>
+<td><code>s.replace("a", "b")</code></td>
+</tr>
+<tr>
+<td>Split</td>
+<td><code>s.split(",")</code></td>
+<td><code>s.split(",")</code> — the argument is a <em>regex</em>!</td>
+</tr>
+<tr>
+<td>Join</td>
+<td><code>", ".join(parts)</code></td>
+<td><code>String.join(", ", parts)</code></td>
+</tr>
+<tr>
+<td>Interpolation</td>
+<td><code>f"{name}: {score:.1f}"</code></td>
+<td><code>String.format("%s: %.1f", name, score)</code></td>
+</tr>
+<tr>
+<td>Value equality</td>
+<td><code>s == t</code></td>
+<td><code>s.equals(t)</code> — <strong>never</strong> <code>==</code></td>
+</tr>
+<tr>
+<td>Compare order</td>
+<td><code>s &lt; t</code></td>
+<td><code>s.compareTo(t) &lt; 0</code></td>
+</tr>
+</tbody>
+</table>
+<p>Formatting mini-language: <a href="../../ch03-functions/04-output-formatting/">Chapter 3.4</a>.</p>
+<h2 id="control-flow">Control flow<a class="headerlink" href="#control-flow" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>What</th>
+<th>Python</th>
+<th>Java</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>If</td>
+<td><code>if x &gt; 0:</code> + indent</td>
+<td><code>if (x &gt; 0) { ... }</code></td>
+</tr>
+<tr>
+<td>Else-if</td>
+<td><code>elif x &lt; 0:</code></td>
+<td><code>else if (x &lt; 0) { ... }</code></td>
+</tr>
+<tr>
+<td>Else</td>
+<td><code>else:</code></td>
+<td><code>else { ... }</code></td>
+</tr>
+<tr>
+<td>Blocks marked by</td>
+<td>indentation</td>
+<td>braces <code>{ }</code>; statements end with <code>;</code></td>
+</tr>
+<tr>
+<td>Multi-way on a value</td>
+<td><code>match x:</code> / <code>case 1:</code></td>
+<td><code>switch (x)</code> / <code>case 1 -&gt;</code> (or <code>case 1:</code> + <code>break</code>)</td>
+</tr>
+<tr>
+<td>Condition must be</td>
+<td>anything truthy</td>
+<td>a real <code>boolean</code> — <code>if (x)</code> with <code>int x</code> won't compile</td>
+</tr>
+</tbody>
+</table>
+<p>Branching details and <code>match</code>:
+<a href="../../ch04-branching/02-if-else/">Chapter 4.2</a> and
+<a href="../../ch04-branching/04-switch-style-debug/">Chapter 4.4</a>.</p>
+<h2 id="loops">Loops<a class="headerlink" href="#loops" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>What</th>
+<th>Python</th>
+<th>Java</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>While</td>
+<td><code>while n &gt; 0:</code></td>
+<td><code>while (n &gt; 0) { ... }</code></td>
+</tr>
+<tr>
+<td>Do-while</td>
+<td>none — use <code>while True:</code> + <code>break</code></td>
+<td><code>do { ... } while (n &gt; 0);</code></td>
+</tr>
+<tr>
+<td>Counted loop</td>
+<td><code>for i in range(5):</code></td>
+<td><code>for (int i = 0; i &lt; 5; i++) { ... }</code></td>
+</tr>
+<tr>
+<td>Counted from a to b−1</td>
+<td><code>for i in range(a, b):</code></td>
+<td><code>for (int i = a; i &lt; b; i++)</code></td>
+</tr>
+<tr>
+<td>Step / countdown</td>
+<td><code>range(10, 0, -1)</code></td>
+<td><code>for (int i = 10; i &gt; 0; i--)</code></td>
+</tr>
+<tr>
+<td>For-each</td>
+<td><code>for x in xs:</code></td>
+<td><code>for (int x : xs) { ... }</code></td>
+</tr>
+<tr>
+<td>With index and value</td>
+<td><code>for i, x in enumerate(xs):</code></td>
+<td>index loop + <code>xs[i]</code> / <code>xs.get(i)</code></td>
+</tr>
+<tr>
+<td>Exit / skip</td>
+<td><code>break</code> / <code>continue</code></td>
+<td><code>break;</code> / <code>continue;</code></td>
+</tr>
+</tbody>
+</table>
+<p>Both <code>range(a, b)</code> and the C-style condition <code>i &lt; b</code> are half-open: they
+stop <em>before</em> <code>b</code> (<a href="../../ch06-loops/02-for/">Chapter 6.2</a>).</p>
+<h2 id="collections">Collections<a class="headerlink" href="#collections" title="Permanent link">&para;</a></h2>
+<p>Dynamic array — <code>list</code> vs <code>ArrayList</code>
+(<a href="../../ch09-collections/02-dynamic-lists/">Chapter 9.2</a>):</p>
+<table>
+<thead>
+<tr>
+<th>What</th>
+<th>Python <code>list</code></th>
+<th>Java <code>ArrayList</code></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Create</td>
+<td><code>xs = [1, 2, 3]</code></td>
+<td><code>var xs = new ArrayList&lt;&gt;(List.of(1, 2, 3));</code></td>
+</tr>
+<tr>
+<td>Add at end</td>
+<td><code>xs.append(4)</code></td>
+<td><code>xs.add(4)</code></td>
+</tr>
+<tr>
+<td>Read / write at index</td>
+<td><code>xs[0]</code> / <code>xs[0] = 9</code></td>
+<td><code>xs.get(0)</code> / <code>xs.set(0, 9)</code></td>
+</tr>
+<tr>
+<td>Length</td>
+<td><code>len(xs)</code></td>
+<td><code>xs.size()</code></td>
+</tr>
+<tr>
+<td>Insert at index</td>
+<td><code>xs.insert(1, 9)</code></td>
+<td><code>xs.add(1, 9)</code></td>
+</tr>
+<tr>
+<td>Remove by value</td>
+<td><code>xs.remove(9)</code></td>
+<td><code>xs.remove(Integer.valueOf(9))</code> — <code>remove(9)</code> means <em>index 9</em>!</td>
+</tr>
+<tr>
+<td>Membership</td>
+<td><code>9 in xs</code></td>
+<td><code>xs.contains(9)</code></td>
+</tr>
+<tr>
+<td>Sort in place</td>
+<td><code>xs.sort()</code></td>
+<td><code>Collections.sort(xs)</code></td>
+</tr>
+<tr>
+<td>Plain fixed array</td>
+<td>(use a list)</td>
+<td><code>int[] a = new int[10];</code>, length <code>a.length</code></td>
+</tr>
+</tbody>
+</table>
+<p>Dictionary / map — <code>dict</code> vs <code>HashMap</code>
+(<a href="../../ch14-beyond/01-collections-tour/">Chapter 14.1</a>):</p>
+<table>
+<thead>
+<tr>
+<th>What</th>
+<th>Python <code>dict</code></th>
+<th>Java <code>HashMap</code></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Create</td>
+<td><code>d = {"a": 1}</code></td>
+<td><code>var d = new HashMap&lt;String, Integer&gt;();</code></td>
+</tr>
+<tr>
+<td>Put</td>
+<td><code>d["b"] = 2</code></td>
+<td><code>d.put("b", 2)</code></td>
+</tr>
+<tr>
+<td>Get (missing key!)</td>
+<td><code>d["b"]</code> — raises <code>KeyError</code></td>
+<td><code>d.get("b")</code> — returns <code>null</code></td>
+</tr>
+<tr>
+<td>Get with default</td>
+<td><code>d.get("b", 0)</code></td>
+<td><code>d.getOrDefault("b", 0)</code></td>
+</tr>
+<tr>
+<td>Contains key</td>
+<td><code>"b" in d</code></td>
+<td><code>d.containsKey("b")</code></td>
+</tr>
+<tr>
+<td>Delete</td>
+<td><code>del d["b"]</code></td>
+<td><code>d.remove("b")</code></td>
+</tr>
+<tr>
+<td>Size</td>
+<td><code>len(d)</code></td>
+<td><code>d.size()</code></td>
+</tr>
+<tr>
+<td>Loop over pairs</td>
+<td><code>for k, v in d.items():</code></td>
+<td><code>for (var e : d.entrySet())</code> then <code>e.getKey()</code>, <code>e.getValue()</code></td>
+</tr>
+</tbody>
+</table>
+<p>Set — <code>set</code> vs <code>HashSet</code>:</p>
+<table>
+<thead>
+<tr>
+<th>What</th>
+<th>Python <code>set</code></th>
+<th>Java <code>HashSet</code></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Create</td>
+<td><code>s = {1, 2}</code> (empty: <code>set()</code>)</td>
+<td><code>var s = new HashSet&lt;Integer&gt;();</code></td>
+</tr>
+<tr>
+<td>Add / remove</td>
+<td><code>s.add(3)</code> / <code>s.discard(3)</code></td>
+<td><code>s.add(3)</code> / <code>s.remove(3)</code></td>
+</tr>
+<tr>
+<td>Membership</td>
+<td><code>3 in s</code></td>
+<td><code>s.contains(3)</code></td>
+</tr>
+<tr>
+<td>Union / intersection</td>
+<td><code>a &#124; b</code> / <code>a &amp; b</code></td>
+<td><code>a.addAll(b)</code> / <code>a.retainAll(b)</code> — these <em>mutate</em> <code>a</code></td>
+</tr>
+</tbody>
+</table>
+<h2 id="functions-and-methods">Functions and methods<a class="headerlink" href="#functions-and-methods" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>What</th>
+<th>Python</th>
+<th>Java</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Define</td>
+<td><code>def area(w, h):</code></td>
+<td><code>static double area(double w, double h) { ... }</code></td>
+</tr>
+<tr>
+<td>Return</td>
+<td><code>return w * h</code></td>
+<td><code>return w * h;</code></td>
+</tr>
+<tr>
+<td>No return value</td>
+<td>returns <code>None</code> implicitly</td>
+<td>declare <code>void</code></td>
+</tr>
+<tr>
+<td>Default argument</td>
+<td><code>def greet(name="world"):</code></td>
+<td>none — write overloads instead</td>
+</tr>
+<tr>
+<td>Same name, different params</td>
+<td>not allowed (last <code>def</code> wins)</td>
+<td>overloading — resolved by parameter types</td>
+</tr>
+<tr>
+<td>Keyword arguments</td>
+<td><code>area(h=2, w=3)</code></td>
+<td>none — arguments are positional</td>
+</tr>
+<tr>
+<td>Variable arg count</td>
+<td><code>def f(*args):</code></td>
+<td><code>static int f(int... args)</code></td>
+</tr>
+<tr>
+<td>Return two things</td>
+<td><code>return lo, hi</code> (a tuple)</td>
+<td>one value only — wrap in a small class/record</td>
+</tr>
+</tbody>
+</table>
+<p>Why Python trades overloading for defaults:
+<a href="../../ch05-under-the-hood/04-overloading-imports/">Chapter 5.4</a>; function
+anatomy: <a href="../../ch03-functions/03-writing-functions/">Chapter 3.3</a>.</p>
+<h2 id="object-oriented-programming">Object-oriented programming<a class="headerlink" href="#object-oriented-programming" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>What</th>
+<th>Python</th>
+<th>Java</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Class</td>
+<td><code>class Dog:</code></td>
+<td><code>public class Dog { ... }</code></td>
+</tr>
+<tr>
+<td>Constructor</td>
+<td><code>def __init__(self, name):</code></td>
+<td><code>public Dog(String name) { ... }</code></td>
+</tr>
+<tr>
+<td>Instance variable</td>
+<td><code>self.name = name</code> (created on assignment)</td>
+<td><code>private String name;</code> (declared up front)</td>
+</tr>
+<tr>
+<td>Create object</td>
+<td><code>d = Dog("Rex")</code></td>
+<td><code>Dog d = new Dog("Rex");</code></td>
+</tr>
+<tr>
+<td>Current object</td>
+<td><code>self</code> — explicit first parameter</td>
+<td><code>this</code> — implicit</td>
+</tr>
+<tr>
+<td>Method</td>
+<td><code>def bark(self):</code></td>
+<td><code>public void bark() { ... }</code></td>
+</tr>
+<tr>
+<td>To-string</td>
+<td><code>def __str__(self):</code></td>
+<td><code>@Override public String toString()</code></td>
+</tr>
+<tr>
+<td>Value equality</td>
+<td><code>def __eq__(self, other):</code></td>
+<td>override <code>equals()</code> <em>and</em> <code>hashCode()</code></td>
+</tr>
+<tr>
+<td>Inheritance</td>
+<td><code>class Puppy(Dog):</code></td>
+<td><code>class Puppy extends Dog</code></td>
+</tr>
+<tr>
+<td>Call parent constructor</td>
+<td><code>super().__init__(name)</code></td>
+<td><code>super(name);</code></td>
+</tr>
+<tr>
+<td>Override method</td>
+<td>just redefine it — no keyword needed</td>
+<td>redefine it; annotate <code>@Override</code></td>
+</tr>
+<tr>
+<td>Abstract class</td>
+<td><code>class Shape(abc.ABC):</code> + <code>@abstractmethod</code></td>
+<td><code>abstract class Shape</code> + <code>abstract</code> methods</td>
+</tr>
+<tr>
+<td>Interface</td>
+<td>closest: ABCs and duck typing</td>
+<td><code>interface Walker { ... }</code> + <code>implements</code></td>
+</tr>
+<tr>
+<td>Access control</td>
+<td>convention: <code>_protected</code>, <code>__mangled</code></td>
+<td>keywords: <code>private</code>, <code>protected</code>, <code>public</code></td>
+</tr>
+<tr>
+<td>Static method</td>
+<td><code>@staticmethod</code> decorator</td>
+<td><code>static</code> keyword</td>
+</tr>
+<tr>
+<td>Getter/setter style</td>
+<td><code>@property</code> decorator</td>
+<td>explicit <code>getX()</code> / <code>setX(...)</code> methods</td>
+</tr>
+</tbody>
+</table>
+<p>Encapsulation: <a href="../../ch13-design/01-encapsulation/">Chapter 13.1</a>;
+inheritance and interfaces:
+<a href="../../ch15-inheritance/01-inheritance/">Chapter 15.1</a> and
+<a href="../../ch15-inheritance/03-interfaces/">Chapter 15.3</a>.</p>
+<h2 id="exceptions">Exceptions<a class="headerlink" href="#exceptions" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>What</th>
+<th>Python</th>
+<th>Java</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Guard risky code</td>
+<td><code>try:</code></td>
+<td><code>try { ... }</code></td>
+</tr>
+<tr>
+<td>Handle</td>
+<td><code>except ValueError as e:</code></td>
+<td><code>catch (NumberFormatException e) { ... }</code></td>
+</tr>
+<tr>
+<td>Handle any</td>
+<td><code>except Exception as e:</code></td>
+<td><code>catch (Exception e)</code></td>
+</tr>
+<tr>
+<td>Always run</td>
+<td><code>finally:</code></td>
+<td><code>finally { ... }</code></td>
+</tr>
+<tr>
+<td>Throw</td>
+<td><code>raise ValueError("bad input")</code></td>
+<td><code>throw new IllegalArgumentException("bad input");</code></td>
+</tr>
+<tr>
+<td>Define your own</td>
+<td><code>class TooCold(Exception): pass</code></td>
+<td><code>class TooCold extends Exception { ... }</code></td>
+</tr>
+<tr>
+<td>Checked exceptions</td>
+<td>none — any code may raise anything</td>
+<td><code>IOException</code> etc. must be caught or declared with <code>throws</code></td>
+</tr>
+<tr>
+<td>Error report</td>
+<td>traceback — read <em>bottom-up</em></td>
+<td>stack trace — read <em>top-down</em></td>
+</tr>
+</tbody>
+</table>
+<p>The full model: <a href="../../ch10-exceptions/02-exceptions/">Chapter 10.2</a>;
+reading the reports: <a href="../../ch10-exceptions/03-stack-traces/">Chapter 10.3</a>.</p>
+<h2 id="file-io">File I/O<a class="headerlink" href="#file-io" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>What</th>
+<th>Python</th>
+<th>Java</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Read whole file</td>
+<td><code>Path("f.txt").read_text()</code></td>
+<td><code>Files.readString(Path.of("f.txt"))</code></td>
+</tr>
+<tr>
+<td>Read lines</td>
+<td><code>with open("f.txt") as f:</code> then <code>for line in f:</code></td>
+<td><code>for (String line : Files.readAllLines(Path.of("f.txt")))</code></td>
+</tr>
+<tr>
+<td>Write (overwrite)</td>
+<td><code>Path("f.txt").write_text(data)</code></td>
+<td><code>Files.writeString(Path.of("f.txt"), data)</code></td>
+</tr>
+<tr>
+<td>Append</td>
+<td><code>open("f.txt", "a")</code></td>
+<td><code>Files.writeString(path, data, StandardOpenOption.APPEND)</code></td>
+</tr>
+<tr>
+<td>Auto-close</td>
+<td><code>with open(...) as f:</code></td>
+<td>try-with-resources: <code>try (var r = ...)</code></td>
+</tr>
+<tr>
+<td>Missing file raises</td>
+<td><code>FileNotFoundError</code></td>
+<td><code>NoSuchFileException</code> (checked!)</td>
+</tr>
+</tbody>
+</table>
+<p>Paths and the <code>with</code> habit: <a href="../../ch11-files/">Chapter 11</a>.</p>
+<h2 id="naming-conventions">Naming conventions<a class="headerlink" href="#naming-conventions" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Thing</th>
+<th>Python</th>
+<th>Java</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Variables, functions/methods</td>
+<td><code>snake_case</code></td>
+<td><code>camelCase</code></td>
+</tr>
+<tr>
+<td>Classes</td>
+<td><code>PascalCase</code></td>
+<td><code>PascalCase</code></td>
+</tr>
+<tr>
+<td>Constants</td>
+<td><code>UPPER_SNAKE</code></td>
+<td><code>UPPER_SNAKE</code></td>
+</tr>
+<tr>
+<td>Files</td>
+<td>any name; <code>hello_utils.py</code></td>
+<td>must match the public class: <code>HelloUtils.java</code></td>
+</tr>
+<tr>
+<td>Packages/modules</td>
+<td>short, lowercase</td>
+<td>lowercase, dot-separated</td>
+</tr>
+</tbody>
+</table>
+<h2 id="false-friends">False friends<a class="headerlink" href="#false-friends" title="Permanent link">&para;</a></h2>
+<p>The dangerous rows: code that <em>looks</em> identical in the two languages but
+means something different. These cause more real bugs than everything
+else on this page combined.</p>
+<table>
+<thead>
+<tr>
+<th>Looks the same</th>
+<th>In Python</th>
+<th>In Java</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>a == b</code></td>
+<td>compares <strong>values</strong> (calls <code>__eq__</code>)</td>
+<td>compares <strong>references</strong> for objects — use <code>.equals()</code> for values (<a href="../../ch04-branching/03-equality-identity/">Ch 4.3</a>)</td>
+</tr>
+<tr>
+<td><code>7 / 2</code></td>
+<td><code>3.5</code> — <code>/</code> is always real division</td>
+<td><code>3</code> — int ÷ int truncates; you wanted <code>7 / 2.0</code></td>
+</tr>
+<tr>
+<td><code>-7 // 2</code> vs <code>-7 / 2</code></td>
+<td><code>-4</code> — floor division rounds <em>down</em></td>
+<td><code>-3</code> — truncation rounds <em>toward zero</em></td>
+</tr>
+<tr>
+<td><code>-7 % 3</code></td>
+<td><code>2</code> — result has the divisor's sign</td>
+<td><code>-1</code> — result has the dividend's sign</td>
+</tr>
+<tr>
+<td><code>round(2.5)</code></td>
+<td><code>2</code> — ties round to the <em>even</em> neighbour</td>
+<td><code>Math.round(2.5)</code> → <code>3</code> — ties round up</td>
+</tr>
+<tr>
+<td><code>'x'</code></td>
+<td>a <code>str</code> of length 1 — same as <code>"x"</code></td>
+<td>a <code>char</code>, a 16-bit number in disguise</td>
+</tr>
+<tr>
+<td><code>case</code> fallthrough</td>
+<td><code>match</code> never falls through</td>
+<td>classic <code>switch</code> falls through without <code>break;</code> (arrow <code>-&gt;</code> form doesn't)</td>
+</tr>
+<tr>
+<td><code>x = y</code> for objects</td>
+<td>copies the <strong>reference</strong> — both names share one object</td>
+<td>same! — this one is a <em>true</em> friend; primitives are copied by value (<a href="../../ch09-collections/01-references/">Ch 9.1</a>)</td>
+</tr>
+<tr>
+<td>Passing an argument</td>
+<td>object reference passed by value ("sharing")</td>
+<td>identical rule — but Java primitives are pure copies</td>
+</tr>
+<tr>
+<td><code>1000000 * 1000000</code></td>
+<td>correct — ints never overflow</td>
+<td>overflows <code>int</code> silently (<a href="../../ch05-under-the-hood/01-numeric-pitfalls/">Ch 5.1</a>)</td>
+</tr>
+<tr>
+<td>"length" of things</td>
+<td><code>len(x)</code> for everything</td>
+<td><code>a.length</code> (array), <code>s.length()</code> (String), <code>xs.size()</code> (collection)</td>
+</tr>
+<tr>
+<td><code>if (items):</code> truthiness</td>
+<td>empty list/string/dict counts as false</td>
+<td>won't compile — conditions must be <code>boolean</code></td>
+</tr>
+</tbody>
+</table>
+<div class="admonition tip">
+<p class="admonition-title">When in doubt</p>
+<p>Translate the <em>idea</em>, not the line. Write what you mean in plain
+English ("divide, keeping the fraction", "compare the contents"),
+then express that in the target language. Line-by-line transliteration
+is exactly how the false friends above sneak in.</p>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+  <script>var tabs=__md_get("__tabs");if(Array.isArray(tabs))e:for(var set of document.querySelectorAll(".tabbed-set")){var labels=set.querySelector(".tabbed-labels");for(var tab of tabs)for(var label of labels.getElementsByTagName("label"))if(label.innerText.trim()===tab){var input=document.getElementById(label.htmlFor);input.checked=!0;continue e}}</script>
+
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+      
+      <nav class="md-footer__inner md-grid" aria-label="Footer" >
+        
+          
+          <a href="../../projects/04-sorting-visualizer/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Project 4 · Sorting Visualizer">
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+            </div>
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              <div class="md-ellipsis">
+                Project 4 · Sorting Visualizer
+              </div>
+            </div>
+          </a>
+        
+        
+          
+          <a href="../B-big-o/" class="md-footer__link md-footer__link--next" aria-label="Next: B · Big-O reference">
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              <div class="md-ellipsis">
+                B · Big-O reference
+              </div>
+            </div>
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11z"/></svg>
+            </div>
+          </a>
+        
+      </nav>
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      Text licensed under <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>;
+code under <a href="https://opensource.org/licenses/MIT">MIT</a>.
+
+    </div>
+  
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://github.com/dongzhaohe321418-lab" target="_blank" rel="noopener" title="github.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+      <div class="md-progress" data-md-component="progress" role="progressbar"></div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.instant", "navigation.instant.progress", "navigation.tracking", "navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.prune", "navigation.path", "navigation.top", "navigation.indexes", "navigation.footer", "header.autohide", "search.suggest", "search.highlight", "search.share", "content.code.copy", "content.code.annotate", "content.code.select", "content.tabs.link", "content.action.edit", "content.action.view", "content.tooltips", "toc.follow"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+        <script src="../../assets/javascripts/mathjax.js"></script>
+      
+        <script src="https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js"></script>
+      
+        <script src="../../assets/javascripts/run_python.js"></script>
+      
+    
+  </body>
+</html>

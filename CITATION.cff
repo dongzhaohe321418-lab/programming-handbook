@@ -1,0 +1,14 @@
+cff-version: 1.2.0
+message: "If you use this handbook, please cite it as below."
+title: "Programming & Computer Systems Handbook"
+authors:
+  - family-names: "Dong"
+    given-names: "Zhaohe"
+type: software
+url: "https://dongzhaohe321418-lab.github.io/programming-handbook/"
+repository-code: "https://github.com/dongzhaohe321418-lab/programming-handbook"
+license: MIT
+abstract: >-
+  A zero-foundation open handbook on programming and computer systems —
+  from bits and binary to data structures and algorithms — with Python
+  code that runs in the browser via Pyodide.

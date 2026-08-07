@@ -1,0 +1,3 @@
+{"id": "sft-0001", "instruction": "Explain what a hash table is.", "input": "", "output": "A hash table maps keys to slots using a hash function, giving average O(1) lookup.", "source": "handwritten", "license": "CC-BY-4.0"}
+{"id": "sft-0002", "instruction": "Translate to French.", "input": "good morning", "output": "bonjour", "source": "handwritten", "license": "CC-BY-4.0"}
+{"id": "sft-0003", "instruction": "Summarise the text.", "input": "a long article", "output": "", "source": "scrape", "license": "unknown"}
