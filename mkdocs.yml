@@ -413,9 +413,16 @@ nav:
       - Project 2 · Text Adventure (OOP): projects/02-text-adventure/README.md
       - Project 3 · Data-Structures Library: projects/03-data-structures-library/README.md
       - Project 4 · Sorting Visualizer: projects/04-sorting-visualizer/README.md
+      - Project 5 · Mini MCP Server and Client: projects/05-mcp-server/README.md
+      - Project 6 · A ReAct Agent from Scratch: projects/06-react-agent/README.md
+      - Project 7 · Preference Alignment with DPO: projects/07-dpo-alignment/README.md
+      - Project 8 · An Evaluation Harness: projects/08-eval-harness/README.md
+      - Project 9 · Route Finder (Graphs): projects/09-route-finder/README.md
+      - Project 10 · Full-Stack Mini App: projects/10-fullstack-app/README.md
   - Appendix:
       - A · Python ↔ Java cheat sheet: appendix/A-python-java.md
       - B · Big-O reference: appendix/B-big-o.md
       - C · Glossary: appendix/C-glossary.md
       - D · Further reading: appendix/D-reading.md
+      - E · AI engineering glossary: appendix/E-ai-glossary.md
       - F · Toolchain quick reference: appendix/F-toolchain-reference.md

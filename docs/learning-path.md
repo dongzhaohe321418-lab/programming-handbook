@@ -80,6 +80,49 @@ You can already write loops, functions, and basic classes.
   hardest.
 - **Start seriously at [Chapter 15](ch15-inheritance/index.md)** and work
   through Chapter 22 in order — Part III is a dependency chain, not a menu.
+- **Then continue into [Part VI](part6-overview.md)** (Chapters 35–42), which
+  picks up exactly where Chapter 22 stops.
+
+## Path D — advanced data structures and the working toolchain
+
+You have finished Part III (through [Chapter 22](ch22-sorting/index.md)) and
+want the third-course material: the structures that stay fast under
+adversarial input, plus the tools professionals use daily.
+
+- **Go straight to [Part VI](part6-overview.md).** Parts IV and V are not
+  prerequisites, which is why the chapter numbers jump from 22 to 35.
+- **Read 35 → 38 in order** — [balanced trees](ch35-balanced-trees/index.md),
+  [hashing, tries, skip lists](ch36-hashing-tries/index.md),
+  [graphs](ch37-graphs/index.md), and
+  [linear-time sorting](ch38-linear-sorting/index.md). Chapter 35 resolves
+  the balance problem [Chapter 20](ch20-bst/index.md) left open, so start
+  there.
+- **Chapters [39](ch39-streams/index.md)–[42](ch42-web-gui/index.md) are a
+  menu, not a chain** — streams, the toolchain, regex, and web/GUI can be
+  read in any order as you need them.
+- **Build [Project 9](projects/09-route-finder/README.md)** after Chapter 37
+  and [Project 10](projects/10-fullstack-app/README.md) after Chapter 42.
+
+## Path E — the AI-engineering track
+
+You have finished Parts I–IV and want to understand how language models and
+agents actually work, from the inside.
+
+- **Go to [Part V](part5-overview.md)** (Chapters 26–34). Part VI is not a
+  prerequisite.
+- **Read [Chapter 26](ch26-llm-internals/index.md) first and slowly** — every
+  later chapter leans on tokens, attention, and sampling. You need no machine
+  learning background; the chapter assumes none.
+- **Then 27 → 30** (serving, tools and MCP, retrieval and memory, agents) is
+  the applied spine, and **31 → 33** (RL, data, evaluation) is the training
+  and measurement spine. [Chapter 31](ch31-rl/index.md) is the hardest in the
+  book — read its opening note before starting.
+- **Build the projects as you go**: [Project 5](projects/05-mcp-server/README.md)
+  after Chapter 28, [Project 6](projects/06-react-agent/README.md) after
+  Chapter 30, [Project 7](projects/07-dpo-alignment/README.md) after
+  Chapter 31, and [Project 8](projects/08-eval-harness/README.md) after
+  Chapter 33.
+- **[Chapter 34](ch34-ai-career/index.md)** turns all of it into a plan.
 
 ## Not sure? A five-question self-test
 

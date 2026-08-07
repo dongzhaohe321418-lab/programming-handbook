@@ -27,10 +27,17 @@ Edit nothing, break nothing: just read, run, and understand.
 | **II · Programming I** | 2–14 | The full first-semester arc: variables, branching, loops, arrays, exceptions, files, and writing your own classes |
 | **III · Programming II** | 15–22 | The second-semester arc: inheritance, Big-O analysis, recursion, linked lists, stacks, queues, trees, heaps, sorting |
 | **IV · Systems & Practice** | 23–25 | The OS, memory layout, interpreters and VMs, real Git workflows, testing, and where to go next |
+| **[V · AI Engineering](part5-overview.md)** | 26–34 | How language models actually work, serving and inference, tools and MCP, RAG and agent memory, agent architectures, RL (PPO/DPO/GRPO), data-centric AI, evaluation, and a career path |
+| **[VI · Programming III](part6-overview.md)** | 35–42 | Balanced trees, hashing and tries, graphs, linear-time sorting, functional style and streams, the developer toolchain, regex, and web/GUI development |
 
-Plus four [projects](projects/01-number-tool/README.md) that tie everything
+Parts V and VI are independent of each other. **Part VI continues directly
+from Part III** — if your goal is advanced data structures and the working
+toolchain, read it right after Chapter 22. Part V needs only Parts I–IV.
+
+Plus ten [projects](projects/01-number-tool/README.md) that tie everything
 together, and an [appendix](appendix/A-python-java.md) with a Python ↔ Java
-cheat sheet, a Big-O reference, and a glossary.
+cheat sheet, a Big-O reference, two glossaries, and a toolchain quick
+reference.
 
 ## Who this is for
 
@@ -75,6 +82,20 @@ Programming II course (5 units), here is where each topic lives:
 | 3 · Recursion, generics/ADTs, linked lists | [Ch 17](ch17-recursion/index.md), [Ch 18](ch18-linked-lists/index.md) |
 | 4 · Iterators, stacks, queues | [Ch 19](ch19-stacks-queues/index.md) |
 | 5 · BSTs, heaps, sorting and searching | [Ch 20](ch20-bst/index.md), [Ch 21](ch21-heaps/index.md), [Ch 22](ch22-sorting/index.md) |
+
+A third course typically pairs advanced data structures with the working
+toolchain. [Part VI](part6-overview.md) covers both tracks:
+
+| Programming III topic | Chapter here |
+| --- | --- |
+| Rotations, AVL and red-black trees, B-trees | [Ch 35](ch35-balanced-trees/index.md) |
+| Hash tables, tries, skip lists | [Ch 36](ch36-hashing-tries/index.md) |
+| Graphs, shortest paths, minimum spanning trees | [Ch 37](ch37-graphs/index.md) |
+| Linear-time sorting | [Ch 38](ch38-linear-sorting/index.md) |
+| Lambdas, streams, and pipes | [Ch 39](ch39-streams/index.md) |
+| Bash, SSH, Make, JUnit | [Ch 40](ch40-toolchain/index.md), [Appendix F](appendix/F-toolchain-reference.md) |
+| Regular expressions | [Ch 41](ch41-regex/index.md) |
+| HTML/CSS, web servers, JavaScript, JavaFX GUIs | [Ch 42](ch42-web-gui/index.md) |
 
 ## The three rules of this handbook
 

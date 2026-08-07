@@ -286,7 +286,9 @@ def self_instruct(rounds=3, k=4, gen_seed=2, sample_seed=100, threshold=0.7):
     for r in range(1, rounds + 1):
         shown = random.Random(sample_seed + r).sample(pool, 3)
         prompt = "\n".join(f"- {s}" for s in shown)
-        print(f"\nROUND {r}  (pool = {len(pool)})")
+        if r > 1:
+            print()
+        print(f"ROUND {r}  (pool = {len(pool)})")
         for cand in llm.propose(prompt, k=k):
             toks = tokens(cand)
             reason = None
@@ -397,6 +399,7 @@ you get a dataset of unanswerable garbage, so the checks come with the method.
 
 ```python
 import re
+import textwrap
 
 SEED = "Write a Python function that removes duplicates from a list."
 
@@ -508,8 +511,10 @@ print(f"\nkept {len(kept)}, eliminated {len(killed)} "
       f"of {len(kept) + len(killed)} rewrites")
 for op_name, why in killed:
     print(f"   - [{op_name}] {why}")
-print(f"longest survivor ({max(len(k.split()) for k in kept)}w): "
-      f"{max(kept, key=lambda k: len(k.split()))}")
+longest = max(kept, key=lambda k: len(k.split()))
+print(f"longest survivor ({len(longest.split())}w):")
+print(textwrap.fill(longest, width=72, initial_indent="   ",
+                    subsequent_indent="   "))
 ```
 
 ```text
@@ -534,9 +539,10 @@ kept 6, eliminated 4 of 10 rewrites
    - [concretize] answer is empty or stop words only
    - [breadth_mutation] rewriting template leaked into the instruction
    - [concretize] no information gain over the parent
-longest survivor (24w): Write a Python function that removes duplicates from a
-list, without using the built-in set type, and state the time complexity of
-your answer.
+longest survivor (24w):
+   Write a Python function that removes duplicates from a list, without
+   using the built-in set type, and state the time complexity of your
+   answer.
 ```
 
 Each line shows the operator, the child's length in words, and its **tail** —
@@ -677,6 +683,12 @@ model-d           3         5         5         0      3.25
 
 best = model-a; built 3 preference pairs
 margins: [2.0, 2.5, 1.75]
+
+one record, in the format 31.3 consumes:
+{
+  "prompt": "Explain why a hash table lookup is usually O(1).",
+  "chosen": "Each key is hashed to a bucket index, so the lookup touches one bucket instead of scanning. Example: 40 keys in 64 buckets averages under one comparison. In the worst case, when every key collides, it degrades to O(n).",
+  "rejected": "Hash tables are always O(log n) because they are internally balanced trees, which is why lookup never deg ...
 ```
 
 The criteria table is the whole argument for multi-criteria scoring. Read it
@@ -807,6 +819,9 @@ distinct-1                 0.093     0.177
 distinct-2                 0.173     0.255
 distinct-3                 0.319     0.371
 mean pairwise Jaccard      0.605     0.171
+
+example A: 'Explain what a linked list is, in simple terms, for someone new to code.'
+example B: 'You are a warehouse manager tracking pallets. Which data structure fits, and why?'
 ```
 
 Check the guard rows first: 24 records each, 24 *unique* records each, and 13.5

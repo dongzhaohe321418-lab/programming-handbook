@@ -3,10 +3,12 @@
 The typical third course — often called *Data Structures and Algorithms* —
 takes the structures you built in Part III and asks two ruthless questions:
 *can we make the guarantees unconditional?* and *what else can we model?*
-This section is an appetizer plate, not the meal. For each topic you get the
-reason it exists and one small taste you can run, so that when a lecturer
-says "red-black tree" or "adjacency list" in week one, you will already know
-what problem is being solved.
+This section is the appetizer plate — and the meal is now served next door.
+Everything previewed below is built properly in
+[Part VI](../part6-overview.md), which picks up exactly where Chapter 22 left
+off. So read this page for the reason each idea exists and one small taste
+you can run; each section ends with a pointer to the chapter that implements
+it in full.
 
 ## The balance problem, solved
 
@@ -44,7 +46,7 @@ for name, order in [("sorted", sorted_order), ("hand-picked", nice_order)]:
     print(f"{name:>12} insert order → height {height(root)}")
 ```
 
-Same 15 keys, height 15 versus height 4. In this book we dodged the problem
+Same 15 keys, height 15 versus height 4. In Part III we dodged the problem
 by hand-picking a friendly insert order; a *self-balancing* tree refuses to
 need your help. The tool it uses is the **rotation**: a constant-time
 re-wiring of one parent–child link that lifts the child up, drops the parent
@@ -88,6 +90,13 @@ B-tree node holds hundreds of keys and hundreds of children, so the whole
 tree is only 3–4 levels deep and finding any record costs 3–4 disk reads.
 They are, in one phrase, *trees for disks* — and they are why databases and
 filesystems can find one row among a billion almost instantly.
+
+All three are drawn, traced, and implemented in
+[Chapter 35 · Balanced Trees](../ch35-balanced-trees/index.md) — rotations in
+[35.1](../ch35-balanced-trees/01-rotations.md), AVL in
+[35.2](../ch35-balanced-trees/02-avl.md), red-black in
+[35.3](../ch35-balanced-trees/03-red-black.md), and B-trees in
+[35.4](../ch35-balanced-trees/04-b-trees.md).
 
 ## Hash tables: the $O(1)$ magic trick
 
@@ -158,8 +167,17 @@ since [Chapter 14](../ch14-beyond/01-collections-tour.md)**. Python's `dict`
 and `set`, and Java's `HashMap` and `HashSet`, are exactly this structure —
 grown up, with resizing, smarter collision handling, and decades of tuning.
 Every `d[key]`, every `x in some_set`, every `counts.get(word, 0)` you have
-written was a hash-and-jump. Programming III finally opens the box you have
-been standing on.
+written was a hash-and-jump.
+
+[Chapter 36](../ch36-hashing-tries/index.md) opens that box: what makes a hash
+function good, and load factors, in
+[36.1](../ch36-hashing-tries/01-hash-tables.md); chaining versus open
+addressing, and why tables resize, in
+[36.2](../ch36-hashing-tries/02-collisions-resizing.md); plus two structures
+this preview has not even hinted at — **tries**
+([36.3](../ch36-hashing-tries/03-tries.md)), which index by prefix, and
+**skip lists** ([36.4](../ch36-hashing-tries/04-skip-lists.md)), which get
+tree-like performance out of coin flips.
 
 ## Graphs: nodes and edges model everything
 
@@ -253,7 +271,27 @@ algorithm**, which is BFS with the queue upgraded to a
 [priority queue](../ch21-heaps/02-priority-queues.md): always expand the
 cheapest frontier node next. You already own every part it is made of.
 
+[Chapter 37 · Graphs](../ch37-graphs/index.md) builds all of it: the three
+representations and their trade-offs in
+[37.1](../ch37-graphs/01-representations.md), BFS and DFS with five
+applications in [37.2](../ch37-graphs/02-traversal.md), Dijkstra, Bellman-Ford
+and A\* — including a demonstration of Dijkstra returning a confidently wrong
+answer — in [37.3](../ch37-graphs/03-shortest-paths.md), and minimum spanning
+trees in [37.4](../ch37-graphs/04-mst.md). Then
+[Project 9](../projects/09-route-finder/README.md) puts them together into a
+working route finder over a city map.
+
 ## What else awaits
+
+One more topic this book now covers, and three that genuinely belong to other
+courses.
+
+**Sorting faster than $O(n \log n)$.** [Chapter 22](../ch22-sorting/index.md)
+proved that no *comparison* sort can beat $O(n \log n)$ — and then there are
+sorts that beat it anyway, because they never compare two keys at all.
+[Chapter 38 · Linear-Time Sorting](../ch38-linear-sorting/index.md) shows
+exactly which assumption counting, radix, and bucket sort trade away to slip
+past a proof.
 
 **Dynamic programming** is recursion that stops re-solving the same
 subproblem twice, by remembering answers in a table. It turns some
@@ -270,7 +308,10 @@ queues that tame them.
 server: how data is chopped into packets, addressed, routed, and reassembled
 (IP and TCP), and how protocols like HTTP layer meaning on top. After one
 networking course, the phrase "the request timed out" becomes a diagnosis
-instead of an incantation.
+instead of an incantation. (The HTTP layer itself is
+[42.2](../ch42-web-gui/02-http-server.md) in this book, where you build a
+server's brain; the packets underneath it are the networking course's
+business.)
 
 !!! warning "Common mistakes"
 

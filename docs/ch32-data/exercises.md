@@ -93,6 +93,8 @@ average time complexity of a hash table lookup?"*.
     e06: verbatim eval question (contamination)
     e07: stub instruction
     e08: wrong answer (18 != 17)
+
+    usable: 1 of 8
     ```
 
     Seven records, seven different stages: exact dedup (e02), schema validation
@@ -627,6 +629,9 @@ verification — and write them down before running the block.
     after heuristics          52        8
     after exact dedup         46        6
     after verification        40        6
+
+    short records that were ALSO duplicates: 4
+    they were removed once, by the first stage that saw them
     ```
 
     If you predicted 44 after dedup you double-counted the four short
@@ -836,6 +841,8 @@ it changed about the *responses*.
 
     example evolved instruction:
        Write a Python function that reverses a string, and give one input on which a naive one-line solution returns the wrong answer.
+    example evolved response:
+       def solve(s): return s[::-1]. A naive sorted(s) fails on 'abc'.
     ```
 
     **The defence, in three measurements.**

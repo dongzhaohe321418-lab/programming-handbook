@@ -888,6 +888,7 @@ after decontamination       421       26       35.1%
 final composition
   by domain     : {'prose': 103, 'math': 272, 'code': 46}
   by difficulty : {2: 142, 1: 144, 3: 135}
+  yield         : 35.1%
 ```
 
 **A 35% yield is normal, and the shape of the funnel is the diagnosis.**
@@ -1052,6 +1053,8 @@ known limitations:
    - prose records are unverifiable and survive on the quality score alone
    - the quality classifier is lexical and biased towards its seed topics
    - decontamination used 6-grams against 3 eval questions only
+
+regenerating from the recorded config reproduces the corpus: True
 ```
 
 The last line of that block is the whole point of writing seeds down: the

@@ -849,6 +849,8 @@ cleaned trajectory:
   open           red     red contains: bolt x5
   open           amber   amber contains: washer x3
   final_answer   9       (episode ends)
+
+secrets remaining: False
 ```
 
 Eleven steps became six, and the token is gone. Three notes on what just
