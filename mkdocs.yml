@@ -294,6 +294,24 @@ nav:
           - Overview: ch25-next/index.md
           - 25.1 A preview of Programming III: ch25-next/01-cs400-preview.md
           - 25.2 Your roadmap: ch25-next/02-roadmap.md
+  - V · AI Engineering:
+      - Overview: part5-overview.md
+      - Chapter 26 · How Language Models Work:
+          - Overview: ch26-llm-internals/index.md
+          - 26.1 From text to tokens: ch26-llm-internals/01-tokenization.md
+          - 26.2 Embeddings and attention: ch26-llm-internals/02-attention.md
+          - 26.3 The decoder-only stack: ch26-llm-internals/03-decoder-stack.md
+          - 26.4 Sampling — how text is chosen: ch26-llm-internals/04-sampling.md
+          - Exercises: ch26-llm-internals/exercises.md
+  - VI · Programming III:
+      - Overview: part6-overview.md
+      - Chapter 35 · Balanced Search Trees:
+          - Overview: ch35-balanced-trees/index.md
+          - 35.1 Rotations: ch35-balanced-trees/01-rotations.md
+          - 35.2 AVL trees: ch35-balanced-trees/02-avl.md
+          - 35.3 Red-black trees: ch35-balanced-trees/03-red-black.md
+          - 35.4 B-trees and the disk: ch35-balanced-trees/04-b-trees.md
+          - Exercises: ch35-balanced-trees/exercises.md
   - Projects:
       - Project 1 · Number-Systems Toolkit: projects/01-number-tool/README.md
       - Project 2 · Text Adventure (OOP): projects/02-text-adventure/README.md
