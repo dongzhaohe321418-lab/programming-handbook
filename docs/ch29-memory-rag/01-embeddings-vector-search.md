@@ -328,7 +328,7 @@ Practical facts worth memorising:
 | --- | --- |
 | How many dimensions? | Typically **384 to 3072**. Small open models are often 384; many API models are 1536; the largest are 3072. |
 | Is bigger better? | Slightly better quality, linearly more storage and search cost. Most systems do fine in the 384–1024 range. |
-| Can I mix models? | **No.** Vectors from two different models live in unrelated spaces; cosine between them is noise. Re-embed *everything* when you switch models. |
+| Can two models be mixed? | **No.** Vectors from two different models live in unrelated spaces; cosine between them is noise. Re-embed *everything* when you switch models. |
 | Normalize? | Yes, once, at insert time. Some models emit unit vectors already — check rather than assume. |
 | What does it cost? | Far less than generation: one forward pass over the text, no token-by-token decoding. Batch it. |
 | Symmetric or asymmetric? | Many models want a prefix such as `"query: "` versus `"passage: "`. Using the wrong one silently degrades recall. |

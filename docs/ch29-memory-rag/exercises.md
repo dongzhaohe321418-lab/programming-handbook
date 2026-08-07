@@ -192,8 +192,8 @@ chunk_size = 40 characters, overlap = 0, split on character count
 over this paragraph:
 
 ```text
-The night shift starts at 22:00 and ends at 06:00. The escalation phone number
-is 555-0143. Do not call it before 22:00.
+The night shift starts at 22:00 and ends at 06:00. The escalation number is
+555-0143. Do not call it before 22:00.
 ```
 
 **Predict before running.** Write down your answers to these three questions:
@@ -212,7 +212,7 @@ splits a sentence.
     import re
 
     DOC = ("The night shift starts at 22:00 and ends at 06:00. The escalation "
-           "phone number is 555-0143. Do not call it before 22:00.")
+           "number is 555-0143. Do not call it before 22:00.")
     NUMBER = "555-0143"
 
     def fixed_size(text, size, overlap=0):
@@ -249,20 +249,22 @@ splits a sentence.
     print("  number intact in", [i for i, c in enumerate(fixed) if NUMBER in c])
     ```
 
-    Four chunks, and **no chunk contains the whole number**: chunk 2 ends
-    `'...number is 555-'` and chunk 3 begins `'0143. Do not call...'`. A
-    keyword retriever asked for "the escalation number" ranks chunk 2 first —
-    it contains *escalation*, *phone*, and *number* — and hands the model a
-    passage ending in `555-`. The model either says it does not know or
-    completes the number itself, which is the worst outcome available.
+    Three chunks, and **no chunk contains the whole number**: chunk 1 ends
+    `'...The escalation number is 555-'` and chunk 2 begins
+    `'0143. Do not call...'`. A keyword retriever asked for "the escalation
+    number" ranks chunk 1 first — it is the only chunk containing both
+    *escalation* and *number* — and hands the model a passage that trails off
+    at `555-`. The model either says it does not know, or completes the number
+    itself, which is the worst outcome available.
 
     Two repairs, in increasing order of quality. An overlap of 15 characters
-    restores the number to one chunk, and costs about 60% more storage.
-    Chunking on sentence boundaries is better: it produces three chunks, none
-    of which cuts a sentence, so the failure cannot recur for *any* fact in
-    the paragraph rather than being patched for this one. For real documents
-    use recursive chunking (paragraph, then sentence, then word) with a small
-    overlap, and always print twenty chunks before you trust the config.
+    restores the number to a whole chunk (two of them, in fact), at the cost of
+    5 chunks instead of 3 — about two-thirds more storage. Chunking on sentence
+    boundaries is better: it produces two chunks, neither of which cuts a
+    sentence, so the failure cannot recur for *any* fact in the paragraph
+    rather than being patched for this one. For real documents use recursive
+    chunking (paragraph, then sentence, then word) with a small overlap, and
+    always print twenty chunks before you trust the config.
 
 ---
 

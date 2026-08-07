@@ -489,7 +489,7 @@ def vector_ranking(query, k=5):
 
 def graph_ranking(query, max_hops=3):
     """Notes reachable from entities named in the query, nearest first."""
-    mentioned = [e for e in sorted(entities, key=len, reverse=True)
+    mentioned = [e for e in sorted(entities, key=lambda e: (-len(e), e))
                  if e.lower() in query.lower()]
     ranked = []
     for start in mentioned:

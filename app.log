@@ -1,0 +1,8 @@
+# app log -- generated
+08:01:14 INFO  service started
+
+08:02:03 ERROR database unreachable
+08:02:04 WARN  retrying in 5s
+08:02:09 ERROR database unreachable
+08:03:00 INFO  recovered
+08:04:41 ERROR disk almost full

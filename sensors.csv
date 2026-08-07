@@ -1,0 +1,10 @@
+# sensor export v2 -- lines starting with # are comments
+2024-03-01T08:00,lab-a,21.4
+
+2024-03-01T08:15,lab-a,21.9
+2024-03-01T08:30,lab-b,19.2
+   2024-03-01T08:45,lab-a,22.6
+
+2024-03-01T09:00,lab-b,19.8
+2024-03-01T09:15,lab-a,BROKEN
+2024-03-01T09:30,lab-b,20.1

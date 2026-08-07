@@ -331,6 +331,13 @@ nav:
           - 30.3 Multi-agent systems: ch30-agents/03-multi-agent.md
           - 30.4 The framework landscape: ch30-agents/04-frameworks.md
           - Exercises: ch30-agents/exercises.md
+      - Chapter 31 · Reinforcement Learning for LLMs:
+          - Overview: ch31-rl/index.md
+          - 31.1 RL from first principles: ch31-rl/01-rl-basics.md
+          - 31.2 Policy gradients and PPO: ch31-rl/02-policy-gradient-ppo.md
+          - 31.3 DPO and GRPO: ch31-rl/03-dpo-grpo.md
+          - 31.4 Reward models — PRM, RLHF, RLAIF: ch31-rl/04-reward-models.md
+          - Exercises: ch31-rl/exercises.md
   - VI · Programming III:
       - Overview: part6-overview.md
       - Chapter 35 · Balanced Search Trees:
@@ -359,6 +366,17 @@ nav:
           - 38.1 The comparison lower bound: ch38-linear-sorting/01-lower-bound.md
           - 38.2 Counting, radix, and bucket sort: ch38-linear-sorting/02-counting-radix-bucket.md
           - Exercises: ch38-linear-sorting/exercises.md
+      - Chapter 39 · Functional Style, Streams, and Pipes:
+          - Overview: ch39-streams/index.md
+          - 39.1 Lambdas and higher-order functions: ch39-streams/01-lambdas.md
+          - 39.2 Map, filter, reduce, and Java Streams: ch39-streams/02-map-filter-reduce.md
+          - 39.3 Generators, pipelines, and Unix pipes: ch39-streams/03-pipelines.md
+          - Exercises: ch39-streams/exercises.md
+      - Chapter 41 · Regular Expressions:
+          - Overview: ch41-regex/index.md
+          - 41.1 Regex fundamentals: ch41-regex/01-fundamentals.md
+          - 41.2 Groups, greediness, and real parsing: ch41-regex/02-groups-parsing.md
+          - Exercises: ch41-regex/exercises.md
   - Projects:
       - Project 1 · Number-Systems Toolkit: projects/01-number-tool/README.md
       - Project 2 · Text Adventure (OOP): projects/02-text-adventure/README.md
