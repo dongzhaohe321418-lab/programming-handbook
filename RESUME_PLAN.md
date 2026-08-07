@@ -16,9 +16,9 @@ chapter's nav block only when all of that chapter's files exist in `docs/`.**
 
 | Chapter | Pages | Status |
 | --- | --- | --- |
-| `part5-overview.md` | 1 | pending |
-| 26 · How Language Models Work | index, 01-tokenization, 02-attention, 03-decoder-stack, 04-sampling, exercises | in progress |
-| 27 · Serving Models — Inference Infrastructure | index, 01-kv-cache, 02-batching, 03-latency-streaming, 04-quantization-deploy, exercises | pending |
+| `part5-overview.md` | 1 | **done** |
+| 26 · How Language Models Work | index, 01-tokenization, 02-attention, 03-decoder-stack, 04-sampling, exercises | **done** |
+| 27 · Serving Models — Inference Infrastructure | index, 01-kv-cache, 02-batching, 03-latency-streaming, 04-quantization-deploy, exercises | in progress |
 | 28 · Tools, Schemas, and MCP | index, 01-function-calling, 02-structured-output, 03-mcp-protocol, 04-building-mcp-server, exercises | pending |
 | 29 · Memory, Retrieval, and Knowledge | index, 01-embeddings-vector-search, 02-rag-pipeline, 03-agent-memory, 04-graphrag, exercises | pending |
 | 30 · Agent Architectures | index, 01-agent-loop-react, 02-planning-reflection, 03-multi-agent, 04-frameworks, exercises | pending |
@@ -33,11 +33,11 @@ chapter's nav block only when all of that chapter's files exist in `docs/`.**
 
 | Chapter | Pages | Status |
 | --- | --- | --- |
-| `part6-overview.md` | 1 | in progress |
-| 35 · Balanced Search Trees | index, 01-rotations, 02-avl, 03-red-black, 04-b-trees, exercises | in progress |
+| `part6-overview.md` | 1 | **done** |
+| 35 · Balanced Search Trees | index, 01-rotations, 02-avl, 03-red-black, 04-b-trees, exercises | **done** |
 | 36 · Hashing, Tries, and Skip Lists | index, 01-hash-tables, 02-collisions-resizing, 03-tries, 04-skip-lists, exercises | pending |
-| 37 · Graphs | index, 01-representations, 02-traversal, 03-shortest-paths, 04-mst, exercises | pending |
-| 38 · Sorting in Linear Time | index, 01-lower-bound, 02-counting-radix-bucket, exercises | pending |
+| 37 · Graphs | index, 01-representations, 02-traversal, 03-shortest-paths, 04-mst, exercises | in progress |
+| 38 · Sorting in Linear Time | index, 01-lower-bound, 02-counting-radix-bucket, exercises | in progress |
 | 39 · Functional Style, Streams, and Pipes | index, 01-lambdas, 02-map-filter-reduce, 03-pipelines, exercises | pending |
 | 40 · The Developer Toolchain | index, 01-bash, 02-ssh-remote, 03-make, 04-junit, exercises | pending |
 | 41 · Regular Expressions | index, 01-fundamentals, 02-groups-parsing, exercises | pending |

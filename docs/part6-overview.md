@@ -40,9 +40,9 @@ chapters depends on the algorithms chapters, or the reverse.
 
 !!! note "Why the numbering jumps"
 
-    Part VI is numbered 35–42 because it was written after
-    [Part V](ch25-next/02-roadmap.md)'s AI-engineering material, not because
-    you must read thirty-four chapters first. **Part VI continues directly
+    Part VI is numbered 35–42 because it was written after Part V's
+    AI-engineering material (Chapters 26–34), not because you must read
+    thirty-four chapters first. **Part VI continues directly
     from Chapter 22** — the last chapter of Part III. Parts IV (systems and
     practice) and V (AI engineering) are independent side-quests: useful,
     recommended, but not prerequisites for anything here. If your goal is
