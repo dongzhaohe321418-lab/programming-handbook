@@ -345,7 +345,7 @@ enumerate:
    4. doohickey     7.50
 ```
 
-Six aggregations, no loop bodies to get wrong. `sum(1 for r in sales if ...)`
+Seven one-line aggregations, no loop bodies to get wrong. `sum(1 for r in sales if ...)`
 is the idiomatic "count matching items", and `enumerate(..., start=1)` gives
 you the rank without a manual counter.
 

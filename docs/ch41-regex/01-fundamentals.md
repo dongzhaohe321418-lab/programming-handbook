@@ -465,7 +465,8 @@ the pattern fit at position zero", and it does not care what follows. A
 validator built on `re.match(r"\d+", user_input)` happily accepts
 `42; DROP TABLE`. **For validation, use `fullmatch`.** For finding
 something inside text, use `search`. `match` is rarely the one you want;
-`re.match(p, s)` is equivalent to `re.search("^" + p, s)`.
+`re.match(p, s)` does the same job as `re.search(r"\A" + p, s)` — `\A` means
+"the very start of the string" and, unlike `^`, is unaffected by `re.M`.
 
 ### `findall` and `finditer`
 

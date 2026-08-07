@@ -338,6 +338,23 @@ nav:
           - 31.3 DPO and GRPO: ch31-rl/03-dpo-grpo.md
           - 31.4 Reward models — PRM, RLHF, RLAIF: ch31-rl/04-reward-models.md
           - Exercises: ch31-rl/exercises.md
+      - Chapter 32 · Data-Centric AI:
+          - Overview: ch32-data/index.md
+          - 32.1 Why data decides everything: ch32-data/01-why-data.md
+          - 32.2 Synthetic data generation: ch32-data/02-synthetic-data.md
+          - 32.3 Agent trajectory data: ch32-data/03-trajectories.md
+          - 32.4 Filtering, dedup, and verification: ch32-data/04-filtering.md
+          - Exercises: ch32-data/exercises.md
+      - Chapter 33 · Evaluation:
+          - Overview: ch33-eval/index.md
+          - 33.1 Benchmarks and what they measure: ch33-eval/01-benchmarks.md
+          - 33.2 Building an eval harness: ch33-eval/02-eval-harness.md
+          - 33.3 LLM-as-a-judge: ch33-eval/03-llm-as-judge.md
+          - Exercises: ch33-eval/exercises.md
+      - Chapter 34 · Becoming an AI Engineer:
+          - Overview: ch34-ai-career/index.md
+          - 34.1 The four-phase learning path: ch34-ai-career/01-learning-path.md
+          - 34.2 Portfolio, open source, and research: ch34-ai-career/02-portfolio.md
   - VI · Programming III:
       - Overview: part6-overview.md
       - Chapter 35 · Balanced Search Trees:
@@ -372,11 +389,25 @@ nav:
           - 39.2 Map, filter, reduce, and Java Streams: ch39-streams/02-map-filter-reduce.md
           - 39.3 Generators, pipelines, and Unix pipes: ch39-streams/03-pipelines.md
           - Exercises: ch39-streams/exercises.md
+      - Chapter 40 · The Developer Toolchain:
+          - Overview: ch40-toolchain/index.md
+          - 40.1 Bash scripting: ch40-toolchain/01-bash.md
+          - 40.2 SSH and remote development: ch40-toolchain/02-ssh-remote.md
+          - 40.3 Make and build systems: ch40-toolchain/03-make.md
+          - 40.4 JUnit and testing at scale: ch40-toolchain/04-junit.md
+          - Exercises: ch40-toolchain/exercises.md
       - Chapter 41 · Regular Expressions:
           - Overview: ch41-regex/index.md
           - 41.1 Regex fundamentals: ch41-regex/01-fundamentals.md
           - 41.2 Groups, greediness, and real parsing: ch41-regex/02-groups-parsing.md
           - Exercises: ch41-regex/exercises.md
+      - Chapter 42 · Web and GUI Development:
+          - Overview: ch42-web-gui/index.md
+          - 42.1 HTML and CSS: ch42-web-gui/01-html-css.md
+          - 42.2 HTTP and a web server from scratch: ch42-web-gui/02-http-server.md
+          - 42.3 JavaScript in the browser: ch42-web-gui/03-javascript.md
+          - 42.4 Desktop GUIs — JavaFX and tkinter: ch42-web-gui/04-desktop-gui.md
+          - Exercises: ch42-web-gui/exercises.md
   - Projects:
       - Project 1 · Number-Systems Toolkit: projects/01-number-tool/README.md
       - Project 2 · Text Adventure (OOP): projects/02-text-adventure/README.md
@@ -387,3 +418,4 @@ nav:
       - B · Big-O reference: appendix/B-big-o.md
       - C · Glossary: appendix/C-glossary.md
       - D · Further reading: appendix/D-reading.md
+      - F · Toolchain quick reference: appendix/F-toolchain-reference.md

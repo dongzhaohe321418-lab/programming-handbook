@@ -322,9 +322,8 @@ They agree to nine or ten decimal places, and the leftover difference is
 floating-point noise in the subtraction, not an error in the formula. The
 `assert` is the point: this is a *test*, in exactly the sense of
 [Section 24.2](../ch24-practice/02-testing.md), and it belongs in your suite.
-Every
-analytic gradient in this chapter — REINFORCE, DPO, the reward model — will be
-checked against finite differences exactly like this before we trust it.
+Every analytic gradient in this chapter — REINFORCE, DPO, the reward model —
+will be checked against finite differences exactly like this before we trust it.
 
 !!! tip "Why not just use finite differences for everything?"
     Because it costs two full evaluations *per parameter*. For our one
