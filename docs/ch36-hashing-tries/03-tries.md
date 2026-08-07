@@ -56,8 +56,8 @@ flowchart TD
 ```
 
 Six words — `car`, `card`, `care`, `cat`, `do`, `dog` — in ten nodes
-counting the root, because they share prefixes. Spelled out separately they
-would need 20 characters. The green ✔ nodes end a word; the white ones
+counting the root, because they share prefixes. Spelled out separately the
+six words are 19 characters; the trie stores 9. The green ✔ nodes end a word; the white ones
 are merely waypoints. Note carefully that `"ca"` is a node but **not** a
 word, while `"do"` is a node **and** a word with a child hanging below it.
 Those two cases are what the end-of-word marker exists to distinguish, and
@@ -704,8 +704,8 @@ Every one of those responses cost a walk of at most seven nodes plus a
 depth-first sweep of one small subtree — and the subtree shrinks with every
 keystroke, so autocomplete gets *faster* as the user types. The lookup for
 `"px"` fails on the second character and returns instantly; a hash set would
-have had to examine all 44 keys to establish the same thing, and all 400 000
-in a real dictionary.
+have had to examine all 44 keys to establish that nothing starts with `px`,
+and all 400 000 of them in a real dictionary.
 
 Two upgrades a production engine adds, both worth knowing:
 

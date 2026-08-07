@@ -317,6 +317,20 @@ nav:
           - 28.3 The Model Context Protocol: ch28-tools-mcp/03-mcp-protocol.md
           - 28.4 Writing a real MCP server: ch28-tools-mcp/04-building-mcp-server.md
           - Exercises: ch28-tools-mcp/exercises.md
+      - Chapter 29 · Memory, Retrieval, and Knowledge:
+          - Overview: ch29-memory-rag/index.md
+          - 29.1 Embeddings and vector search: ch29-memory-rag/01-embeddings-vector-search.md
+          - 29.2 The RAG pipeline: ch29-memory-rag/02-rag-pipeline.md
+          - 29.3 Agent memory and context management: ch29-memory-rag/03-agent-memory.md
+          - 29.4 Knowledge graphs and GraphRAG: ch29-memory-rag/04-graphrag.md
+          - Exercises: ch29-memory-rag/exercises.md
+      - Chapter 30 · Agent Architectures:
+          - Overview: ch30-agents/index.md
+          - 30.1 The agent loop and ReAct: ch30-agents/01-agent-loop-react.md
+          - 30.2 Planning and reflection: ch30-agents/02-planning-reflection.md
+          - 30.3 Multi-agent systems: ch30-agents/03-multi-agent.md
+          - 30.4 The framework landscape: ch30-agents/04-frameworks.md
+          - Exercises: ch30-agents/exercises.md
   - VI · Programming III:
       - Overview: part6-overview.md
       - Chapter 35 · Balanced Search Trees:
@@ -326,6 +340,13 @@ nav:
           - 35.3 Red-black trees: ch35-balanced-trees/03-red-black.md
           - 35.4 B-trees and the disk: ch35-balanced-trees/04-b-trees.md
           - Exercises: ch35-balanced-trees/exercises.md
+      - Chapter 36 · Hashing, Tries, and Skip Lists:
+          - Overview: ch36-hashing-tries/index.md
+          - 36.1 Hash tables from scratch: ch36-hashing-tries/01-hash-tables.md
+          - 36.2 Collisions and resizing: ch36-hashing-tries/02-collisions-resizing.md
+          - 36.3 Tries: ch36-hashing-tries/03-tries.md
+          - 36.4 Skip lists: ch36-hashing-tries/04-skip-lists.md
+          - Exercises: ch36-hashing-tries/exercises.md
       - Chapter 37 · Graphs:
           - Overview: ch37-graphs/index.md
           - 37.1 Representing graphs: ch37-graphs/01-representations.md
