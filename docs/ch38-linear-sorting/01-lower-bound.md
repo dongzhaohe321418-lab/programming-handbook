@@ -68,22 +68,23 @@ Here is that tree for $n = 3$, sorting `a0, a1, a2`:
 
 ```mermaid
 graph TD
-    Q1{"a0 &lt; a1 ?"}
-    Q1 -->|yes| Q2{"a1 &lt; a2 ?"}
-    Q1 -->|no| Q3{"a1 &lt; a2 ?"}
-    Q2 -->|yes| L1["a0 a1 a2"]
-    Q2 -->|no| Q4{"a0 &lt; a2 ?"}
-    Q4 -->|yes| L2["a0 a2 a1"]
-    Q4 -->|no| L3["a2 a0 a1"]
-    Q3 -->|no| L4["a2 a1 a0"]
-    Q3 -->|yes| Q5{"a0 &lt; a2 ?"}
-    Q5 -->|yes| L5["a1 a0 a2"]
-    Q5 -->|no| L6["a1 a2 a0"]
+    Q1{"compare a0 : a1"}
+    Q1 -->|a0 smaller| Q2{"compare a1 : a2"}
+    Q1 -->|a1 smaller| Q3{"compare a1 : a2"}
+    Q2 -->|a1 smaller| L1["a0 a1 a2"]
+    Q2 -->|a2 smaller| Q4{"compare a0 : a2"}
+    Q4 -->|a0 smaller| L2["a0 a2 a1"]
+    Q4 -->|a2 smaller| L3["a2 a0 a1"]
+    Q3 -->|a2 smaller| L4["a2 a1 a0"]
+    Q3 -->|a1 smaller| Q5{"compare a0 : a2"}
+    Q5 -->|a0 smaller| L5["a1 a0 a2"]
+    Q5 -->|a2 smaller| L6["a1 a2 a0"]
 ```
 
-Six leaves, each labelled with the arrangement that produces it. Two leaves sit
-at depth 2; four sit at depth 3. Here is the same tree as code, so you can
-check every branch:
+Rhombuses are comparisons, edge labels are the two possible answers, and the
+rectangles at the bottom are the six leaves — each labelled with the
+arrangement that leads there. Two leaves sit at depth 2; four sit at depth 3.
+Here is the same tree as code, so you can check every branch:
 
 ```python
 from itertools import permutations

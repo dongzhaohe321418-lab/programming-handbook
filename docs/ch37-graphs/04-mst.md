@@ -138,8 +138,8 @@ the cheapest way to do it.
 The two algorithms are simply two different ways of choosing which cut to look
 at next:
 
-- **Prim** always cuts "the tree I have grown so far" against "everything
-  else", and takes the cheapest edge crossing it.
+- **Prim** always cuts "the tree grown so far" against "everything else", and
+  takes the cheapest edge crossing it.
 - **Kruskal** considers edges in increasing weight order; when an edge joins
   two different components, there is a cut (that component against the rest)
   for which this edge is cheapest.

@@ -310,6 +310,13 @@ nav:
           - 27.3 Latency, throughput, and streaming: ch27-inference/03-latency-streaming.md
           - 27.4 Quantization and deployment: ch27-inference/04-quantization-deploy.md
           - Exercises: ch27-inference/exercises.md
+      - Chapter 28 · Tools, Schemas, and MCP:
+          - Overview: ch28-tools-mcp/index.md
+          - 28.1 Function calling and JSON Schema: ch28-tools-mcp/01-function-calling.md
+          - 28.2 Structured output and constrained decoding: ch28-tools-mcp/02-structured-output.md
+          - 28.3 The Model Context Protocol: ch28-tools-mcp/03-mcp-protocol.md
+          - 28.4 Writing a real MCP server: ch28-tools-mcp/04-building-mcp-server.md
+          - Exercises: ch28-tools-mcp/exercises.md
   - VI · Programming III:
       - Overview: part6-overview.md
       - Chapter 35 · Balanced Search Trees:
