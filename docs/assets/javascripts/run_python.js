@@ -280,6 +280,50 @@ async function runPythonInto(py, code, output, globalsObj) {
 }
 
 // ---------------------------------------------------------------------------
+// `# continues` support
+// ---------------------------------------------------------------------------
+// A block whose first line is `# continues` deliberately builds on the blocks
+// above it on the same page (the CI test-suite honours the same marker). A
+// reader who clicks such a block first would otherwise get a bare NameError
+// for a variable defined further up the page. So before running one, we
+// silently execute every earlier python block that has not run yet, in
+// document order, into the shared namespace — exactly what CI does.
+
+function isContinuation(code) {
+  const first = code.replace(/^\s+/, "").split("\n")[0].trim();
+  return first.indexOf("# continues") === 0;
+}
+
+// Every python code element on the page, in document order.
+function allCodeElements() {
+  return Array.prototype.slice
+    .call(document.querySelectorAll("div[class*='language-python'] pre > code"))
+    .filter(function (el) { return el.textContent.trim() !== ""; });
+}
+
+// Run each earlier block that hasn't run yet. Failures are swallowed on
+// purpose: an earlier `# raises` demo is *supposed* to throw, and it must not
+// stop the block the reader actually asked for.
+async function runPrerequisites(py, codeEl) {
+  const els = allCodeElements();
+  const idx = els.indexOf(codeEl);
+  if (idx <= 0) return;
+  for (let i = 0; i < idx; i++) {
+    const el = els[i];
+    if (el.dataset.pyRan === "1") continue;
+    const src = el.textContent;
+    if (usesHeavyPackage(src)) continue;
+    const firstLine = src.replace(/^\s+/, "").split("\n")[0].trim();
+    if (firstLine.indexOf("# widget") === 0 || firstLine.indexOf("# no-test") === 0) continue;
+    try {
+      await py.loadPackagesFromImports(src);
+      await py.runPythonAsync(src);
+    } catch (e) { /* see comment above */ }
+    el.dataset.pyRan = "1";
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Plain Run button
 // ---------------------------------------------------------------------------
 function attachRunButton(blockEl) {
@@ -328,8 +372,15 @@ function attachRunButton(blockEl) {
 
     try {
       const py = await loadPyodideOnce();
+      if (isContinuation(code)) {
+        btn.innerHTML = "<span class='pyodide-icon'>⚙</span> Running earlier blocks…";
+        output.innerHTML =
+          "<div class='pyodide-note'>This block continues the ones above it, so those are being run first.</div>";
+        await runPrerequisites(py, codeEl);
+      }
       btn.innerHTML = "<span class='pyodide-icon'>⚙</span> Running…";
       const ok = await runPythonInto(py, code, output, null);
+      codeEl.dataset.pyRan = "1";
       btn.disabled = false;
       btn.innerHTML = ok
         ? "<span class='pyodide-icon'>▶</span> Run again"
