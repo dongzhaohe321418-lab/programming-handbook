@@ -20,10 +20,12 @@ masking: a token may only look backwards).
 
 Now watch what a naive generation loop does. At step $s$ it feeds the entire
 sequence of $s$ tokens through the layer, producing $k$ and $v$ for all $s$
-positions — but positions $0 \dots s-2$ are *exactly the same tokens with
-exactly the same weights* as in the previous step, so their $k$ and $v$ are
-bit-for-bit identical to what was computed a moment ago and thrown away. Only
-the newest token is new.
+positions.
+
+But positions $0 \dots s-2$ are *exactly the same tokens with exactly the same
+weights* as in the previous step. Their $k$ and $v$ are bit-for-bit identical
+to what was computed a moment ago and thrown away. **Only the newest token is
+new.**
 
 Let us count, in the style of [Section 16.1](../ch16-complexity/01-big-o.md) —
 operations first, stopwatch later. Two quantities matter: how many token
@@ -226,15 +228,23 @@ $$
 $$
 
 Multiply by the number of concurrent requests. Notice how few of these terms
-you control: $n_{tokens}$ and the number of concurrent requests are runtime
-decisions, but $L$, $H_{kv}$, and $d_{head}$ are fixed the moment you pick a
-model, and $b$ is fixed by the precision you serve at. In fp16, $b = 2$.
+you actually control:
 
-The one term worth staring at is $H_{kv}$. Classic **multi-head attention**
-(MHA) gives every query head its own key/value head. **Grouped-query
-attention** (GQA) lets several query heads share one KV head, and
-**multi-query attention** (MQA) takes it to the limit: all query heads share a
-single KV head. The query heads are unchanged; only the cache shrinks. That is
+- **Runtime decisions:** $n_{tokens}$ (the context you allow) and the number
+  of concurrent requests.
+- **Fixed the moment you pick a model:** $L$, $H_{kv}$, and $d_{head}$.
+- **Fixed by the precision you serve at:** $b$, which is 2 for fp16.
+
+The one term worth staring at is $H_{kv}$, because three architectures set it
+three different ways:
+
+| Scheme | Key/value heads | Effect on the cache |
+| --- | --- | --- |
+| **MHA** — multi-head attention | one per query head | the baseline, and the most expensive |
+| **GQA** — grouped-query attention | one per *group* of query heads | shrinks by the group size |
+| **MQA** — multi-query attention | exactly one, shared by all | shrinks by the head count |
+
+In every case the query heads are unchanged; only the cache shrinks. That is
 why nearly every model released for serving uses GQA.
 
 ```python
@@ -244,7 +254,9 @@ def kv_bytes(layers, kv_heads, head_dim, n_tokens, bytes_per_elt=2):
     """2 (K and V) x layers x KV heads x head dim x tokens x bytes."""
     return 2 * layers * kv_heads * head_dim * n_tokens * bytes_per_elt
 
-# (label, layers, KV heads, head_dim) -- shapes of widely deployed open models.
+# (label, layers, KV heads, head_dim). The GQA rows are the shapes of widely
+# deployed open models; the MHA/MQA rows re-cut the same model to show what
+# changing only H_kv costs.
 CONFIGS = [
     ("7B   MHA   (32 L, 32 KV heads)", 32, 32, 128),
     ("8B   GQA-8 (32 L,  8 KV heads)", 32, 8, 128),
@@ -271,13 +283,19 @@ print(f"\n70B: GQA-8 uses {mha / gqa:.0f}x less KV memory than MHA "
 ```
 
 This table is the "why your GPU OOMs" moment. Take the first row — the shape
-of a 7B model with plain multi-head attention. Every token costs **0.524 MB**
-of cache. A single 128k-token conversation therefore needs **68.7 GB** of KV
-cache *on top of* the 14 GB of fp16 weights: more than an 80 GB card has, for
-**one user**. At a comfortable 4k context you can hold 18 concurrent requests
-in a 40 GB cache budget — not 18 thousand, 18. Switch to GQA with 8 KV heads
-and the same budget holds 74; the 70B GQA row is 8× cheaper than the same
-model would be with MHA, which the block verifies by printing the ratio.
+of a 7B model with plain multi-head attention — and read four numbers off it:
+
+- **0.524 MB of cache per token.** That is the unit price of remembering one
+  token of one conversation.
+- **68.7 GB for a single 128k-token conversation**, *on top of* the 14 GB of
+  fp16 weights. More than an 80 GB card has, for **one user**.
+- **18 concurrent requests** at a comfortable 4k context in a 40 GB cache
+  budget. Not eighteen thousand — eighteen.
+- **74 concurrent requests** in the same budget once you switch to GQA with 8
+  KV heads.
+
+The 70B GQA row tells the same story: it is 8× cheaper than the same model
+would be with MHA, which the block verifies by printing the ratio.
 
 !!! tip "Sanity-check your own model"
 
@@ -290,14 +308,18 @@ model would be with MHA, which the block verifies by printing the ratio.
 ## Prefill and decode are different machines
 
 The split we noticed in the toy loop is the most consequential fact in LLM
-serving, and it is a *hardware* fact. During prefill, the model multiplies its
-weight matrices by a matrix of hundreds or thousands of token vectors: each
-weight, once loaded from memory, is used many times. During decode, the same
-weights are multiplied by a *single* vector: every weight is loaded from
-memory, used once, and discarded.
+serving, and it is a *hardware* fact:
 
-So the question for each phase is which resource runs out first — arithmetic
-or memory traffic. Both are just division:
+- **Prefill** multiplies the weight matrices by a matrix of hundreds or
+  thousands of token vectors. Each weight, once loaded from memory, is used
+  many times.
+- **Decode** multiplies the same weights by a *single* vector. Every weight is
+  loaded from memory, used once, and discarded.
+
+### Which resource runs out first?
+
+That is the question for each phase — arithmetic, or memory traffic. Both
+answers are just division:
 
 ```python
 PARAMS = 7e9          # 7B model
@@ -381,13 +403,17 @@ print(f"KV memory, shared prefix blocks : {(SYSTEM + N_REQ * UNIQUE) * KV_PER_TO
 ```
 
 **29.3× less prefill work** and **107.5 GB of cache collapsing to 3.7 GB** —
-from a cache hit, not a faster model. This is why prompt layout is an
-engineering decision: put the stable material (system prompt, tool
-definitions, the long document) *first* and the volatile material (the user's
-new question) *last*. A prefix cache can only reuse an exact prefix; one
-changed character near the top — a timestamp, a shuffled tool list — misses
-everything after it. Prefix caching also requires the sharing machinery of
-[Section 27.2](02-batching.md): you cannot share blocks between requests if
+from a cache hit, not a faster model.
+
+!!! tip "Prompt layout is an engineering decision"
+    Put the **stable** material first (system prompt, tool definitions, the
+    long document) and the **volatile** material last (the user's new
+    question). A prefix cache can only reuse an *exact* prefix, so one changed
+    character near the top — a timestamp, a shuffled tool list — misses
+    everything after it.
+
+Prefix caching also requires the sharing machinery of
+[Section 27.2](02-batching.md). You cannot share blocks between requests if
 each request owns one private contiguous slab of memory.
 
 !!! warning "Common mistakes"

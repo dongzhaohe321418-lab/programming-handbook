@@ -5,19 +5,23 @@ per pass, so they cannot beat roughly $n^2/2$ comparisons on unfriendly
 input. Breaking that ceiling takes a different *strategy*, and it is one
 you already own: **divide and conquer**, the recursive pattern from
 [Chapter 17](../ch17-recursion/index.md). Split the problem in half, sort
-the halves by recursion, combine. Both of this section's algorithms follow
-that script — merge sort does its real work in the *combine* step,
-quicksort in the *split* step — and both reach $O(n \log n)$, which for
-$n = 400$ means roughly 3,500 comparisons where selection sort spent
-79,800.
+the halves by recursion, combine.
+
+Both of this section's algorithms follow that script — merge sort does its
+real work in the *combine* step, quicksort in the *split* step — and both
+reach $O(n \log n)$, which for $n = 400$ means roughly 3,500 comparisons
+where selection sort spent 79,800.
 
 ## The merge: a two-finger walk
 
 Merge sort rests on one humble observation: **combining two already-sorted
-lists into one sorted list is easy and fast**. Put a finger under the first
-element of each list; whichever finger points at the smaller value, copy
-that value out and advance that finger. Repeat until one list runs dry,
-then copy the survivor's remainder wholesale.
+lists into one sorted list is easy and fast**. The walk, in three moves:
+
+1. Put a finger under the first element of each list.
+2. Whichever finger points at the smaller value, copy that value out and
+   advance *that* finger. Repeat until one list runs dry.
+3. Copy the survivor's remaining elements out wholesale — they are already
+   sorted, and all bigger than everything emitted so far.
 
 Merging `[2, 5, 9]` and `[1, 4, 8]`:
 
@@ -30,9 +34,10 @@ Merging `[2, 5, 9]` and `[1, 4, 8]`:
 | 2, 5, **9** | 1, 4, **8** | 9 vs 8 → take 8 | `[1, 2, 4, 5, 8]` |
 | 2, 5, **9** | — empty — | right ran dry → copy rest | `[1, 2, 4, 5, 8, 9]` |
 
-Six elements merged with five comparisons — never more than $n - 1$ for
-$n$ total elements, because every comparison permanently retires one
-element. Each finger only ever moves forward: the walk is *linear*, $O(n)$.
+Six elements merged with five comparisons — never more than $n - 1$ for $n$
+total elements, because every comparison permanently retires one element.
+
+Each finger only ever moves forward, so the walk is *linear*: $O(n)$.
 
 ```python
 def merge(left, right):
@@ -54,11 +59,12 @@ print(merge([2, 5, 9], [1, 4, 8]))
 
 ## Merge sort: split until trivial, merge on the way back
 
-But wait — merging requires the halves to *already be sorted*. Who sorts
-the halves? The same algorithm, recursively. And the base case is the
-secret of the whole design: **a list of one element is already sorted**.
-Split all the way down to singletons, then let `merge` do every scrap of
-real work on the way back up.
+But wait — merging requires the halves to *already be sorted*. Who sorts the
+halves? The same algorithm, recursively.
+
+And the base case is the secret of the whole design: **a list of one element
+is already sorted**. Split all the way down to singletons, then let `merge`
+do every scrap of real work on the way back up.
 
 ```python
 # continues
@@ -106,10 +112,14 @@ level 2:  four merges of 2      -> touches 8 elements
               every level does O(n) total merge work
 ```
 
-Each level's merges, added together, process every element exactly once —
-$O(n)$ work per level, no matter how the level is chopped up. And how many
-levels are there? Halving $n$ down to 1 takes $\log_2 n$ halvings — 3
-levels for 8 elements, about 17 for 100,000. So the total is
+Two facts, multiplied together:
+
+- **Work per level is $O(n)$.** Each level's merges, added together, process
+  every element exactly once, no matter how the level is chopped up.
+- **The number of levels is $\log_2 n$.** That is how many halvings it takes
+  to get from $n$ down to 1 — 3 levels for 8 elements, about 17 for 100,000.
+
+So the total is
 
 $$
 \underbrace{O(n)}_{\text{work per level}} \times
@@ -117,10 +127,13 @@ $$
 $$
 
 and — this is merge sort's signature — the analysis never mentioned the
-input's *values*. Sorted, reversed, adversarial: the tree has the same
-shape and the same bill. Merge sort is $O(n \log n)$ **always**. It shares
-that guarantee with [heapsort](../ch21-heaps/02-priority-queues.md), and
-we are about to meet a famous algorithm that *doesn't* have it.
+input's *values*. Sorted, reversed, adversarial: the tree has the same shape
+and the same bill.
+
+!!! note "Merge sort is $O(n \log n)$ **always**"
+    Not on average, not usually: on every input. It shares that guarantee
+    with [heapsort](../ch21-heaps/02-priority-queues.md) — and we are about
+    to meet a famous algorithm that *doesn't* have it.
 
 ## Quicksort: divide by value, not by position
 
@@ -134,10 +147,12 @@ combining is free. The split is called **partitioning**:
 3. The pivot is now in its **final sorted position** — recurse on the left
    chunk and the right chunk, and there is nothing left to do at the end.
 
-The classic in-place partition (Lomuto's scheme) keeps a "small zone" at
-the front and grows it as one scan finds small elements. Take
-`[4, 8, 1, 6, 3, 7, 5]` with the last element, `5`, as pivot; `j` scans,
-and `i` marks the end of the small zone:
+### The partition pass, step by step
+
+The classic in-place partition (Lomuto's scheme) keeps a "small zone" at the
+front and grows it as one scan finds small elements. Take
+`[4, 8, 1, 6, 3, 7, 5]` with the last element, `5`, as pivot; `j` scans, and
+`i` marks the end of the small zone:
 
 | Scan | Is it < 5? | Action | List after |
 | ---- | ---------- | ------ | ---------- |
@@ -149,10 +164,11 @@ and `i` marks the end of the small zone:
 | `j=5`: 7 | no | nothing | `[4, 1, 3, 6, 8, 7, 5]` |
 | end | — | pivot ↔ first non-small: 5 ↔ 6 | `[4, 1, 3, 5, 8, 7, 6]` |
 
-One linear pass, and the list is now `small stuff | 5 | big stuff`. The
-`5` will never move again — index 3 is where it belongs in the final
-sorted order. Notice neither side is itself sorted; that is the
-recursion's job.
+One linear pass, and the list is now `small stuff | 5 | big stuff`. The `5`
+will never move again — index 3 is where it belongs in the final sorted
+order.
+
+Notice neither side is itself sorted; that is the recursion's job.
 
 ```python
 def partition(a, lo, hi):
@@ -184,17 +200,21 @@ slices, no copies.
 
 ## The pivot gamble
 
-Quicksort's cost analysis is a *gamble on the pivot*. If pivots land near
-the middle of their range, the two sides are balanced, the recursion tree
-looks like merge sort's — $\log n$ levels of $O(n)$ partitioning:
-$O(n \log n)$. But if the pivot is the *smallest or largest* element, the
-"split" peels off a single element and recurses on all the rest: $n$
-levels of shrinking scans, $(n-1) + (n-2) + \dots + 1 = n(n-1)/2$
-comparisons. That is $O(n^2)$ — selection-sort money.
+Quicksort's cost analysis is a *gamble on the pivot*, and there are two ways
+it can land:
 
-When does the nightmare pivot happen *every single time*? With
-depressing ease: take the first (or last) element as pivot and feed in
+- **A middling pivot.** The two sides come out balanced, the recursion tree
+  looks like merge sort's — $\log n$ levels of $O(n)$ partitioning — and the
+  total is $O(n \log n)$.
+- **An extreme pivot** (the smallest or largest element). The "split" peels
+  off a single element and recurses on all the rest: $n$ levels of shrinking
+  scans, $(n-1) + (n-2) + \dots + 1 = n(n-1)/2$ comparisons. That is
+  $O(n^2)$ — selection-sort money.
+
+When does the nightmare pivot happen *every single time*? With depressing
+ease: take the first (or last) element as pivot and feed in
 **already-sorted data** — one of the most common inputs in real life.
+
 Watch the counter catch the collapse; note we sort *sorted* lists here:
 
 ```python
@@ -240,15 +260,17 @@ for n in [50, 100, 200]:
     print(f"{n:>4} | {r:>12,} | {f:>11,} | {n*(n-1)//2:>9,}")
 ```
 
-The first-element pivot matches $n(n-1)/2$ *exactly* — on sorted input it
-is a quadratic algorithm, full stop, and doubling $n$ quadruples its
-column while the random-pivot column only a little more than doubles. The
-random pivot has no such weakness: no *particular input* is bad for it,
-because the danger was moved from the data to the dice. A run can still
-get unlucky, but the *expected* cost is $O(n \log n)$ on every input, and
-catastrophically bad luck at scale is statistically negligible. That is
-why library quicksorts randomise or use median-style pivot selection —
-never "just take the first element".
+The first-element pivot matches $n(n-1)/2$ *exactly* — on sorted input it is
+a quadratic algorithm, full stop. Doubling $n$ quadruples its column, while
+the random-pivot column only a little more than doubles.
+
+The random pivot has no such weakness: no *particular input* is bad for it,
+because the danger was moved from the data to the dice. A run can still get
+unlucky, but the *expected* cost is $O(n \log n)$ on every input, and
+catastrophically bad luck at scale is statistically negligible.
+
+That is why library quicksorts randomise or use median-style pivot selection
+— never "just take the first element".
 
 ## The rematch: memory and stability
 
@@ -262,18 +284,18 @@ professional tie-breakers are elsewhere:
 | Extra memory | $O(n)$ buffer for merging | in place; only the recursion stack, expected $O(\log n)$ |
 | Stable? | **Yes** (with `<=` taking left on ties) | **No** (as normally implemented) |
 
-The memory line: our `merge` cannot interleave two halves in place — it
-needs somewhere to put the output, so merge sort carries an $n$-sized
-buffer (our slicing version allocates even more freely; tuned versions
-recycle a single scratch list). Quicksort's partition just swaps within
-the original list; its only overhead is the stack of recursive calls,
-$O(\log n)$ deep when splits are healthy.
+**The memory line.** Our `merge` cannot interleave two halves in place — it
+needs somewhere to put the output, so merge sort carries an $n$-sized buffer
+(our slicing version allocates even more freely; tuned versions recycle a
+single scratch list). Quicksort's partition just swaps within the original
+list; its only overhead is the stack of recursive calls, $O(\log n)$ deep
+when splits are healthy.
 
-The stability line: merge honours ties by construction — when
-`left[i] <= right[j]`, the left (earlier) element goes first, so equal
-keys keep their order. Quicksort's partition, like selection sort's swap,
-flings elements across the whole span, and equal keys land in whatever
-order the swaps dictate.
+**The stability line.** Merge honours ties by construction: when
+`left[i] <= right[j]`, the left (earlier) element goes first, so equal keys
+keep their order. Quicksort's partition, like selection sort's swap, flings
+elements across the whole span, and equal keys land in whatever order the
+swaps dictate.
 
 !!! info "What real libraries actually run"
     Python's `sorted()` and `list.sort()` use **Timsort** — a

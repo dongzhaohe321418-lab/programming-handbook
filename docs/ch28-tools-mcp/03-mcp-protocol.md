@@ -100,18 +100,21 @@ flowchart TB
     S2 --- D2[(Vendor API)]
 ```
 
-Two **transports** carry the messages. **stdio** is the local one: the host
-launches the server as a child process and they exchange newline-delimited
-JSON over that process's standard input and output — the pipes named among
-the ways processes communicate in
-[Section 23.1](../ch23-os/01-os-processes.md). No ports, no network, no
-auth, and the server dies with the host. **HTTP** is
-the remote one, for servers running as a service somewhere else, where
-authorization becomes a real concern. The HTTP transport has been revised
-since the first release (the current specification calls it *Streamable
-HTTP*; an earlier revision used HTTP with Server-Sent Events, the format you
-parsed in [Section 27.3](../ch27-inference/03-latency-streaming.md)). The
-messages are identical on both; only the pipe changes.
+### Two transports
+
+- **stdio**, the local one. The host launches the server as a child process
+  and they exchange newline-delimited JSON over that process's standard input
+  and output — the pipes named among the ways processes communicate in
+  [Section 23.1](../ch23-os/01-os-processes.md). No ports, no network, no
+  auth, and the server dies with the host.
+- **HTTP**, the remote one, for servers running as a service somewhere else,
+  where authorization becomes a real concern. This transport has been revised
+  since the first release: the current specification calls it *Streamable
+  HTTP*, and an earlier revision used HTTP with Server-Sent Events, the format
+  you parsed in
+  [Section 27.3](../ch27-inference/03-latency-streaming.md).
+
+**The messages are identical on both. Only the pipe changes.**
 
 ## The three primitives
 
@@ -124,23 +127,28 @@ them is *who decides to use it* — not what the data looks like.
 | **Resources** | The application | `file:///notes/spec.md`, `db://orders/2024` | A file you attach |
 | **Prompts** | The user | "Review this diff", "Summarize this incident" | A slash command |
 
-**Tools** are Section 28.1 exactly: a name, a description, a JSON Schema, and
-side effects. The model chooses when to call one. Methods: `tools/list` and
-`tools/call`.
+### Tools — the model decides
 
-**Resources** are read-only data addressed by **URI**. The server lists what
-it has (`resources/list`) and hands over the bytes on request
-(`resources/read`). The crucial difference from tools is control: the *host
-application* decides what to include — usually because the user picked a file
-from a menu — rather than the model deciding to go and fetch it. Resources
-are how you say "here is the document we are talking about" without giving
-the model a general-purpose file reader.
+Section 28.1 exactly: a name, a description, a JSON Schema, and side effects.
+The model chooses when to call one. Methods: `tools/list` and `tools/call`.
 
-**Prompts** are reusable templates the *user* invokes, typically surfaced as
-slash commands or menu items. `prompts/list` returns their names and
-arguments; `prompts/get` fills a template in and returns the messages to
-send. A server for a code host might ship a `review-pr` prompt that knows the
-team's review checklist.
+### Resources — the application decides
+
+Read-only data addressed by **URI**. The server lists what it has
+(`resources/list`) and hands over the bytes on request (`resources/read`).
+
+The crucial difference from tools is control. The *host application* decides
+what to include — usually because the user picked a file from a menu — rather
+than the model deciding to go and fetch it. Resources are how you say "here is
+the document we are talking about" without giving the model a
+general-purpose file reader.
+
+### Prompts — the user decides
+
+Reusable templates the user invokes, typically surfaced as slash commands or
+menu items. `prompts/list` returns their names and arguments; `prompts/get`
+fills a template in and returns the messages to send. A server for a code host
+might ship a `review-pr` prompt that knows the team's review checklist.
 
 !!! note "Who is in charge is the whole point"
     A model that can silently read any file is a security problem. A user who
@@ -157,9 +165,10 @@ prompts are the three you will meet first and use most.
 
 ## The wire format: JSON-RPC 2.0
 
-MCP does not invent a message format. It uses **JSON-RPC 2.0**, a small,
-old, boring specification, which is exactly what you want in a protocol.
-There are only three message shapes.
+MCP does not invent a message format. It uses **JSON-RPC 2.0**, a small, old,
+boring specification, which is exactly what you want in a protocol.
+
+### Three message shapes
 
 A **request** has a method, optional params, and an `id`:
 
@@ -200,9 +209,11 @@ expected or allowed. It is fire-and-forget:
 ```
 
 That `id` is doing more work than it looks. Both sides may have several
-messages in flight at once, and replies can come back in any order, so the
-`id` is what matches a response to the request that caused it. It is the
+messages in flight at once, and replies can come back in any order, so **the
+`id` is what matches a response to the request that caused it.** It is the
 same job `tool_call_id` did in Section 28.1, one layer down.
+
+### Error objects
 
 An **error object** has an integer `code`, a human `message`, and optional
 structured `data`. The reserved codes come straight from JSON-RPC:
@@ -230,8 +241,16 @@ structured `data`. The reserved codes come straight from JSON-RPC:
 ### The initialize handshake
 
 No other message may be sent until the connection has been negotiated. The
-client opens with `initialize`, announcing which protocol revision it speaks
-(the revisions are date-stamped strings) and what it can do:
+handshake is exactly three messages:
+
+1. **Client → server: `initialize`** — the protocol revision it speaks and
+   what it can do.
+2. **Server → client: the `initialize` result** — the revision it will
+   actually use, its capabilities, and its identity.
+3. **Client → server: `notifications/initialized`** — a notification, so no
+   reply. The connection is now live.
+
+Step 1 looks like this (the revisions are date-stamped strings):
 
 ```json
 {
@@ -246,9 +265,8 @@ client opens with `initialize`, announcing which protocol revision it speaks
 }
 ```
 
-The server replies with the version it will actually use and its own
-capabilities — here, "I have tools, and I will not notify you when the list
-changes":
+Step 2 is the server's reply — here saying "I have tools, and I will not
+notify you when the list changes":
 
 ```json
 {
@@ -262,12 +280,10 @@ changes":
 }
 ```
 
-The client then sends the `notifications/initialized` notification, and the
-connection is live. This is **capability negotiation**, and it is why a
-client written against an old revision can talk to a new server: each side
-declares what it supports, both sides stay inside the intersection, and
-nobody calls `resources/read` on a server that never claimed to have
-resources.
+This is **capability negotiation**, and it is why a client written against an
+old revision can talk to a new server: each side declares what it supports,
+both sides stay inside the intersection, and nobody calls `resources/read` on
+a server that never claimed to have resources.
 
 ## Build it: a working MCP-style server
 
@@ -308,7 +324,7 @@ class MiniMCPServer:
         mid = message.get("id")
         params = message.get("params", {})
 
-        if mid is None:                    # a notification: act, stay silent
+        if mid is None:                    # a notification: no reply is permitted
             return None
         try:
             if method == "initialize":
@@ -476,12 +492,16 @@ out = client.call_tool("stock_level", {"sku": "gizmo"})
 print(f"     -> text {out['content'][0]['text']!r}, isError {out['isError']}")
 ```
 
-Read the arrows. Request 1 is the handshake; the server answers with its
-version, its capabilities, and its identity. Then a notification goes out
-with no `id` and the server correctly says nothing back. Request 2 asks for
-the menu and gets both tools *with their full schemas* — this is how a host
-that has never heard of your server learns what it can do, at runtime, with
-no code generation. Request 3 calls a tool and gets a content array back.
+Read the arrows in order:
+
+1. **Request 1 is the handshake.** The server answers with its version, its
+   capabilities, and its identity.
+2. **A notification goes out with no `id`**, and the server correctly says
+   nothing back.
+3. **Request 2 asks for the menu** and gets both tools *with their full
+   schemas*. This is how a host that has never heard of your server learns
+   what it can do — at runtime, with no code generation.
+4. **Request 3 calls a tool** and gets a content array back.
 
 ## Errors, and the distinction that trips everyone up
 
@@ -507,17 +527,19 @@ out = client.call_tool("stock_level", {"sku": "flux_capacitor"})
 print(f"     isError {out['isError']}, text {out['content'][0]['text']!r}")
 ```
 
-(a) and (b) are **protocol** errors: the request was malformed or
-unanswerable, so the server returns an `error` object with a reserved code
-and the client raises. The host's *programmer* needs to know.
+The difference is entirely about *who needs to read the message*:
 
-(c) is different. The request was perfectly well formed, the tool ran, and
-the tool did not like its input. That comes back as a normal `result` with
-`isError: true` and a text explanation — because the audience for that
-message is the **model**, which should read "unknown sku 'flux_capacitor'"
-and try a different SKU. Sending it as a JSON-RPC error would hide it from
-the model behind an exception in the host. This is the same lesson as
-Section 28.1's dispatcher, now written into a specification.
+| | (a) and (b) — protocol errors | (c) — a tool that failed |
+| --- | --- | --- |
+| What went wrong | the request was malformed or unanswerable | the request was fine; the tool did not like its input |
+| Shape on the wire | an `error` object with a reserved code | a normal `result` with `isError: true` |
+| What the client does | raises | hands the text to the model |
+| Audience | the host's **programmer**, who has a bug | the **model**, which should try something else |
+
+That is why "unknown sku 'flux_capacitor'" must not travel as a JSON-RPC
+error: it would be hidden from the model behind an exception in the host. This
+is the same lesson as Section 28.1's dispatcher, now written into a
+specification.
 
 ## Build it: a model driving the protocol
 
@@ -569,13 +591,14 @@ print(run_over_mcp("Do we need to restock widgets?", driver, tools, FakeLLM()))
 
 Two turns, two `tools/call` messages, one English answer. The model asked for
 `stock_level`, read `42` off the wire, worked out that 58 more units reach
-100, asked for `restock_cost`, and produced a sentence. Every arrow you see
-is a message a real MCP server would receive byte-for-byte.
+100, asked for `restock_cost`, and produced a sentence. Every arrow you see is
+a message a real MCP server would receive byte-for-byte.
 
-And now the payoff of the whole design: `run_over_mcp` never mentions
-inventory. Point `driver` at a filesystem server or a ticket server and the
-same twelve lines drive those instead, because the tool menu arrives at
-runtime in `tools/list`. That is $M + N$, in code.
+!!! tip "The payoff of the whole design"
+    **`run_over_mcp` never mentions inventory.** Point `driver` at a
+    filesystem server or a ticket server and the same twelve lines drive those
+    instead, because the tool menu arrives at runtime in `tools/list`. That is
+    $M + N$, in code.
 
 !!! note "What is toy, what is faithful"
     Toy: the in-memory transport (real servers use pipes or HTTP), the three

@@ -5,10 +5,12 @@ the single most important idea in this half of the book: **a variable does not
 contain a value — it refers to one.** As long as your programs used only
 numbers and short strings, the difference was invisible. The moment two
 variables point at the *same* list, it becomes the difference between a
-program that works and a bug that takes you an afternoon to find. This chapter
-drags that idea into the light, names it (the *reference model*), and gives
-you the tools to reason about it: aliasing, `==` versus `is`, shallow versus
-deep copies, and what actually happens when you pass a list to a function.
+program that works and a bug that takes you an afternoon to find.
+
+This chapter drags that idea into the light, names it (the *reference model*),
+and gives you the tools to reason about it: aliasing, `==` versus `is`,
+shallow versus deep copies, and what actually happens when you pass a list to
+a function.
 
 The chapter also completes your collection toolkit. Java courses introduce
 `ArrayList` at this point — a list that grows and shrinks on demand, unlike

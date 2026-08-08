@@ -28,11 +28,16 @@ red-black tree is a binary search tree satisfying:
    NIL leaves contain the same number of black nodes.** That number is the
    node's **black-height**.
 
-P4 and P5 are the entire balancing mechanism, and they pull against each
-other in a productive way: P5 says every root-to-leaf path has the same
-number of *black* nodes, and P4 says the reds cannot clump. So the longest
-possible path (alternating black-red-black-red) is at most twice the
-shortest (all black).
+P4 and P5 are the entire balancing mechanism, and they pull against each other
+in a productive way. P5 pins down the *black* nodes: every root-to-leaf path
+has exactly the same number of them. P4 stops the reds from clumping: they
+must sit one at a time, between blacks.
+
+!!! note "What P4 and P5 buy together"
+
+    The longest root-to-leaf path (alternating black-red-black-red) is at
+    most **twice** the shortest (all black). That single ratio is the whole
+    balance guarantee.
 
 ```mermaid
 flowchart TD
@@ -153,28 +158,34 @@ node 1 -> red   : (False, 'P4 violated: red node 8 has a red left child 1')
 node 6 -> black : (False, 'P5 violated: node 1 sees black-height 1 left but 2 right')
 ```
 
-Three deliberate one-bit edits, three different diagnoses. Notice that the
-second one is reported at node **8**, not at node 1: P4 is a statement about
-a red node's *children*, so the offending pair is named from above. The last
-edit is the subtle case worth staring at — painting node 6 black created no
-adjacent reds and left the root alone; it merely made *one* path one black
-node longer than its sibling, and P5 caught it at node 1.
+Three deliberate one-bit edits, three different diagnoses.
+
+Notice that the second one is reported at node **8**, not at node 1: P4 is a
+statement about a red node's *children*, so the offending pair is named from
+above.
+
+The last edit is the subtle case worth staring at. Painting node 6 black
+created no adjacent reds and left the root alone. It merely made *one* path
+one black node longer than its sibling — and P5 caught it at node 1.
 
 ## Why the height is at most about $2\log_2 n$
 
 The argument is two steps, both short.
 
-**Step one.** Consider any node $x$ with black-height $b$ (black nodes on
-any path from $x$ down to a NIL, counting the NIL). Its subtree contains at
-least $2^{b} - 1$ real nodes. Proof by induction: a NIL has $b = 1$ and
-$2^1 - 1 = 1 \ge 0$ nodes below it; a real node's two children each have
-black-height $b$ or $b-1$, so its subtree holds at least
-$2(2^{b-1} - 1) + 1 = 2^{b} - 1$.
+**Step one.** Consider any node $x$ with black-height $b$ — the black nodes
+on any path from $x$ down to a NIL, counting $x$ itself when it is black and
+counting the NIL, which is the count P5 fixes and the count the code below
+prints. Its subtree contains at least $2^{\,b-1} - 1$ real nodes. Proof by
+induction: a NIL has $b = 1$ and $2^{0} - 1 = 0$ real nodes below it; a real
+node's two children each have black-height $b$ or $b-1$, so its subtree holds
+at least $2\bigl(2^{\,b-2} - 1\bigr) + 1 = 2^{\,b-1} - 1$.
 
-**Step two.** By P4, on any root-to-NIL path at least half the nodes below
-the root are black, so the root's black-height is at least half the path
-length. Let $\hat h$ be the longest root-to-NIL path in edges. Then
-$b \ge \hat h / 2$ and $n \ge 2^{\hat h / 2} - 1$, which rearranges to
+**Step two.** By P4 no two nodes on a path are both red, and by P2 and P3 the
+two ends of a root-to-NIL path — the root and the NIL — are both black, so at
+least half that path's nodes are black. Let $\hat h$ be the longest root-to-NIL
+path in edges; it holds $\hat h + 1$ nodes, so
+$b \ge \lceil \hat h / 2\rceil + 1$ and
+$n \ge 2^{\,b-1} - 1 \ge 2^{\hat h / 2} - 1$, which rearranges to
 $\hat h \le 2\log_2(n+1)$. Our height convention counts edges between
 *real* nodes, one fewer:
 
@@ -216,30 +227,33 @@ def count_nodes(tree):
 
 n, b, height = count_nodes(t), rb_black_height(t), rb_height(t)
 print(f"real nodes n = {n}, black-height b = {b}, height h = {height}")
-print(f"step one:  n >= 2**b - 1  ->  {n} >= {2 ** b - 1}   {n >= 2 ** b - 1}")
+print(f"step one:  n >= 2**(b-1) - 1  ->  {n} >= {2 ** (b - 1) - 1}   "
+      f"{n >= 2 ** (b - 1) - 1}")
 print(f"step two:  h <= 2*log2(n+1) - 1  ->  {height} <= "
       f"{2 * math.log2(n + 1) - 1:.2f}   {height <= 2 * math.log2(n + 1) - 1}")
 ```
 
 ```text
 real nodes n = 8, black-height b = 3, height h = 3
-step one:  n >= 2**b - 1  ->  8 >= 7   True
+step one:  n >= 2**(b-1) - 1  ->  8 >= 3   True
 step two:  h <= 2*log2(n+1) - 1  ->  3 <= 5.34   True
 ```
 
 Eight nodes, black-height 3, and the tree indeed carries at least the
-$2^3 - 1 = 7$ nodes the counting argument demands. Both inequalities hold —
+$2^{3-1} - 1 = 3$ nodes the counting argument demands. Both inequalities hold —
 but one hand-checked tree proves nothing about the general case, and we
 cannot build a big one until the tree can insert. So: insertion.
 
 ## Insertion: colour first, ask questions after
 
 Insert exactly as in Chapter 20, then paint the newcomer **red**. Red is the
-cheap colour: adding a red node never changes any black-height, so P5 is
-safe for free, and P2 is fixed by one line at the end. The only property
-that can break is P4 — the new red node might have a red parent. Fixing that
-is a loop that walks *upward*, and it has three cases, distinguished by the
-colour of the new node's **uncle** (its parent's sibling).
+cheap colour: adding a red node never changes any black-height, so P5 is safe
+for free, and P2 is fixed by one line at the end.
+
+That leaves exactly one property that can break — P4, because the new red
+node might have a red parent. Fixing it is a loop that walks *upward*, with
+three cases distinguished by the colour of the new node's **uncle** (its
+parent's sibling).
 
 ### Case 1 — the uncle is red: recolour and climb
 
@@ -446,8 +460,9 @@ bound 2*log2(n+1)-1 = 9.0
 
 Height 7 against the plain BST's 30 — and against AVL's 4. That gap is the
 trade in one number: the red-black tree is nearly twice as tall as the AVL
-tree on this input, and it did strictly less work to get there. Now fill in
-the empirical table promised earlier:
+tree on this input, and it did strictly less work to get there.
+
+Now fill in the empirical table promised earlier:
 
 ```python
 # continues
@@ -476,38 +491,47 @@ most rotations any single insert needed: 2
 ```
 
 Across all 11 115 insertions no single one needed more than two rotations —
-the theory's promise, measured. Every height sits far under the bound and only one or two levels above a
-perfect tree — the $2\log_2 n$ worst case is a promise, not a prediction. On
+the theory's promise, measured.
+
+Every height sits far under the bound, and only one or two levels above a
+perfect tree: the $2\log_2 n$ worst case is a promise, not a prediction. On
 *random* input a red-black tree is essentially as short as the AVL trees
-measured in [35.2](02-avl.md) (which hit exactly the same heights 4, 7, 11,
-15). The two structures separate on adversarial input: sorted inserts gave
-AVL 4 and red-black 7. Ten thousand keys, sixteen nodes on the longest
-search path, guaranteed regardless of arrival order.
+measured in [35.2](02-avl.md), which hit exactly the same heights 4, 7, 11,
+15.
+
+The two structures separate on adversarial input: sorted inserts gave AVL 4
+and red-black 7. Ten thousand keys, sixteen nodes on the longest search path,
+guaranteed regardless of arrival order.
 
 ## Deletion: the part everyone skips, and why
 
 Deletion is where red-black trees stop being friendly. Removing a node is
 Chapter 20's usual three cases, but if the node that physically leaves the
 tree was **black**, every path through it just lost a black node and P5 is
-broken. The standard repair introduces a temporary fiction: the node that
-moved into the gap is treated as carrying an extra unit of blackness — it is
-**"doubly black"** — and the fix-up loop pushes that extra black around the
-tree until it can be absorbed:
+broken.
 
-- if the doubly-black node's sibling is red, rotate to make it black and
-  retry;
-- if the sibling is black with two black children, paint the sibling red
-  (removing one black from the sibling's paths, matching the loss) and move
-  the doubly-black marker up to the parent;
-- if the sibling is black with a usefully-coloured child, one or two
-  rotations plus recolouring absorb the extra black and the loop ends.
+The standard repair introduces a temporary fiction. The node that moved into
+the gap is treated as carrying an extra unit of blackness — it is **"doubly
+black"** — and a fix-up loop pushes that extra black around the tree until
+something can absorb it. Three shapes, distinguished by the doubly-black
+node's **sibling**:
+
+1. **Sibling is red.** Rotate to make it black, then retry: this turns the
+   case into one of the two below.
+2. **Sibling is black with two black children.** Paint the sibling red. That
+   removes one black from the sibling's paths, matching the loss on our own
+   side, and moves the doubly-black marker up to the parent.
+3. **Sibling is black with a usefully-coloured child.** One or two rotations
+   plus recolouring absorb the extra black, and the loop ends.
 
 Four cases plus a mirror image of each, several of which fall through into
 one another. It runs in $O(\log n)$ with at most three rotations, so it is
-*fast* — it is simply intricate, and most data-structures courses (and most
-textbook chapters) implement red-black **insert only**, then reach for a
-library when deletion is needed. We do the same here: this page implements
-insert, and describes delete rather than pretending to.
+*fast* — it is simply intricate.
+
+Most data-structures courses (and most textbook chapters) therefore implement
+red-black **insert only**, then reach for a library when deletion is needed.
+We do the same here: this page implements insert, and describes delete rather
+than pretending to.
 
 If you want a self-balancing tree with a deletion you can write and trust
 from memory, AVL is the honest answer — its delete is [35.2](02-avl.md)'s

@@ -18,7 +18,7 @@ columns position by position. Using $a = 12$ (`1100`) and $b = 10$ (`1010`):
 | operator | name | rule per bit position | example | binary view | result |
 | -------- | ---- | --------------------- | ------- | ----------- | ------ |
 | `&` | AND | 1 only if **both** bits are 1 | `12 & 10` | `1100 & 1010` | `1000` = 8 |
-| `\|` | OR | 1 if **either** bit is 1 | `12 \| 10` | `1100 \| 1010` | `1110` = 14 |
+| <code>&#124;</code> | OR | 1 if **either** bit is 1 | <code>12 &#124; 10</code> | <code>1100 &#124; 1010</code> | `1110` = 14 |
 | `^` | XOR | 1 if the bits **differ** | `12 ^ 10` | `1100 ^ 1010` | `0110` = 6 |
 | `~` | NOT | flip every bit | `~12` | see below | −13 |
 | `<<` | left shift | slide bits left, fill with 0 | `12 << 1` | `11000` | 24 |
@@ -42,6 +42,8 @@ have one (just the 8s place), `|` where *either* does, `^` where they
 [Chapter 4](../ch04-branching/01-booleans-logic.md), applied to each bit
 pair instead of to whole `True`/`False` values — but they are different
 operators, and mixing them up is a classic bug (see the warning below).
+
+### Why `~` looks strange in Python
 
 `~` needs its own note. Python integers have no fixed width, so "flip every
 bit" is defined by arithmetic instead: `~x` is exactly `-x - 1`. To *see*
@@ -96,8 +98,10 @@ used less often.)
 
 ## Two classic tricks
 
-**Even or odd in one operation.** The lowest bit of any integer is its
-"ones place" in binary, so `n & 1` is 1 exactly for odd numbers:
+### Even or odd in one operation
+
+The lowest bit of any integer is its "ones place" in binary, so `n & 1` is 1
+exactly for odd numbers:
 
 ```python
 for n in range(6):
@@ -108,10 +112,12 @@ for n in range(6):
 Scan the binary column: the last bit alternates 0, 1, 0, 1, … and the
 verdict follows it exactly.
 
-**Shifting is scaling by powers of two.** Sliding the bits one place left
-doubles the value (every bit moves into a column worth twice as much);
-sliding right halves it, rounding down. So `x << k` equals
-$x \times 2^k$ and `x >> k` equals $\lfloor x / 2^k \rfloor$:
+### Shifting is scaling by powers of two
+
+Sliding the bits one place left doubles the value, because every bit moves
+into a column worth twice as much; sliding right halves it, rounding down. So
+`x << k` equals $x \times 2^k$ and `x >> k` equals
+$\lfloor x / 2^k \rfloor$:
 
 ```python
 value = 1
@@ -185,13 +191,18 @@ for day in Day:                  # iterates in definition order
     print(f"{day.name:<9} {kind}")
 ```
 
-Each member has a `.name` (the identifier) and a `.value` (the number you
-assigned), members compare equal only to themselves, and iterating the
-class visits every member in definition order — perfect for building menus
-or tables. The `today == 3` line is the philosophy in one comparison: a
-`Day` deliberately refuses to equal a bare int, so days can never silently
-mix with arithmetic. (When you *want* int behaviour, Python offers
-`IntEnum` — opt-in, not default.)
+Three facts do most of the work:
+
+- **Every member carries a `.name`** (the identifier you wrote) **and a
+  `.value`** (the number you assigned it).
+- **Members compare equal only to themselves**, never to a bare number.
+- **Iterating the class visits every member in definition order** — perfect
+  for building menus or tables.
+
+The `today == 3` line is the philosophy in one comparison: a `Day`
+deliberately refuses to equal a bare int, so days can never silently mix with
+arithmetic. When you *want* int behaviour, Python offers `IntEnum` — opt-in,
+never the default.
 
 Java's `enum` is a core language keyword with the same intent:
 
@@ -238,12 +249,16 @@ class Day(Enum):
 print(Day.WENDSDAY)   # typo — Python stops us on the spot
 ```
 
-That eager failure is the selling point. Prefer an enum when the set of
-values is **fixed and known in advance** (days, suits, states, directions)
-so typos become errors, the options are discoverable by iterating the
-class, and each member is one honest object. Stay with plain strings when
-the values are **open-ended data** — user names, file paths, anything you
-cannot enumerate when writing the program.
+That eager failure is the selling point. Which tool fits comes down to one
+question — can you list every possible value while writing the program?
+
+| Prefer an enum when… | Stay with plain strings when… |
+| --- | --- |
+| the set of values is **fixed and known in advance** — days, suits, states, directions | the values are **open-ended data** — user names, file paths |
+| you want typos to become errors, and the options discoverable by iterating the class | you cannot enumerate the possibilities while writing the program |
+
+The bonus of the enum column: each member is one honest object rather than a
+loose string that any part of the program can misspell.
 
 !!! warning "Common mistakes"
 

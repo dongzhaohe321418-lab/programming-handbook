@@ -85,14 +85,18 @@ for name, p, o in WORKLOADS:
 ```
 
 The `TTFT share` column is the design lesson, and it says something different
-for each row. A **chat turn** spends just 4% of its time before the first
-token: it is almost pure decode, so TPOT is the number to optimise and
-batching hurts it. A **document summary** spends 30% of a five-second request
-— a full 1.5 seconds — producing nothing at all, which is precisely the dead
-air users complain about; prefix caching and chunked prefill target exactly
-this row. **Code completion** is 28% TTFT but its entire request is 224 ms,
-so the 63 ms before the first token is the difference between an editor that
-feels instant and one that feels laggy. Same model, three different problems.
+for each row:
+
+- **Chat turn — 4% TTFT.** Almost pure decode, so TPOT is the number to
+  optimise, and batching hurts it.
+- **Document summary — 30% TTFT.** A full 1.5 seconds of a five-second request
+  producing nothing at all: precisely the dead air users complain about.
+  Prefix caching and chunked prefill target exactly this row.
+- **Code completion — 28% TTFT.** The whole request is only 224 ms, so the
+  63 ms before the first token is the difference between an editor that feels
+  instant and one that feels laggy.
+
+Same model, three different problems.
 
 Notice also how differently the two phases scale with prompt length. Going
 from a 512-token prompt to a 16,000-token one takes TTFT from 63 ms to
@@ -142,16 +146,24 @@ ax1.set_title("Throughput and per-user speed pull in opposite directions")
 fig.tight_layout()
 ```
 
-The two curves cross, which is the entire story in one image. Total
-throughput (blue) climbs steeply, then bends over and saturates once the step
-becomes compute-bound. Per-user speed (red) is a flat plateau while the step
-time is pinned to the memory floor, then falls away as $1/\text{batch}$.
-There is no batch size that maximises both. What you *can* find is the knee.
-Batch 64 delivers 9,143 tok/s — 85% of the ceiling — while every user still
-gets the full 142.9 tok/s; the block reports that throughput first reaches
-95% of its ceiling at batch 96, where a user is down to 112 tok/s. Doubling
-from 64 to 128 buys 17% more throughput and costs each user 41% of their
-speed. Whether that is a good trade is a product decision, not a technical
+The two curves cross, which is the entire story in one image:
+
+- **Total throughput (blue)** climbs steeply, then bends over and saturates
+  once the step becomes compute-bound.
+- **Per-user speed (red)** is a flat plateau while the step time is pinned to
+  the memory floor, then falls away as $1/\text{batch}$.
+
+**There is no batch size that maximises both.** What you *can* find is the
+knee:
+
+- **Batch 64** delivers 9,143 tok/s — 85% of the ceiling — while every user
+  still gets the full 142.9 tok/s.
+- **Batch 96** is where throughput first reaches 95% of its ceiling, and a
+  user is down to 112 tok/s.
+- **Batch 128** buys 17% more throughput than 64 and costs each user 41% of
+  their speed.
+
+Whether that last trade is a good one is a product decision, not a technical
 one, which is the point.
 
 This is why serving configurations are stated as service-level objectives,
@@ -199,8 +211,10 @@ Nothing was made faster: E2E latency is identical in both rows, because it is
 the same computation. But the streamed reader starts at 0.70 s instead of
 4.19 s — a **6.0× shorter perceived wait** — and finishes the whole
 interaction sooner too, because reading overlaps generation instead of
-following it. Note that this block computes a timeline; it never actually
-sleeps. Simulating time is how you reason about latency without wasting any.
+following it.
+
+Note that this block computes a timeline; it never actually sleeps. Simulating
+time is how you reason about latency without wasting any.
 
 The catch is worth stating: streaming means committing to tokens as they are
 produced. You cannot post-process, re-rank, or retract text you have already
@@ -232,11 +246,15 @@ data: {"choices":[{"delta":{"content":" attention"}}]}
 data: [DONE]
 ```
 
-Four rules cover almost everything: a line beginning with `:` is a comment
-(servers send these periodically so proxies do not time the connection out);
-a single leading space after the colon is stripped; multiple `data:` lines in
-one event are joined with a newline; and a blank line ends the event. The
-`[DONE]` sentinel is not part of SSE — it is a convention popularised by the
+Four rules cover almost everything:
+
+1. **A line beginning with `:` is a comment.** Servers send these periodically
+   so proxies do not time the connection out.
+2. **A single leading space after the colon is stripped** — exactly one.
+3. **Multiple `data:` lines in one event are joined with a newline.**
+4. **A blank line ends the event** and dispatches it.
+
+The `[DONE]` sentinel is not part of SSE. It is a convention popularised by the
 OpenAI API and copied widely, including by vLLM's compatible endpoint.
 
 Why SSE rather than something more modern? Because the traffic is one-way
@@ -321,31 +339,38 @@ print("\nreassembled:", repr("".join(pieces)))
 print("chunks received:", len(pieces))
 ```
 
-Three things in that stream are there on purpose. The keep-alive comments are
-skipped without producing an event. The first event carries a `role` and no
-`content`, so it contributes an empty string — clients must tolerate deltas
-with no text. And the final content event is split across two `data:` lines;
-joining them with a newline yields valid JSON, because JSON ignores
-whitespace between tokens. Handle those three cases and you have a correct
-client.
+Three things in that stream are there on purpose:
+
+- **The keep-alive comments** are skipped without producing an event.
+- **The first event carries a `role` and no `content`**, so it contributes an
+  empty string. Clients must tolerate deltas with no text.
+- **The final content event is split across two `data:` lines.** Joining them
+  with a newline yields valid JSON, because JSON ignores whitespace between
+  tokens.
+
+Handle those three cases and you have a correct client.
 
 ## Backpressure and cancellation
 
-Two operational realities live at this boundary. **Backpressure** is what
-happens when the model produces tokens faster than the client can accept
-them — a mobile connection, a slow browser tab, a downstream service. The
-kernel's socket buffer fills, writes start blocking, and if the server does
-not handle that it either stalls a GPU worker on a network write or grows an
-unbounded in-memory queue until it runs out of RAM. Production servers
-therefore bound the per-connection queue and treat a persistently blocked
-client as a disconnection. **Cancellation** is the mirror image: when a user
-closes the tab or hits stop, the HTTP connection drops, and the server must
-notice and evict that sequence from the running batch. This matters more than
-it sounds — an abandoned generation that runs to `max_tokens` occupies a
-batch slot and its whole KV cache for nothing, which is pure lost throughput
-in the exact currency Section 27.2 was counting. Every serious client library
-exposes cancellation (an `AbortController` in the browser, a cancelled task in
-Python) and every serious server acts on it.
+Two operational realities live at this boundary, and they are mirror images of
+each other.
+
+**Backpressure** is what happens when the model produces tokens faster than
+the client can accept them — a mobile connection, a slow browser tab, a
+downstream service. The kernel's socket buffer fills and writes start
+blocking. A server that does not handle that either stalls a GPU worker on a
+network write or grows an unbounded in-memory queue until it runs out of RAM.
+Production servers therefore bound the per-connection queue and treat a
+persistently blocked client as a disconnection.
+
+**Cancellation** is the other direction. When a user closes the tab or hits
+stop, the HTTP connection drops, and the server must notice and evict that
+sequence from the running batch. This matters more than it sounds: an
+abandoned generation that runs to `max_tokens` occupies a batch slot and its
+whole KV cache for nothing, which is pure lost throughput in the exact
+currency Section 27.2 was counting. Every serious client library exposes
+cancellation — an `AbortController` in the browser, a cancelled task in
+Python — and every serious server acts on it.
 
 ## The browser side
 

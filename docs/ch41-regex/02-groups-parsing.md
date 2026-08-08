@@ -55,10 +55,12 @@ where was group 1 : (0, 11)
 how many groups   : 6
 ```
 
-One line of text, six fields, no `split` gymnastics. Note `[^\]]+` for the
-timestamp — "one or more characters that are not a closing bracket" is the
-standard way to say "everything up to the next delimiter", and it is both
-clearer and faster than the lazy `.+?` we will meet below.
+One line of text, six fields, no `split` gymnastics.
+
+Note `[^\]]+` for the timestamp. "One or more characters that are not a
+closing bracket" is the standard way to say "everything up to the next
+delimiter", and it is both clearer and faster than the lazy `.+?` we will meet
+below.
 
 ### Named groups are better
 
@@ -96,9 +98,10 @@ status as int: 2 xx family
 ```
 
 `groupdict()` is the bridge from text to data: one call and the line has
-become a record you can put in a list, sort, or count. Combined with verbose
-mode, a named-group pattern is genuinely readable six months later — which
-is the real reason to prefer it.
+become a record you can put in a list, sort, or count.
+
+Combined with verbose mode, a named-group pattern is genuinely readable six
+months later — which is the real reason to prefer it.
 
 ### Non-capturing groups `(?:...)`
 
@@ -131,8 +134,12 @@ group counts: 2 vs 1
 ```
 
 Use `(?:...)` whenever the parentheses exist for structure rather than for
-extraction. It keeps `findall` returning whole matches, keeps group numbers
-meaningful, and tells the next reader "nothing to see here".
+extraction. It buys three things:
+
+- `findall` keeps returning **whole matches** instead of group contents;
+- group **numbers stay meaningful**, and stop shifting when someone edits the
+  pattern;
+- it tells the next reader "nothing to see here".
 
 ## Backreferences: matching what you already matched
 
@@ -173,10 +180,12 @@ swapped : say <hi> and <bye> now
 ```
 
 The `\1` in the replacement string is how the repair works: match two copies,
-put back one. The `QUOTED` pattern is worth a second look: `(?P<q>['\"])` captures *whichever* quote
-character opened the string, and `(?P=q)` demands the same one to close it,
-so a single quote cannot be closed by a double quote. That is a genuine
-parsing rule expressed in eight characters.
+put back one.
+
+The `QUOTED` pattern is worth a second look. `(?P<q>['\"])` captures
+*whichever* quote character opened the string, and `(?P=q)` demands the same
+one to close it, so a single quote cannot be closed by a double quote. **That
+is a genuine parsing rule expressed in eight characters.**
 
 ## `sub`: rewriting text
 
@@ -240,17 +249,29 @@ branch: the quick brown foxes JUMPED over
 
 The phone number is untouched because seven digits are fewer than the
 thirteen the pattern requires — the `{12,18}` bound is doing exactly the work
-a hand-written masker would need an `if` for. A replacement function is the
-escape hatch that makes `sub` able to do anything: look values up in a
-dictionary, format numbers, count as it goes, or leave a match alone by
-returning `m.group()` unchanged.
+a hand-written masker would need an `if` for.
+
+A replacement function is the escape hatch that makes `sub` able to do
+anything: look values up in a dictionary, format numbers, count as it goes, or
+leave a match alone by returning `m.group()` unchanged.
 
 ## Greedy versus lazy
 
 Every quantifier you have met is **greedy**: it takes as much as it can and
 gives characters back only if the rest of the pattern fails. Adding `?` after
 a quantifier makes it **lazy**: it takes as little as possible and asks for
-more only when forced. The classic demonstration is HTML tags.
+more only when forced.
+
+| | Greedy | Lazy |
+|---|---|---|
+| Spelling | `*` `+` `?` `{n,m}` | `*?` `+?` `??` `{n,m}?` |
+| Strategy | take the most, then give back | take the least, then extend |
+| `a+` / `a+?` on `"aaaa"` | `aaaa` | `a` |
+| `<.+>` / `<.+?>` on `"<b>hi</b>"` | the whole string | `<b>` |
+| Typical use | the default; what you usually want | a terminator of more than one character |
+| Better alternative | — | a negated class such as `<[^>]+>` |
+
+The classic demonstration is HTML tags.
 
 ```python
 import re
@@ -293,9 +314,10 @@ end, then backed up just far enough to find a `>` — the *last* one. The lazy
 But notice the third line. `<[^>]+>` gives the same answer as the lazy
 version, and it is the better pattern: "characters that are not `>`" states
 the intent directly and cannot backtrack, where `.+?` has to try, fail, and
-extend one character at a time. **Prefer a negated character class to a lazy
-dot** when you can; save laziness for when the terminator is more than one
-character, as in `<!--.*?-->`.
+extend one character at a time.
+
+**Prefer a negated character class to a lazy dot** when you can. Save laziness
+for when the terminator is more than one character, as in `<!--.*?-->`.
 
 ## Lookahead and lookbehind
 
@@ -310,9 +332,12 @@ condition is checked.
 | `(?<=...)` | lookbehind | what precedes must match |
 | `(?<!...)` | negative lookbehind | what precedes must **not** match |
 
-Two practical uses. First, **rules that must all hold** — the classic
-password policy, where each lookahead is an independent requirement checked
-from the same starting position:
+Two practical uses.
+
+### Use 1 — rules that must all hold
+
+The classic password policy, where each lookahead is an independent
+requirement checked from the same starting position:
 
 ```python
 import re
@@ -338,13 +363,15 @@ NoDigits!!!!       False
 Str0ng!Passw0rd    True
 ```
 
-Without lookahead you would need four separate patterns and four `if`s;
-with it, the four rules stack up at one position and the `.{10,}` then does
-the actual consuming. (In production, report *which* rule failed — a single
+Without lookahead you would need four separate patterns and four `if`s; with
+it, the four rules stack up at one position and the `.{10,}` then does the
+actual consuming. (In production, report *which* rule failed — a single
 boolean is a poor user experience.)
 
-Second, **matching in context**: extract a number only when it follows a
-currency symbol, or split on a delimiter that is not inside quotes.
+### Use 2 — matching in context
+
+Extract a number only when it follows a currency symbol, or split on a
+delimiter that is not inside quotes:
 
 ```python
 import re
@@ -369,18 +396,20 @@ quote-aware  : ['name', '"Lovelace, Ada"', '1815', '"mathematician, first progra
 ```
 
 The lookahead reads "from here to the end of the line, quotes come in pairs",
-which is true exactly when this comma is *outside* a quoted field. It is a
-lovely trick and you should still use the `csv` module for real CSV, which
-handles doubled quotes, embedded newlines, and encodings that this one-liner
-does not.
+which is true exactly when this comma is *outside* a quoted field.
+
+It is a lovely trick — and you should still use the `csv` module for real CSV,
+which handles doubled quotes, embedded newlines, and encodings that this
+one-liner does not.
 
 !!! warning "Python's lookbehind must be fixed width"
 
     `(?<=\$)` is fine; `(?<=\$+)` and `(?<=cat|elephant)` raise
     `re.error: look-behind requires fixed-width pattern`, because the engine
     has to know how far back to step. Alternatives of the *same* length are
-    allowed (`(?<=cat|dog)`). Java and .NET permit variable-length
-    lookbehind, JavaScript does since ES2018, and Go's RE2 has no lookaround
+    allowed (`(?<=cat|dog)`). .NET permits arbitrary variable-length lookbehind
+    and JavaScript has since ES2018; Java allows only a *bounded* one —
+    `(?<=a{1,5})` compiles, `(?<=a+)` does not. Go's RE2 has no lookaround
     at all — this is one of the least portable corners of regex.
 
 ## Catastrophic backtracking, and why it matters
@@ -394,16 +423,17 @@ input:    "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"      (30 a's, no b)
 ```
 
 The pattern says: "one or more groups, each of one or more `a`s, then a `b`."
-There is no `b`, so the match must fail — but before failing the engine has
-to prove that *no* arrangement works. And the number of arrangements is the
-number of ways to split 30 `a`s into groups: $2^{29}$, over five hundred
-million. Each one is tried. A 30-character input hangs the process; a
-40-character input outlives the universe's patience. This is
-**catastrophic backtracking**, and when the input comes from a user it is a
-denial-of-service vulnerability with its own name: **ReDoS**.
+There is no `b`, so the match must fail — but before failing the engine has to
+prove that *no* arrangement works.
 
-The shape to fear is a quantifier **inside** another quantifier where the two
-can match the same text: `(a+)+`, `(a*)*`, `(\w+\s?)*`, `(.*,)*`. Real
+And the number of arrangements is the number of ways to split 30 `a`s into
+groups: $2^{29}$, over five hundred million. Each one is tried. A 30-character
+input hangs the process; a 40-character input outlives the universe's
+patience. This is **catastrophic backtracking**, and when the input comes from
+a user it is a denial-of-service vulnerability with its own name: **ReDoS**.
+
+**The shape to fear is a quantifier inside another quantifier where the two
+can match the same text**: `(a+)+`, `(a*)*`, `(\w+\s?)*`, `(.*,)*`. Real
 outages have been caused by patterns exactly this innocent-looking —
 including one that took a large content-delivery network offline in 2019.
 
@@ -444,12 +474,14 @@ for n in (2_000, 4_000, 8_000, 16_000):
   16000                 72.17                 0.011
 ```
 
-The absolute milliseconds depend on your machine; the shape does not.
-Double $n$ and the unanchored version takes four times as long — quadratic,
-because it retries the whole scan from every starting position. The anchored
-version is flat: it fails once, at position 0, and stops. Neither is
-catastrophic (there is no nested quantifier here), but the same arithmetic
-that turns $n$ into $n^2$ is what turns $n$ into $2^n$ when quantifiers nest.
+The absolute milliseconds depend on your machine; the shape does not. Double
+$n$ and the unanchored version takes four times as long — quadratic, because
+it retries the whole scan from every starting position. The anchored version
+is flat: it fails once, at position 0, and stops.
+
+Neither is catastrophic — there is no nested quantifier here. But the same
+arithmetic that turns $n$ into $n^2$ is what turns $n$ into $2^n$ when
+quantifiers nest.
 
 !!! tip "Atomic groups and possessive quantifiers"
 
@@ -537,20 +569,25 @@ failing IPs  : [('198.51.100.22', 3), ('192.0.2.66', 1)]
 bytes served : 10748
 ```
 
-Three habits from that code are worth copying. The pattern is a **named
-constant in verbose mode with comments**, not an inline mystery string.
-Non-matching lines are **collected, not ignored** — a parser that silently
-drops what it does not understand will hide the day the log format changes.
-And the conversion to `int` happens at the boundary, right after matching, so
-the rest of the program works with numbers rather than strings. Drop this
-loop into a generator pipeline from
+Three habits from that code are worth copying:
+
+1. **The pattern is a named constant in verbose mode, with comments** — not an
+   inline mystery string.
+2. **Non-matching lines are collected, not ignored.** A parser that silently
+   drops what it does not understand will hide the day the log format changes.
+3. **Conversion to `int` happens at the boundary**, right after matching, so
+   the rest of the program works with numbers rather than strings.
+
+Drop this loop into a generator pipeline from
 [section 39.3](../ch39-streams/03-pipelines.md) and it will stream a
 multi-gigabyte log in constant memory.
 
 ## When *not* to use regex
 
-Regular expressions describe **regular** languages, and that word is
-technical: a regular language cannot count. It has no memory of how deep it
+Regular expressions are named after **regular** languages, and the core
+notation describes exactly those — a regular language cannot count.
+(Backreferences and lookaround push real engines a little past that line, but
+nowhere near far enough to track nesting depth.) It has no memory of how deep it
 is, which means it fundamentally cannot match nested structure. Here is that
 theory as an experiment:
 
@@ -580,11 +617,12 @@ json  : Ada, "the countess"
 ```
 
 The greedy pattern ran to the last `</div>` in the string; the lazy one
-stopped at the first. Neither is right, and no amount of tweaking makes it
-right, because "the matching close tag" requires counting how many opens are
-still outstanding — precisely what a regular language cannot do. The JSON
-example fails the same way: the pattern stops at the first `"`, which here is
-an *escaped* quote inside the value.
+stopped at the first. Neither is right, and **no amount of tweaking makes it
+right**, because "the matching close tag" requires counting how many opens are
+still outstanding — precisely what a regular language cannot do.
+
+The JSON example fails the same way: the pattern stops at the first `"`, which
+here is an *escaped* quote inside the value.
 
 Use a parser for anything with nesting or escaping:
 
@@ -602,7 +640,7 @@ pages; every short "email regex" on the internet rejects addresses that are
 valid and accepts some that are not. Check for an `@` with something on both
 sides, then prove the address exists by mailing it.
 
-Regex remains the right tool for **flat, line-oriented, shape-defined** text:
+**Regex remains the right tool for flat, line-oriented, shape-defined text:**
 log lines, identifiers, tokens, phone numbers, hex colours, search-and-replace
 across a codebase, and the first pass of a hand-written tokenizer — which is
 [the last exercise](exercises.md) of this chapter.
@@ -611,6 +649,27 @@ across a codebase, and the first pass of a hand-written tokenizer — which is
 
 The core syntax — classes, quantifiers, anchors, groups, alternation — is the
 same everywhere. The API around it is not.
+
+### The flavours, side by side
+
+| | Python `re` | Java | JavaScript | POSIX `grep -E` / `sed -E` | Go / RE2 |
+|---|---|---|---|---|---|
+| Search anywhere | `re.search` | `matcher.find()` | `str.match(/…/)` | the default | `FindString` |
+| Match the whole string | `re.fullmatch` | `String.matches()` | `/^…$/` | `^…$` | `^…$` |
+| All matches | `re.findall` / `finditer` | `while (m.find())` | needs the `g` flag | the default | `FindAllString` |
+| Escaping in source | raw strings: `r"\d"` | doubled: `"\\d"` | literal: `/\d/` | shell-quoted | backticks |
+| `\d`, `\w`, `\s` | yes, Unicode-aware | yes | yes | **no** — use `[0-9]`, `[[:digit:]]` | yes |
+| Named groups | `(?P<name>…)` | `(?<name>…)` | `(?<name>…)`, read via `m.groups` | none | `(?P<name>…)` |
+| Lookbehind | fixed width only | bounded (`a{1,5}`) | any width, since ES2018 | none | **none** |
+| Backreferences | yes | yes | yes | with `-E`, yes | **none, by design** |
+| Worst-case time | exponential | exponential | exponential | exponential | **linear, guaranteed** |
+
+Two of those rows deserve a sentence each. `grep` **without** `-E` is POSIX
+*basic* regex, where `+`, `?`, `|`, and `()` must be backslashed
+(`grep 'a\+'`) — use `grep -E` for the syntax this chapter taught. And RE2,
+used by Go and by several log platforms, drops backreferences and lookaround
+precisely so that matching is guaranteed linear time: no ReDoS is possible, at
+the price of expressiveness.
 
 === "Java"
 
@@ -654,22 +713,12 @@ same everywhere. The API around it is not.
     $ sed -E 's/[0-9]{3}-[0-9]{2}-[0-9]{4}/[REDACTED]/g' people.txt
     ```
 
-!!! warning "Flavours differ — check before you copy"
+!!! warning "The trap the table cannot show"
 
-    - **Java** doubles every backslash, because the pattern is an ordinary
-      string literal: `"\\d"`, not `\d`. Its `matches()` is a full match while
-      `find()` is a search — the opposite trap to Python's `match`.
-    - **JavaScript** needs the `g` flag to find more than one match, names
-      groups `(?<name>...)` (no `P`), and stores them on `m.groups`.
-    - **grep** without `-E` is POSIX *basic* regex, where `+`, `?`, `|`, and
-      `()` must be backslashed: `grep 'a\+'`. Use `grep -E` (or `egrep`) for
-      the syntax this chapter taught. POSIX tools have no `\d` — write
-      `[0-9]` or `[[:digit:]]`.
-    - **Go and RE2** (also used by some log platforms) deliberately omit
-      backreferences and lookaround so that matching is guaranteed linear
-      time — no ReDoS possible, at the price of expressiveness.
-    - **Python's** `(?P<name>...)` spelling is its own; most other flavours
-      write `(?<name>...)`.
+    **Java's `matches()` is a full match while `find()` is a search** — the
+    opposite trap to Python's `match`, which anchors only the start. Carrying
+    a pattern between the two without noticing is a real and quiet source of
+    wrong answers.
 
     When a pattern must travel, stick to the common core: classes,
     quantifiers, anchors, groups, alternation. Leave lookbehind, named
@@ -712,7 +761,7 @@ same everywhere. The API around it is not.
     They accept exactly the same strings, but `(a+)+` can split a run of
     `a`s into groups in exponentially many ways. On input that fails — a
     string of `a`s with no `b` — the engine tries every split before giving
-    up: $2^{n}$ attempts, which hangs the process. `a+b` has one way to match
+    up: about $2^{\,n-1}$ attempts, which hangs the process. `a+b` has one way to match
     and fails in linear time. Never put a quantifier inside a quantifier when
     both can match the same characters.
 

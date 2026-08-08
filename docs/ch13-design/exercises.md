@@ -1,5 +1,53 @@
 # Exercises
 
+## The chapter in brief
+
+- An **invariant** is a rule that must hold for an object's entire lifetime,
+  and a public attribute leaves it completely undefended
+  ([13.1](01-encapsulation.md)).
+- Encapsulation moves the data behind methods, so exactly one class is in a
+  position to break — or protect — the rule.
+- Java enforces visibility with `public`, `protected`, package-private, and
+  `private`; Python asks politely with `name`, `_name`, and `__name`.
+- **Name mangling** rewrites `__x` as `_Class__x`: it prevents clashes with
+  subclasses, and it is a rename rather than a lock.
+- A `@property` puts a method behind attribute syntax, so a plain attribute
+  can grow a guard later without changing a single caller.
+- A UML class box has three compartments — name, attributes, operations —
+  with `+`, `-`, and `#` marking visibility ([13.2](02-uml.md)).
+- Mermaid `classDiagram` text is all you need to draw one: `class Name { … }`
+  with one member per line, and relationships written outside the braces.
+- Five arrows carry the design information: association, aggregation,
+  composition, inheritance, and dependency.
+- Turning a diagram into code is mechanical — box to `class`, attribute to
+  `__init__` line, operation to `def`, arrow to where the objects come from —
+  and reading code back into a diagram works the same way in reverse.
+- A multi-class system starts as prose: underline the nouns for classes and
+  the verbs for methods, then let judgement trim the list
+  ([13.3](03-multi-class.md)).
+- Build from the edges inward — the classes with no dependencies first, the
+  coordinator last — and keep `print` out of the model classes entirely.
+- Single responsibility, one owner per piece of state, and the law of least
+  surprise are the lessons that scale; the duplicated `describe` methods at
+  the end of the chapter are the itch inheritance will scratch.
+
+### Key terms
+
+| Term | Reminder |
+| --- | --- |
+| [invariant](../concept-index.md) | a condition that must stay true for an object's whole life |
+| [encapsulation](../concept-index.md) | hiding data behind methods so the class alone enforces its rules |
+| [access modifier](../concept-index.md) | Java's `public` / `protected` / `private`, checked by the compiler |
+| name mangling | `__x` stored as `_Class__x` — a rename, never a lock |
+| [property (Python)](../concept-index.md) | attribute syntax with a getter, and optionally a setter, underneath |
+| [UML class diagram](../concept-index.md) | boxes for classes, arrows for the relationships between them |
+| [composition](../concept-index.md) | the owner builds its parts and they die with it (`*--`) |
+| aggregation | the whole holds parts made elsewhere, which outlive it (`o--`) |
+| association vs dependency | a lasting reference to a peer (`-->`) versus a link that lasts one call (`..>`) |
+| single responsibility | one job per class, stateable in a single sentence |
+
+Now design a few systems of your own.
+
 Design skills grow by designing. The early exercises sharpen your
 encapsulation instincts; the middle ones make you draw and read UML; the
 last two extend the chapter's running systems. Attempt each one before

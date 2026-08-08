@@ -1,7 +1,59 @@
 # Exercises
 
-These exercises tour the whole chapter: the operating system's jobs, the
-memory map of a process, garbage collection, and the pipeline that turns
+## The chapter in brief
+
+- An operating system has two jobs: **landlord** (share scarce resources,
+  keep tenants apart) and **abstraction factory** (turn awkward hardware
+  into files, windows, and processes) ([23.1](01-os-processes.md)).
+- A **program** is a file; a **process** is that program in motion, with its
+  own memory, its own PID, and the OS's bookkeeping.
+- One core runs many processes by **time-slicing**: run, save state,
+  **context switch**, repeat — hundreds of times a second, invisibly.
+- **Threads** live inside one process and *share its memory*, which makes
+  communication trivial and **race conditions** possible.
+- User space cannot touch hardware; every real effect goes through a
+  **system call**, and every system call is a checkpoint the kernel can
+  refuse.
+- A process's address space has four regions: code, static data, **heap**
+  (grows up, holds objects) and **stack** (grows down, one frame per call)
+  ([23.2](02-memory-layout.md)).
+- `RecursionError` is a *stack-depth* limit, not an out-of-memory condition.
+- Lists **over-allocate** in a staircase of capacity jumps — the physical
+  reason `append` is amortized $O(1)$.
+- CPython frees objects by **reference counting** the instant a count hits
+  zero, plus a **cycle collector** for objects that only reference each
+  other.
+- A garbage-collected language still leaks by *accidental retention* — an
+  unbounded cache is reachable, so it is kept.
+- CPython runs a four-stage pipeline: source → AST → **bytecode** → the
+  ceval loop, which is a fetch–decode–execute machine written in software
+  ([23.3](03-interpreters-vms.md)).
+- "Compiled versus interpreted" is a spectrum: ahead-of-time (C), bytecode
+  plus JIT (Java, PyPy), bytecode plus interpretation (CPython).
+- The Run buttons on this site are **CPython compiled to WebAssembly** — a
+  virtual machine inside a virtual machine inside a sandboxed process on a
+  time-sliced kernel on silicon.
+
+### Key terms
+
+| Term | What it means |
+| --- | --- |
+| [process](../concept-index.md#p) | one running instance of a program, with its own memory and PID |
+| [thread](../concept-index.md#t) | an execution stream inside a process, sharing that process's memory |
+| race condition | a bug whose outcome depends on the exact interleaving of threads |
+| [system call](../concept-index.md#s) | a checked request from user space into the kernel |
+| [kernel vs user space](../concept-index.md#k) | the privileged core versus the restricted mode your code runs in |
+| [address space](../concept-index.md#a) | a process's private map of memory: code, static data, heap, stack |
+| [stack (memory region)](../concept-index.md#s) | one frame per active call; small, disciplined, and where `RecursionError` comes from |
+| [heap (memory region)](../concept-index.md#h) | where objects created at run time live |
+| [garbage collection](../concept-index.md#g) | the runtime reclaiming what the program can no longer reach |
+| [reference counting](../concept-index.md#r) | CPython's main mechanism: free an object the moment its count hits zero |
+| [bytecode](../concept-index.md#b) | instructions for a pretend machine, not for any physical CPU |
+| [virtual machine](../concept-index.md#v) | a machine made of software, with its own instruction set |
+| [JIT compiler](../concept-index.md#j) | compiles hot code to real machine code while the program runs |
+
+Now the exercises. They tour the whole chapter: the operating system's jobs,
+the memory map of a process, garbage collection, and the pipeline that turns
 your source code into something a machine — real or virtual — can execute.
 Do the prediction ones on paper *before* pressing ▶ Run.
 

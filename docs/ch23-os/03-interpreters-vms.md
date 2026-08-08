@@ -1,12 +1,17 @@
 # 23.3 Interpreters and virtual machines
 
 [Chapter 0](../ch00-machine/03-programs.md) told you, honestly but briefly,
-that Python "reads your code and carries it out." Twenty-three chapters
-later you are owed the real story — and it is better than the summary. In
-this section you will watch your own code pass through every stage of the
-CPython pipeline, compare it with Java's, discover that "compiled versus
-interpreted" is a spectrum rather than a war, and end at a genuinely
-vertiginous fact about the page you are reading right now.
+that Python "reads your code and carries it out." Twenty-three chapters later
+you are owed the real story — and it is better than the summary.
+
+In this section you will:
+
+- watch your own code pass through every stage of the CPython pipeline;
+- compare that pipeline with Java's;
+- discover that "compiled versus interpreted" is a spectrum rather than a
+  war;
+- and end at a genuinely vertiginous fact about the page you are reading
+  right now.
 
 ## The CPython pipeline: source → AST → bytecode → execution
 
@@ -23,11 +28,13 @@ flowchart LR
     E --> F["the ceval loop<br/>fetch–decode–execute,<br/>in software"]
 ```
 
-**Stage 1–2: parsing.** The parser reads your characters and builds an
-**abstract syntax tree** (AST) — a data structure capturing what the code
-*means* grammatically: this is an assignment; its target is `total`; its
-value is a multiplication of a name and a constant. Python will happily
-show you the tree for any code you like:
+### Stage 1–2: parsing
+
+The parser reads your characters and builds an **abstract syntax tree**
+(AST) — a data structure capturing what the code *means* grammatically: this
+is an assignment; its target is `total`; its value is a multiplication of a
+name and a constant. Python will happily show you the tree for any code you
+like:
 
 ```python
 import ast
@@ -38,15 +45,19 @@ print(ast.dump(tree, indent=2))
 
 Read the output inside-out: a `BinOp` multiplying `price` by `2`, nested as
 the left side of a `BinOp` adding `tax`, all wrapped in an `Assign` whose
-target is `total`. Notice what has already happened: precedence rules from
+target is `total`.
+
+Notice what has already happened. Precedence rules from
 [Chapter 2](../ch02-data/03-operators.md) are *resolved* — the tree's shape
 says `(price * 2) + tax`, and no parenthesis question can ever arise again.
-Syntax errors are simply the parser failing to build this tree, which is
+And syntax errors are simply the parser failing to build this tree, which is
 why a `SyntaxError` arrives before a single line runs.
 
-**Stage 3: compiling to bytecode.** Yes — *compiling*. CPython translates
-the AST into **bytecode**: compact instructions, not for any physical CPU,
-but for an imaginary, simplified processor. Bytecode is literally bytes:
+### Stage 3: compiling to bytecode
+
+Yes — *compiling*. CPython translates the AST into **bytecode**: compact
+instructions, not for any physical CPU, but for an imaginary, simplified
+processor. Bytecode is literally bytes:
 
 ```python
 code = compile("total = price * 2 + tax", "<demo>", "exec")
@@ -59,16 +70,21 @@ print("constants :", code.co_consts)
 
 The exact byte values shift between Python versions, but there it is — your
 one line of Python, reduced to a numbered instruction stream plus tables of
-the names and constants it mentions. (This explains the `.pyc` files and
-`__pycache__` folders Python scatters around real projects: cached
-bytecode, saved so unchanged files skip stages 1–3 next time.)
+the names and constants it mentions.
 
-**Stage 4: the ceval loop.** The heart of CPython is one function (in
-`ceval.c`) that does, in software, exactly what Chapter 0's processor does
-in silicon: **fetch** the next bytecode instruction, **decode** which
-operation it is, **execute** it, repeat. For this reason CPython is called
-a **virtual machine** (VM) — a machine made of code, with its own
-instruction set, running on the real one.
+(This explains the `.pyc` files and `__pycache__` folders Python scatters
+around real projects: cached bytecode, saved so unchanged files skip stages
+1–3 next time.)
+
+### Stage 4: the ceval loop
+
+The heart of CPython is one function, in `ceval.c`, that does in software
+exactly what Chapter 0's processor does in silicon: **fetch** the next
+bytecode instruction, **decode** which operation it is, **execute** it,
+repeat.
+
+For this reason CPython is called a **virtual machine** (VM) — a machine made
+of code, with its own instruction set, running on the real one.
 
 ### Reading real bytecode with `dis`
 
@@ -85,10 +101,11 @@ def total_price(quantity, unit_price):
 dis.dis(total_price)
 ```
 
-The listing's exact details vary slightly between Python versions (newer
-versions fuse some instruction pairs and add hints), but the shape is
-always this, and it is worth reading instruction by instruction. The
-leftmost numbers are source line numbers; each row is one instruction for
+The listing's exact details vary slightly between Python versions — newer
+ones fuse some instruction pairs and add hints — but the shape is always
+this, and it is worth reading instruction by instruction.
+
+The leftmost numbers are source line numbers. Each row is one instruction for
 the virtual machine, which keeps a little working stack of values:
 
 - `RESUME` — version-dependent housekeeping as the call starts; ignore it.
@@ -146,13 +163,14 @@ multiply, store; load, constant, add, return. Two ecosystems, independently
 converging on a stack-shaped pretend machine. (The `i` prefixes mean these
 instructions work on `int`s — the JVM's bytecode is typed, just as Java is.)
 
-The JVM adds one spectacular trick: **just-in-time (JIT) compilation**.
-While bytecode runs, the JVM watches for *hot* code — a method called
-thousands of times, a tight loop — and compiles exactly those parts into
-genuine machine code for your actual CPU, on the fly, optimizing them using
-facts observed at runtime. This is why long-running Java services are fast:
-the program *warms up*, and its hot paths end up running as native code,
-often near the speed of C.
+The JVM adds one spectacular trick: **just-in-time (JIT) compilation**. While
+bytecode runs, the JVM watches for *hot* code — a method called thousands of
+times, a tight loop — and compiles exactly those parts into genuine machine
+code for your actual CPU, on the fly, optimizing them using facts observed at
+runtime.
+
+This is why long-running Java services are fast: the program *warms up*, and
+its hot paths end up running as native code, often near the speed of C.
 
 ## A spectrum, not a war
 
@@ -168,30 +186,40 @@ bytecode). Java compiles to bytecode, interprets briefly, then compiles
 | Bytecode + interpretation | CPython | Compile to bytecode automatically, behind the scenes | The VM's fetch–decode–execute loop |
 | Bytecode + JIT, for Python | PyPy | Same source language as CPython, JIT strategy like the JVM | The VM, then JIT-compiled hot loops |
 
-The trade is always the same: the more translation you do ahead of time,
-the faster it runs but the more tied to one machine the result is; the more
-you interpret, the more portable and flexible everything stays. PyPy's row
-is the proof that this is a choice of *strategy*, not a property of the
-language: the same Python programs, run with a JIT, are often several times
-faster.
+The trade is always the same: the more translation you do ahead of time, the
+faster it runs but the more tied to one machine the result is; the more you
+interpret, the more portable and flexible everything stays.
+
+PyPy's row is the proof that this is a choice of *strategy*, not a property
+of the language: the same Python programs, run with a JIT, are often several
+times faster.
+
+### Why virtual machines win on portability
 
 Portability is the VM's superpower, and it is why Java's slogan was
-**"write once, run anywhere."** A C program compiled for an x86 Windows
-machine is meaningless noise to an ARM Mac — machine code names one
-specific CPU's instructions. But `.class` files and `.pyc` bytecode target
-the *virtual* machine, and the virtual machine is just a program: implement
-it once per platform, and every bytecode file ever produced runs on all of
-them. The pretend machine is the same everywhere; only the pretender
-changes.
+**"write once, run anywhere."**
+
+A C program compiled for an x86 Windows machine is meaningless noise to an
+ARM Mac — machine code names one specific CPU's instructions. But `.class`
+files and `.pyc` bytecode target the *virtual* machine, and the virtual
+machine is just a program: implement it once per platform, and every bytecode
+file ever produced runs on all of them.
+
+The pretend machine is the same everywhere; only the pretender changes.
 
 ## The tower under this page
 
-Now for the punchline the whole handbook has been walking toward. Every
-runnable Python block on this site runs on **Pyodide** — the CPython interpreter
-(that C program with the ceval loop) *itself compiled* to **WebAssembly**
-(Wasm), a portable bytecode that browsers can execute. WebAssembly is — say
-it with me — a virtual machine. Which means that when you pressed ▶ Run on
-the `dis` example above, the actual arrangement was:
+Now for the punchline the whole handbook has been walking toward.
+
+!!! note "The code you have been running is CPython compiled to WebAssembly"
+    Every runnable Python block on this site runs on **Pyodide**: the
+    CPython interpreter — that C program with the ceval loop — *itself
+    compiled* to **WebAssembly** (Wasm), a portable bytecode that browsers
+    can execute.
+
+And WebAssembly is — say it with me — a virtual machine. Which means that
+when you pressed ▶ Run on the `dis` example above, the actual arrangement
+was:
 
 ```mermaid
 flowchart TB
@@ -204,25 +232,37 @@ flowchart TB
     A --> B --> C --> D --> E --> F
 ```
 
-Walk it once, slowly, with everything this chapter gave you. Your function
-became Python bytecode, executed by the ceval loop — but the ceval loop is
-not machine code here; it is Wasm bytecode, executed (and JIT-compiled, when
-hot) by the browser's WebAssembly VM. The browser doing that is an ordinary
-process in user space, holding its own stack and heap in its own address
-space, allowed to touch nothing except through system calls, running only
-in the time slices the scheduler grants — sharing the machine, that whole
-time, with your music player. And at the bottom, for the first time since
-your keystroke, a physical CPU performs the fetch–decode–execute cycle from
-[Chapter 0](../ch00-machine/01-hardware.md) — the cycle every layer above
-it has been *imitating in software*.
+Walk it once, slowly, with everything this chapter gave you:
 
-A virtual machine, inside a virtual machine, inside a sandboxed process,
-on a time-sliced kernel, on silicon. Five stories of the same simple loop,
-each layer pretending to be a computer for the benefit of the layer above —
-and it is turtles most of the way down, until, at the bottom, one real
-turtle. That this tower not only works but runs fast enough that you never
-suspected it existed is among the great engineering achievements of our
-time. You now know every floor of it by name.
+1. **Your function became Python bytecode**, executed by the ceval loop.
+2. **The ceval loop is not machine code here.** It is Wasm bytecode,
+   executed — and JIT-compiled, when hot — by the browser's WebAssembly VM.
+3. **The browser doing that is an ordinary process** in user space, holding
+   its own stack and heap in its own address space, allowed to touch nothing
+   except through system calls, running only in the time slices the
+   scheduler grants — sharing the machine, that whole time, with your music
+   player.
+4. **At the bottom, a physical CPU** performs the fetch–decode–execute cycle
+   from [Chapter 0](../ch00-machine/01-hardware.md) — the cycle every layer
+   above it has been *imitating in software*.
+
+A virtual machine, inside a virtual machine, inside a sandboxed process, on a
+time-sliced kernel, on silicon. Five stories of the same simple loop, each
+layer pretending to be a computer for the benefit of the layer above — turtles
+most of the way down, until, at the bottom, one real turtle.
+
+That this tower not only works but runs fast enough that you never suspected
+it existed is among the great engineering achievements of our time. You now
+know every floor of it by name.
+
+!!! tip "The same reasoning, one workload later"
+    Nothing on this page was about machine learning, and yet this way of
+    thinking — *what does each step actually cost, and where does the time
+    really go?* — is most of what makes running a language model fast or
+    slow. [Chapter 27](../ch27-inference/index.md) asks exactly that question
+    about generating text one token at a time, and answers it with caching,
+    batching, and scheduling: the contents of this chapter, pointed at a
+    newer machine.
 
 !!! warning "Common mistakes"
 

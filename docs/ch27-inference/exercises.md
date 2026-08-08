@@ -1,5 +1,62 @@
 # Chapter 27 · Exercises
 
+## The chapter in brief
+
+- Generating without a **KV cache** re-projects every earlier token at every
+  step, which is $\Theta(n^2)$ work where $\Theta(n)$ would do
+  ([27.1](01-kv-cache.md)).
+- The cache stores **K and V only** — per token, per layer, per KV head — and
+  it changes the output by nothing at all.
+- The KV cache removes *redundant* work; it does **not** make attention
+  linear, because the score total is $\Theta(n^2)$ even with a perfect cache.
+- Cache size is one multiplication you can do from a `config.json`, and
+  $H_{kv}$ is the term architects cut with **GQA** and **MQA**.
+- **Prefill is compute-bound and decode is memory-bandwidth-bound**, which is
+  why one unbatched user leaves the GPU's multipliers idle ~99% of the time.
+- **Prefix caching** reuses the K and V of a shared prompt across requests,
+  so stable text belongs at the *top* of a prompt and volatile text at the
+  bottom.
+- **Batching** is free up to the compute-bound crossover, and costly past it —
+  the same lever raises throughput and lowers per-user speed
+  ([27.2](02-batching.md)).
+- **Continuous batching** refills a slot the moment a sequence finishes,
+  which converts static batching's head-of-line blocking into useful work.
+- **PagedAttention** is OS paging applied to the KV cache: fixed-size blocks
+  kill fragmentation and let identical prefixes share physical memory.
+- **Chunked prefill** stops one long prompt from freezing everyone else's
+  token stream, for a few percent of extra TTFT.
+- **TTFT, ITL, TPOT, and throughput are different numbers** that move in
+  different directions; streaming shortens the *perceived* wait without
+  changing E2E latency at all ([27.3](03-latency-streaming.md)).
+- **Quantization** trades precision for memory, and grouping is what makes
+  4 bits survive outliers — measure the quality cost on your own task
+  ([27.4](04-quantization-deploy.md)).
+
+### Key terms
+
+| Term | One-clause reminder |
+| --- | --- |
+| [KV cache](../appendix/E-ai-glossary.md) | Stored keys and values so old tokens are never re-projected |
+| [Prefill](../appendix/E-ai-glossary.md) | Processing the whole prompt at once; compute-bound |
+| [Decode](../appendix/E-ai-glossary.md) | Producing one token per step; memory-bandwidth-bound |
+| [Prefix caching](../appendix/E-ai-glossary.md) | Reusing the cached blocks of a prompt prefix shared across requests |
+| [GQA / MQA](../appendix/E-ai-glossary.md) | Fewer KV heads than query heads, so the cache shrinks proportionally |
+| [Continuous batching](../appendix/E-ai-glossary.md) | Scheduling per iteration instead of per batch |
+| Head-of-line blocking | A short request held hostage by the longest member of its batch |
+| [PagedAttention](../appendix/E-ai-glossary.md) | Fixed-size KV blocks plus a block table — virtual memory for the cache |
+| Chunked prefill | Splitting a long prompt across steps so decoders never stall |
+| [TTFT](../appendix/E-ai-glossary.md) | Time to first token: queueing plus prefill |
+| [TPOT](../appendix/E-ai-glossary.md) | Time per output token: the mean gap between tokens |
+| [Throughput](../appendix/E-ai-glossary.md) | Output tokens per second across all users, set mostly by batch size |
+| [SSE](../appendix/E-ai-glossary.md) | Server-Sent Events, the plain-HTTP wire format that carries a token stream |
+| [Quantization](../appendix/E-ai-glossary.md) | Storing weights in fewer bits, with a scale per group |
+| [GGUF / GPTQ / AWQ / NF4](../appendix/E-ai-glossary.md) | The four quantized-model ecosystems you will actually download |
+
+The [concept index](../concept-index.md) links each of these to the section
+that derives it.
+
+Now the problems.
+
 Eight problems on the arithmetic and the scheduling of LLM inference. They
 build on [27.1](01-kv-cache.md), [27.2](02-batching.md),
 [27.3](03-latency-streaming.md), and [27.4](04-quantization-deploy.md), and

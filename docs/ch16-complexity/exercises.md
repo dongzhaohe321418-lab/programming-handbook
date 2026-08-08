@@ -1,5 +1,54 @@
 # Exercises
 
+## The chapter in brief
+
+- An algorithm's cost is described in **steps as a function of $n$**, not in
+  seconds, because seconds describe a laptop rather than an algorithm
+  ([16.1](01-big-o.md)).
+- Four code shapes produce the four basic growth patterns: no loop gives
+  $1$, one loop gives $n$, nested loops give $n^2$, and a halving loop gives
+  $\log_2 n$.
+- **Big-O names the growth family** by discarding constant factors and
+  lower-order terms — the very parts two careful counters would disagree
+  about — and formally means "$f$ stays below some fixed multiple of $g$
+  beyond a threshold $n_0$".
+- Best, worst, and average case can differ for the same algorithm, and an
+  unqualified Big-O claim means the **worst** case.
+- To read a Big-O off code: count the input-scaled loop nestings, add the
+  sequential parts, keep the dominant term.
+- Timing needs a protocol — **repeat and take the minimum** — because noise
+  can only ever make a run slower ([16.2](02-timing.md)).
+- The **doubling experiment** reveals the growth family from the outside: a
+  $T(2n)/T(n)$ ratio near 2 is linear, near 4 quadratic, near 8 cubic.
+- On **log-log axes** a power law is a straight line whose slope is the
+  exponent.
+- The classic timing traps are no warm-up, inputs too tiny, `print` inside
+  the timed region, and changing two things at once.
+- The six families from $O(1)$ to $O(2^n)$ each have a feasible input size
+  for a one-second budget — from unlimited down to about 26
+  ([16.3](03-complexity-zoo.md)).
+- `list.append` is **amortized** $O(1)$: individual appends may copy the
+  whole list, but proportional over-allocation makes $n$ appends cost $O(n)$
+  in total.
+- A loop is only as cheap as the dearest built-in inside it — `x in lst` or
+  `insert(0, x)` quietly turns a linear loop quadratic.
+
+### Key terms
+
+| Term | Reminder |
+| --- | --- |
+| [Big-O notation](../concept-index.md) | the growth family of a cost function, constants discarded |
+| growth family | the class $O(1)$, $O(\log n)$, $O(n)$, $O(n \log n)$, $O(n^2)$, $O(2^n)$ a cost belongs to |
+| dominant term | the fastest-growing term, the only one Big-O keeps |
+| [best / worst / average case](../concept-index.md) | cost on the luckiest, unluckiest, and typical input of a given size |
+| `time.perf_counter` | the high-resolution stopwatch used for all timing here |
+| doubling experiment | timing at $n$ and $2n$; the ratio $2^k$ reveals the exponent $k$ |
+| log-log plot | both axes logarithmic, so a power law's slope *is* its exponent |
+| [amortized cost](../concept-index.md) | the per-operation average over a whole sequence of operations |
+| accidental quadratic | a linear-looking loop containing a hidden $O(n)$ operation |
+
+On to the practice.
+
 Counting first, stopwatch second — same as the chapter. Keep every timing
 experiment's sizes modest (the solutions show sizes that finish fast), and
 remember the protocol: repeat, take the minimum.

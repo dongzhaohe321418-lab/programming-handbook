@@ -3,12 +3,18 @@
 You now know that variables hold references and objects live somewhere else.
 This page assembles the complete picture of *where*: stack frames full of
 names on one side, a heap full of objects on the other, and arrows crossing
-from every frame into the shared heap. Once you can draw that picture for a
-running program, two things fall out almost for free — why a "list of
-objects" behaves the way it does, and what object-oriented programming
-actually splits in two: the *user's* view of an object and the *author's*
-view. You have been living on the user side since Chapter 3; this page walks
-you up to the door of the author side.
+from every frame into the shared heap.
+
+Once you can draw that picture for a running program, two things fall out
+almost for free:
+
+- **why a "list of objects" behaves the way it does** — mutate through any
+  route and every route sees it;
+- **what object-oriented programming actually splits in two** — the *user's*
+  view of an object and the *author's* view.
+
+You have been living on the user side since Chapter 3; this page walks you up
+to the door of the author side.
 
 ## Names on the stack, objects on the heap
 
@@ -136,6 +142,8 @@ creates two legitimate ways to look at the same object:
   the state inside and the code that manipulates it, and you are
   responsible for keeping every promise the menu makes.
 
+### Being the user
+
 Here is a `Counter` object. First, be its **user**: the class definition is
 included so the block can run, but skip it — read only the last six lines,
 where the counter is *used*:
@@ -165,18 +173,27 @@ As a user you needed exactly three sentences of documentation: *`click()`
 counts one event, `value()` reports the total, `reset()` starts over.*
 That is the external view — a contract, not a mechanism.
 
-Now put on the author's hat and read the class from the top. The state is
-one variable, `self._count`, created when the object is born (`__init__`)
-and stored *inside the object on the heap* — not in any frame, which is why
-it survives between calls. Each method is a promise-keeper: `click` adds
-one, `reset` zeroes it, `value` reports it. The leading underscore in
-`_count` is the author whispering "this is internal — users, stay out."
+### Being the author
+
+Now put on the author's hat and read the class from the top. Three things are
+worth naming:
+
+- **The state** is one variable, `self._count`. It is created when the object
+  is born (`__init__`) and stored *inside the object on the heap* — not in any
+  frame, which is why it survives between calls.
+- **Each method is a promise-keeper.** `click` adds one, `reset` zeroes it,
+  `value` reports it.
+- **The leading underscore** in `_count` is the author whispering "this is
+  internal — users, stay out."
+
 (The full grammar of classes — `self`, `__init__`, methods — is
 [Chapter 12](../ch12-classes/index.md)'s job; today you only need to *read*
 it.)
 
-And because objects live on the heap, everything from this chapter applies
-to them unchanged:
+### Objects alias exactly like lists
+
+Because objects live on the heap, everything from this chapter applies to
+them unchanged:
 
 ```python
 class Counter:
@@ -221,13 +238,15 @@ print(nums)                # [1, 2, 3]
 ```
 
 Since [Chapter 3](../ch03-functions/01-using-objects.md) you have used
-`str`, `list`, and friends purely through their external views. Somewhere
-inside `sort()` is a sophisticated algorithm you have never read — and its
-authors can replace it tomorrow with a faster one, and *your code will not
+`str`, `list`, and friends purely through their external views.
+
+Somewhere inside `sort()` is a sophisticated algorithm you have never read.
+Its authors can replace it tomorrow with a faster one and *your code will not
 change*, because you depended only on the promise, never on the mechanism.
-That is the entire payoff of the split: users get simplicity, authors get
-the freedom to change the insides, and the method menu is the treaty line
-between them.
+
+!!! tip "The payoff of the split"
+    Users get simplicity, authors get the freedom to change the insides, and
+    the method menu is the treaty line between them.
 
 The next step is inevitable: [Chapter 12](../ch12-classes/index.md) hands
 you the author's pen, and you will write `__init__`, methods, and promises

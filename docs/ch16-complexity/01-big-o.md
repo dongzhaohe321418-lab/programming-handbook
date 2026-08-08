@@ -97,18 +97,27 @@ base-2 logarithm, so this is **logarithmic time** — the step count is about
 $\log_2 n$. Logarithms grow so slowly that for practical purposes they feel
 almost constant.
 
-Four runnable experiments, four growth patterns: $1$, $n$, $n^2$, and
-$\log_2 n$. Everything else in this chapter is vocabulary for talking about
-them.
+Four runnable experiments, four growth patterns:
+
+| Code shape | Steps as $n$ grows | Name |
+| --- | --- | --- |
+| work that ignores the input | $1$ | constant |
+| one loop over the input | $n$ | linear |
+| a loop inside a loop | $n^2$ | quadratic |
+| a loop that halves what is left | $\log_2 n$ | logarithmic |
+
+Everything else in this chapter is vocabulary for talking about them.
 
 ## Big-O: naming the growth family
 
 Here is the awkward part: real step counts are messy. A careful count of
 some loop might give $3n^2 + 5n + 20$ steps — and a colleague who counts
 assignments differently might get $2n^2 + 7n + 12$. Both of you would be
-"right". Big-O notation exists to throw away exactly the parts you would
-disagree about — the constant factors and the smaller terms — and keep the
-part that matters: the **growth family**.
+"right".
+
+Big-O notation exists to throw away exactly the parts you would disagree
+about — the constant factors and the smaller terms — and keep the part that
+matters: the **growth family**.
 
 We say $f(n)$ *is* $O(g(n))$ — read "f is big-oh of g" — when, for large
 inputs, $f$ grows no faster than some constant multiple of $g$. The messy
@@ -189,9 +198,14 @@ default: a guarantee that holds no matter how unlucky the input.
 
 ## The dominant-term rule
 
-You now have everything needed to read code and name its family without a
-counter. The procedure: count loop nestings over the input, add costs of
-sequential parts, then *keep only the dominant term and drop its constant*.
+You now have everything needed to read code and name its family without ever
+bolting on a counter. To read a Big-O off a loop nest:
+
+1. **Find the loops whose length scales with the input**, and see how deeply
+   they nest — each level of nesting *multiplies*.
+2. **Add up the parts that run one after another** rather than nested.
+3. **Keep only the dominant term, and drop its constant factor.**
+
 Dominance order (slowest-growing first):
 
 $$ 1 \;<\; \log n \;<\; n \;<\; n \log n \;<\; n^2 \;<\; 2^n $$

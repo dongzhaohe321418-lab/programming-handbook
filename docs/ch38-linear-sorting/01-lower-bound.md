@@ -57,12 +57,15 @@ restriction — and, as we are about to see, also its cost.
 ## A sort is a decision tree
 
 Fix an algorithm and fix $n$. Now watch the algorithm run, and record only the
-comparisons it makes and their answers. The first comparison is the same
-regardless of input (the algorithm has learned nothing yet, so it has no reason
-to choose differently). Its answer — yes or no — determines the second
-comparison, whose answer determines the third, and so on. That structure is a
-**binary tree**: internal nodes are comparisons, edges are answers, and each
-leaf is one complete run of the algorithm.
+comparisons it makes and their answers.
+
+The first comparison is the same regardless of input — the algorithm has
+learned nothing yet, so it has no reason to choose differently. Its answer, yes
+or no, determines the second comparison, whose answer determines the third, and
+so on.
+
+That structure is a **binary tree**: internal nodes are comparisons, edges are
+answers, and each leaf is one complete run of the algorithm.
 
 Here is that tree for $n = 3$, sorting `a0, a1, a2`:
 
@@ -166,8 +169,11 @@ $$
 2^h \ \ge\ n! \qquad\Longrightarrow\qquad h \ \ge\ \log_2(n!)
 $$
 
-That is the theorem. Any comparison sort, on some input, makes at least
-$\log_2(n!)$ comparisons.
+!!! note "The comparison lower bound"
+
+    Any **comparison sort** makes at least $\log_2(n!)$ comparisons on some
+    input. Every word in that sentence is load-bearing, and the last section of
+    this page takes each one apart.
 
 ### Turning $\log_2(n!)$ into something readable
 
@@ -209,8 +215,10 @@ for n in (8, 16, 32, 100, 1000):
 ```
 
 The approximation is poor for tiny $n$ and excellent by $n = 1000$, which is
-exactly what "asymptotic" means. Note the use of `math.lgamma(n + 1)` rather
-than `math.log2(math.factorial(n))`: for large $n$ the factorial itself is an
+exactly what "asymptotic" means.
+
+Note the use of `math.lgamma(n + 1)` rather than
+`math.log2(math.factorial(n))`: for large $n$ the factorial itself is an
 enormous integer, and `lgamma` computes its logarithm directly.
 
 ## Checking the bound against a real algorithm
@@ -276,13 +284,14 @@ for n in (8, 16, 32):
 
 Read the final column. Merge sort uses about **three percent** more comparisons
 than the information-theoretic minimum. It is not merely $O(n \log n)$ — it is
-very nearly optimal among all possible comparison sorts, at every size. The
-crude $n \log_2 n$ column is a noticeably worse predictor than $\log_2(n!)$,
-because it omits the $-1.44n$ term.
+very nearly optimal among all possible comparison sorts, at every size.
 
-That is a striking thing to have proved with nothing but counting: we now know
-that no future algorithm will ever beat merge sort by more than a few percent,
-*provided it sorts by comparing*.
+Note also that the crude $n \log_2 n$ column is a noticeably worse predictor
+than $\log_2(n!)$, because it omits the $-1.44n$ term.
+
+That is a striking thing to have proved with nothing but counting: no future
+algorithm will ever beat merge sort by more than a few percent, *provided it
+sorts by comparing*.
 
 ## What the theorem does not forbid
 
@@ -312,11 +321,13 @@ Read the statement carefully and the loopholes appear.
   them.
 
 The last two bullets are the same idea from two directions, and together they
-are the whole of the next section. Sorting is fundamentally about *acquiring
-information*: you need $\log_2(n!)$ bits to identify which of the $n!$ orderings
-you were handed, and a yes/no comparison supplies at most one bit. But an
-algorithm that reads a two-digit key learns $\log_2 100 \approx 6.6$ bits in a
-single operation. It is not cheating the bound; it is asking a better question.
+are the whole of the next section.
+
+Sorting is fundamentally about *acquiring information*. You need $\log_2(n!)$
+bits to identify which of the $n!$ orderings you were handed, and a yes/no
+comparison supplies at most one bit. But an algorithm that reads a two-digit
+key learns $\log_2 100 \approx 6.6$ bits in a single operation. **It is not
+cheating the bound; it is asking a better question.**
 
 ```python
 import math
@@ -381,10 +392,10 @@ yes.
 
     ??? success "Answer"
         Only for very small $n$. We need $2n \ge \log_2(n!)$: at $n = 8$ that
-        is $16 \ge 15.3$, just barely true; at $n = 16$ it would be
-        $32 \ge 44.3$, false. So the claim is impossible from $n = 12$ or so
-        upward — a quick calculation ($n=12$: $24$ versus $\log_2(12!) = 28.8$)
-        settles it. Any claim of a *linear* comparison sort is false for all
+        is $16 \ge 15.3$, just barely true; at $n = 9$ it is already
+        $18 \ge 18.5$, false — and the gap only widens ($n = 16$: $32$ versus
+        $44.3$; $n = 32$: $64$ versus $117.7$). So the claim can hold only for
+        $n \le 8$. Any claim of a *linear* comparison sort is false for all
         large $n$.
 
 3. Python's `sorted()` sorts an already-sorted list of a million elements in

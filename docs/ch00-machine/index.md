@@ -4,6 +4,7 @@ Before you write a single line of code, it pays to know what you are actually
 talking *to*. A computer is not a magic box that understands English, and it
 is not intelligent. It is an astonishingly fast, astonishingly literal machine
 that does exactly one small thing at a time — billions of times per second.
+
 Every program you will ever write, from a two-line script to a game engine,
 is ultimately a long list of tiny instructions fed to that machine. This
 chapter shows you the machine.
@@ -21,7 +22,7 @@ example runs in your browser with the **▶ Run** button, and you are warmly
 encouraged to press it, change something, and press it again — that habit
 will serve you for the rest of the book.
 
-**After this chapter you can …**
+## After this chapter you can …
 
 - name the main hardware components (CPU, RAM, storage, input/output) and
   explain what each one does;
@@ -36,11 +37,13 @@ will serve you for the rest of the book.
   Python actually does with your source code;
 - trace a short program by hand, line by line, and predict its output.
 
-**Prerequisites:** none. This is the very first chapter. If you have not yet
-read [How to use this book](../how-to-use.md), it takes two minutes and
-explains the Run buttons.
+## Prerequisites
 
-**Sections**
+None. This is the very first chapter. If you have not yet read
+[How to use this book](../how-to-use.md), it takes two minutes and explains
+the Run buttons.
+
+## Sections
 
 - [0.1 What is a computer, really](01-hardware.md) — the hardware tour:
   CPU, memory, storage, and the speed hierarchy that shapes all of computing.

@@ -8,13 +8,14 @@ confront a famous Python trap (the `*` operator that silently makes every
 row the *same* row) and preview NumPy's two-dimensional arrays.
 
 The chapter then takes two steps that mark real growth as a programmer.
-First, we combine lists with functions and discover that a list argument
-is passed as a **reference**: a function can reach back and change the
-caller's data — sometimes exactly what you want, sometimes a baffling
-bug, and the difference is worth an entire section. Second, we write our
-first genuine **algorithms**: linear search and selection sort,
-hand-traced and instrumented with step counters so you can *see* the
-$n^2$ growth that Chapter 16 will make precise.
+
+1. **Lists meet functions.** A list argument is passed as a **reference**, so
+   a function can reach back and change the caller's data — sometimes exactly
+   what you want, sometimes a baffling bug. That difference is worth an entire
+   section.
+2. **We write our first genuine algorithms**: linear search and selection
+   sort, hand-traced and instrumented with step counters so you can *see* the
+   $n^2$ growth that Chapter 16 will make precise.
 
 Finally, we ask the question professionals ask about every function they
 write: *how do I know it works?* Unit testing — small, automated checks

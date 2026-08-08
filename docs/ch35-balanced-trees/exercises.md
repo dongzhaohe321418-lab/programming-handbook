@@ -1,9 +1,56 @@
 # Chapter 35 · Exercises
 
-Balanced trees reward pencil work. Draw the tree, name the case, apply the
-rule — *then* run the code and see whether the machine agrees with you. The
-first three exercises are paper-first on purpose; the last one is a small
-engineering project.
+## The chapter in brief
+
+- A binary search tree's height is a consequence of **arrival order**, not of
+  the data — and sorted input degrades it to a chain of height $n-1$
+  ([35.1](01-rotations.md)).
+- Many different tree shapes hold the same keys, and all of them share one
+  in-order traversal, so reshaping is always legal.
+- A **rotation** re-points three pointers in $O(1)$: it changes the shape and
+  leaves the in-order traversal untouched.
+- A single rotation fixes a subtree that leans *straight*; a **double
+  rotation** fixes a zig-zag by promoting the middle key.
+- The **AVL invariant** is one inequality at *every* node —
+  $\lvert h_L - h_R \rvert \le 1$ — enforced with a cached height per node
+  ([35.2](02-avl.md)).
+- Rebalancing has exactly four cases (LL, RR, LR, RL), chosen by the sign of
+  the balance factor and of the heavy child's.
+- Insert needs at most one rotation site; **delete can rotate at every level**
+  on the path back up.
+- An AVL tree is never more than about $1.44\log_2 n$ tall, because its
+  sparsest shape follows the Fibonacci recurrence.
+- A **red-black tree** swaps that single inequality for five colour
+  properties, and P5 — equal black-heights — is the one doing the balancing
+  ([35.3](03-red-black.md)).
+- Colouring the newcomer red keeps P5 free, so insertion only ever repairs P4,
+  in at most two rotations; deletion is the genuinely hard operation.
+- A **B-tree** changes the cost model from comparisons to **block reads**, and
+  a node sized to one disk block answers a billion-key query in four
+  ([35.4](04-b-trees.md)).
+- B-trees grow *upward* by splitting the root and shrink by merging, which is
+  why all leaves stay at the same depth without a single rotation.
+
+### Key terms
+
+| Term | What it means |
+| --- | --- |
+| [rotation](../concept-index.md#r) | three-pointer re-link that changes shape and preserves in-order order |
+| double rotation | two rotations that lift the middle key of a zig-zag |
+| [balance factor](../concept-index.md#b) | $h(\text{left}) - h(\text{right})$; legal values are $-1$, $0$, $+1$ |
+| [AVL tree](../concept-index.md#a) | BST where every balance factor is in $[-1, +1]$ |
+| [red-black tree](../concept-index.md#r) | BST balanced by five colour properties instead of heights |
+| black-height | black nodes on any path from a node down to a NIL leaf |
+| [B-tree](../concept-index.md#b) | wide search tree with all leaves at equal depth, sized to a disk block |
+| B+ tree | B-tree with data only in the leaves and the leaves linked left to right |
+| node split | full node halves, median rises into the parent — how a B-tree grows |
+| [invariant](../concept-index.md#i) | a promise the structure keeps between every operation |
+| [$O(\log n)$](../appendix/B-big-o.md) | the guarantee every structure in this chapter exists to protect |
+
+Now put it to work. Balanced trees reward pencil work: draw the tree, name the
+case, apply the rule — *then* run the code and see whether the machine agrees
+with you. The first three exercises are paper-first on purpose; the last one
+is a small engineering project.
 
 ### Exercise 35.1 — Name the rotation ●
 

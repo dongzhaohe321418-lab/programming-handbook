@@ -3,10 +3,12 @@
 When you wrote `name.upper()` in Chapter 3, someone else had already decided
 what a string *is* and what it can *do*. Today you get to be that someone.
 Writing a class means defining a new kind of object: the data each one
-carries, and the methods anyone may call on it. Nothing you have learned gets
-thrown away — a class is mostly variables and functions arranged in a new
-shape — but that shape is the single most important idea in this half of the
-book, so we will walk through it slowly, one organ at a time.
+carries, and the methods anyone may call on it.
+
+Nothing you have learned gets thrown away — a class is mostly variables and
+functions arranged in a new shape. But that shape is the single most
+important idea in this half of the book, so we will walk through it slowly,
+one organ at a time.
 
 ## Blueprint and instances
 
@@ -127,9 +129,11 @@ g.hello()                     # Python passes g anyway -> TypeError
 The message — `hello() takes 0 positional arguments but 1 was given` —
 confuses everyone the first time, because the call `g.hello()` *looks* empty.
 But you now know the hidden rewrite: Python passed `g` as the first argument,
-and `hello` had no parameter to catch it. Whenever you see "takes 0
-positional arguments but 1 was given" on a method call, the diagnosis is
-always the same: a missing `self`.
+and `hello` had no parameter to catch it.
+
+!!! tip "Diagnosis on sight"
+    "Takes 0 positional arguments but 1 was given" on a method call always
+    means the same thing: a missing `self`.
 
 === "Python"
 
@@ -235,20 +239,29 @@ Dog(name='Rex', age=3)
 [Dog(name='Ada', age=1), Dog(name='Bo', age=2)]
 ```
 
-Note that `__repr__` **returns** a string rather than printing one — Python
-calls it whenever anything needs to display the object: `print`, error
-messages, and (as the second line shows) every element when you print a
-list. The `!r` in the f-string shows the value with quotes. The gold
-standard is output resembling the call that would rebuild the object —
-exactly what we produced. Give every class you write a `__repr__`; ten
-seconds of typing repays itself the first time you debug.
+Three things to notice:
+
+- **`__repr__` returns a string; it does not print one.** Python calls it
+  whenever anything needs to display the object — `print`, error messages,
+  and (as the second line shows) every element of a printed list.
+- **The `!r` in the f-string** shows the value with its quotes.
+- **The gold standard** is output resembling the call that would rebuild the
+  object — exactly what we produced.
+
+Give every class you write a `__repr__`; ten seconds of typing repays itself
+the first time you debug.
 
 ## Class attributes vs instance attributes
 
-Everything stored through `self` is an **instance attribute** — one copy per
-object. A variable assigned directly inside the `class` block, outside any
-method, is a **class attribute** — one copy total, shared by every instance.
-Use one for facts true of the whole species, not of one individual:
+Not every attribute belongs to an individual object:
+
+| | Instance attribute | Class attribute |
+| --- | --- | --- |
+| Written as | `self.name = ...`, inside a method | a plain assignment in the `class` block |
+| How many copies | one per object | one in total, shared by every instance |
+| Use it for | anything that varies from object to object | facts true of the whole species |
+
+Here both kinds live side by side:
 
 ```python
 class Dog:
@@ -274,11 +287,12 @@ Canis lupus familiaris / Canis lupus familiaris
 ```
 
 When you write `rex.species`, Python looks in the instance first and — not
-finding a `species` there — falls back to the class; that fallback is why
-one assignment to `Dog.species` changed the answer for both dogs. The trap
-runs in reverse, too: `rex.species = "wolf"` would *not* change the class
-copy but create an instance attribute on `rex` alone that shadows the shared
-one. The exercises turn this into a prediction puzzle.
+finding a `species` there — falls back to the class. That fallback is why one
+assignment to `Dog.species` changed the answer for both dogs.
+
+The trap runs in reverse, too: `rex.species = "wolf"` would *not* change the
+class copy. It would create an instance attribute on `rex` alone that shadows
+the shared one. The exercises turn this into a prediction puzzle.
 
 ## The whole anatomy, side by side
 
@@ -341,11 +355,19 @@ everything else is per-instance.
     rex.bark();
     ```
 
-The translation table is short: field ↔ instance attribute, constructor ↔
-`__init__`, `this` ↔ `self` (explicit), `static` field ↔ class attribute,
-`new Dog(...)` ↔ `Dog(...)`. Java also declares types and access modifiers
-(`private String name`) — Python handles visibility by convention instead,
-a story [Chapter 13 takes up properly](../ch13-design/01-encapsulation.md).
+The translation table is short:
+
+| Java | Python |
+| --- | --- |
+| field | instance attribute |
+| constructor | `__init__` |
+| `this` (often left implicit) | `self` (always written out) |
+| `static` field | class attribute |
+| `new Dog("Rex", 3)` | `Dog("Rex", 3)` |
+
+Java also declares types and access modifiers (`private String name`) —
+Python handles visibility by convention instead, a story
+[Chapter 13 takes up properly](../ch13-design/01-encapsulation.md).
 
 !!! warning "Common mistakes"
     - **Forgetting `self` in the method definition.** The resulting

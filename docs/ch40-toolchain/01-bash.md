@@ -35,17 +35,22 @@ cp notes.txt archive/notes-$(date +%F).txt
 echo "Done."
 ```
 
+### 1. The shebang line
+
 The first line is the **shebang** (`#!`), and it is read by the operating
 system, not by bash: it says which interpreter should run the rest of the
-file. `#!/usr/bin/env bash` asks the environment to find whichever `bash` is
-first on the user's `PATH`, which is more portable than hard-coding
-`#!/bin/bash` — on macOS, for instance, `/bin/bash` is an ancient version
-while a modern one lives elsewhere.
+file.
 
-The second thing is the **executable bit**. A file is not runnable just
-because it contains commands; the file system stores a permission flag that
-says "this may be executed", and `chmod +x` sets it
-([Section 40.2](02-ssh-remote.md) decodes those permission bits in detail):
+`#!/usr/bin/env bash` asks the environment to find whichever `bash` is first on
+the user's `PATH`, which is more portable than hard-coding `#!/bin/bash` — on
+macOS, for instance, `/bin/bash` is an ancient version while a modern one lives
+elsewhere.
+
+### 2. The executable bit
+
+A file is not runnable just because it contains commands. The file system
+stores a permission flag that says "this may be executed", and `chmod +x` sets
+it ([Section 40.2](02-ssh-remote.md) decodes those permission bits in detail):
 
 ```console
 $ ls -l backup.sh
@@ -55,9 +60,11 @@ $ ls -l backup.sh
 -rwxr-xr-x  1 kim  staff  164 Mar  4 09:12 backup.sh
 ```
 
-The third is knowing how to *invoke* it. Typing `backup.sh` alone fails,
-because the shell only searches the directories listed in `PATH` — and the
-current directory is deliberately not one of them. Say where the file is:
+### 3. Knowing how to invoke it
+
+Typing `backup.sh` alone fails, because the shell only searches the
+directories listed in `PATH` — and the current directory is deliberately not
+one of them. Say where the file is:
 
 ```console
 $ backup.sh
@@ -88,13 +95,14 @@ echo "${name}s notebook"       # braces where the name would run into text
 
 `name = "Ada"` with spaces is a *different command*: bash reads `name` as a
 program to run with the arguments `=` and `"Ada"`. That is a beginner's first
-bash error, and it is a good introduction to how the language thinks — every
-line is a command line, split into words.
+bash error, and it is a good introduction to how the language thinks — **every
+line is a command line, split into words**.
 
-That word splitting is the source of **the** bash bug. When bash expands
-`$var`, it substitutes the text and *then* splits the result on whitespace
-into separate arguments. If the value contains a space, one argument becomes
-two:
+### Word splitting, the bug that defines bash
+
+That splitting is the source of **the** bash bug. When bash expands `$var`, it
+substitutes the text and *then* splits the result on whitespace into separate
+arguments. If the value contains a space, one argument becomes two:
 
 ```text
 file="my notes.txt"
@@ -126,9 +134,9 @@ for label, line in [("unquoted", broken), ("quoted", fixed)]:
 
 print()
 # The same failure with an EMPTY variable, this time inside a test:
-missing = ""                   # imagine: file="" because a lookup failed
-print('[ -f $file ]   ->', shlex.split(f"[ -f {missing} ]"))
-print('[ -f "$file" ] ->', shlex.split(f'[ -f "{missing}" ]'))
+file = ""                      # imagine: file="" because a lookup failed
+print('[ -f $file ]   ->', shlex.split(f"[ -f {file} ]"))
+print('[ -f "$file" ] ->', shlex.split(f'[ -f "{file}" ]'))
 ```
 
 ```text
@@ -146,8 +154,10 @@ Look hard at the last two lines. With an empty unquoted variable the test
 loses an argument entirely — `[ -f ]` is not "test an empty filename", it is
 a *differently shaped command*, and old-style `[ ]` happily reports success
 for it. The quoted version keeps the empty string as a real argument and
-correctly reports failure. This one habit prevents more shell bugs than
-everything else on this page combined:
+correctly reports failure.
+
+**Quoting is the one bash habit that prevents most bash bugs.** It is worth
+more than everything else on this page combined:
 
 !!! tip "Quote every expansion"
     Write `"$var"`, `"$1"`, `"$(command)"`, `"${array[@]}"` — always, unless
@@ -271,9 +281,10 @@ $ make ; run-tests ; deploy
 ```
 
 The second chain deserves a second look: the *chain* succeeds (`$? = 0`)
-even though the tests failed, because `alert-team` ran and returned 0. That
-is exactly how a `|| echo failed` line can accidentally hide a failure from
-a CI system that only checks the final status.
+even though the tests failed, because `alert-team` ran and returned 0.
+
+That is exactly how a `|| echo failed` line can accidentally hide a failure
+from a CI system that only checks the final status.
 
 Your own script sets its status with `exit`:
 
@@ -318,14 +329,17 @@ regex matching.
 | `[[ $n -lt 10 ]]` | integer comparison: `-eq -ne -lt -le -gt -ge` |
 | `[[ -f a && -f b ]]` | both — inside `[[ ]]`, `&&` and <code>&#124;&#124;</code> work directly |
 
-The integer operators are spelled with letters because `<` and `>` already
-mean redirection. Using `==` on numbers compares them as *text*, so `"10"`
-sorts before `"9"` — a real and quiet source of wrong answers.
+The integer operators are spelled with letters because in the older `[ ]` test
+`<` and `>` would be read as redirection. Inside `[[ ]]` they do work — but
+they compare *text*, so `[[ 10 > 9 ]]` is **false**, because `"10"` sorts
+before `"9"`. Use `-gt`/`-lt` for numbers; that mix-up is a real and quiet
+source of wrong answers.
 
 ## Loops
 
-`for` iterates over a list of words. The list is usually a glob, an array, or
-the output of a command:
+### `for` — over a list of words
+
+The list is usually a glob, an array, or the output of a command:
 
 ```text
 for file in *.log; do
@@ -340,8 +354,10 @@ for host in web-01 web-02 web-03; do
 done
 ```
 
-`while` repeats as long as a command succeeds. The canonical use is reading a
-file line by line, and it has a canonical spelling worth memorising:
+### `while` — as long as a command succeeds
+
+The canonical use is reading a file line by line, and it has a canonical
+spelling worth memorising:
 
 ```text
 while IFS= read -r line; do
@@ -353,7 +369,9 @@ done < input.txt
 backslashes being interpreted as escapes. Without both, `read` quietly
 mangles data.
 
-`case` is the shell's `match` statement, and it matches glob patterns:
+### `case` — the shell's `match` statement
+
+It matches glob patterns, not just literals:
 
 ```text
 case "$1" in
@@ -371,6 +389,8 @@ fall-through by default — unlike Java's `switch`, one branch runs and the
 `case` ends.
 
 ## Functions, arguments, and here-documents
+
+### Functions, and why `local` matters
 
 A function is a named block. Inside it, `$1`, `$2`, … are *its* arguments,
 `$@` is all of them, and `local` keeps a variable from leaking into the rest
@@ -396,8 +416,10 @@ result=$(basename "$PWD")                 # capture OUTPUT with $( )
 log INFO "project is $result"
 ```
 
-A shell function returns a *status*, not a value. To hand data back, print it
-and let the caller capture it with `$( )`.
+**A shell function returns a *status*, not a value.** To hand data back, print
+it and let the caller capture it with `$( )`.
+
+### The script's own arguments
 
 The script itself has the same positional parameters:
 
@@ -409,6 +431,8 @@ The script itself has the same positional parameters:
 | `"$@"` | all arguments, each kept as one word — almost always what you want |
 | `$*` | all arguments joined into a single word |
 | `${1:-default}` | `$1`, or `default` if it is unset or empty |
+
+### Here-documents
 
 A **here-document** feeds a literal block of text to a command's standard
 input — the readable way to write usage messages, SQL, or config files:
@@ -431,8 +455,9 @@ is what you want when generating a config file from values.
 
 ## Redirection, file descriptors, and pipes
 
-Every process starts with three open streams, identified by small integers
-called **file descriptors**:
+### The three streams every process starts with
+
+They are identified by small integers called **file descriptors**:
 
 | FD | Name | Default |
 |---|---|---|
@@ -440,8 +465,10 @@ called **file descriptors**:
 | 1 | standard output (`stdout`) | your terminal |
 | 2 | standard error (`stderr`) | your terminal |
 
-They both land on your screen, which hides the fact that they are separate
-channels — until you redirect one of them:
+### Redirecting them
+
+Streams 1 and 2 both land on your screen, which hides the fact that they are
+separate channels — until you redirect one of them:
 
 ```console
 $ ./build.sh > build.log            # stdout to a file (truncating it first)
@@ -454,11 +481,20 @@ $ ./build.sh > /dev/null 2>&1       # discard everything: the "quiet" idiom
 $ ./build.sh 2>&1 | tee build.log   # to the screen AND a file
 ```
 
+### `2>&1`, and why the order matters
+
 `2>&1` reads as "make descriptor 2 point at whatever descriptor 1 currently
-points at", and the *order matters*. `> file 2>&1` sends both to the file.
-`2>&1 > file` sends stderr to the terminal (where 1 pointed at the time) and
-only stdout to the file. That reversal is a classic interview question and a
-classic real-world bug.
+points at". Redirections are applied strictly left to right, so:
+
+- `> file 2>&1` — stdout goes to the file, then stderr is aimed at wherever
+  stdout goes. **Both end up in the file.**
+- `2>&1 > file` — stderr is aimed at wherever stdout goes *right now*, which
+  is still the terminal, and only then is stdout moved. **Errors stay on
+  screen.**
+
+That reversal is a classic interview question and a classic real-world bug.
+
+### The pipe
 
 The `|` operator connects one process's descriptor 1 directly to the next
 process's descriptor 0, with no temporary file. That is the machinery behind
@@ -471,8 +507,10 @@ instantly on a file bigger than memory.
 By default, bash is dangerously forgiving: a failing command does not stop
 the script, and a misspelled variable expands to the empty string. A script
 that deletes `"$TARGET_DIR"/*` where `TARGET_DIR` was never set will happily
-delete `/*`. Three settings fix most of that, and one line at the top of
-every serious script turns them on:
+delete `/*`.
+
+Three settings fix most of that, and one line at the top of every serious
+script turns them on:
 
 ```text
 #!/usr/bin/env bash
@@ -487,24 +525,22 @@ IFS=$'\n\t'
 | `set -o pipefail` | — | a pipeline fails if **any** stage fails, not just the last one |
 | `IFS=$'\n\t'` | — | split words on newlines and tabs only, not spaces |
 
-Why each one earns its place:
+Why each one earns its place, in the order they appear on the line:
 
-**`-e`** turns "the copy failed but we carried on and deployed anyway" into
-an immediate stop. Without it, every single command needs its own
-`|| exit 1`.
-
-**`-u`** catches typos. `rm -rf "$BUILD_DIR/"` where the variable is actually
-called `BUILDDIR` becomes an error instead of `rm -rf /`.
-
-**`pipefail`** matters because a pipeline's exit status is normally the
-status of its *last* command only. `curl -f https://example.com/data | wc -l`
-reports success whenever `wc` succeeds — which it always does, even when
-`curl` failed and fed it nothing. With `pipefail`, the pipeline reports the
-rightmost non-zero status, so the failure surfaces.
-
-**`IFS=$'\n\t'`** is optional but common: it stops unquoted expansions being
-split on spaces, which makes filenames with spaces survive a little longer.
-It is a seatbelt, not a substitute for quoting.
+1. **`-e` stops the script at the first failure.** It turns "the copy failed
+   but we carried on and deployed anyway" into an immediate stop. Without it,
+   every single command needs its own `|| exit 1`.
+2. **`-u` catches typos.** `rm -rf "$BUILD_DIR/"` where the variable is
+   actually called `BUILDDIR` becomes an error instead of `rm -rf /`.
+3. **`pipefail` stops a pipeline hiding a failure.** A pipeline's exit status
+   is normally the status of its *last* command only, so
+   `curl -f https://example.com/data | wc -l` reports success whenever `wc`
+   succeeds — which it always does, even when `curl` failed and fed it
+   nothing. With `pipefail` the pipeline reports the rightmost non-zero
+   status, and the failure surfaces.
+4. **`IFS=$'\n\t'` is optional but common.** It stops unquoted expansions
+   being split on spaces, which makes filenames with spaces survive a little
+   longer. It is a seatbelt, not a substitute for quoting.
 
 !!! warning "`set -e` is not as strong as it looks"
     Be honest about its limits, because people over-trust it. `set -e` does
@@ -544,12 +580,14 @@ each is enough to recognise them; the full card is in
 | `tr` | `tr 'A-Z' 'a-z' < notes.txt` | translate or delete characters |
 | `head` / `tail` | `tail -n 50 -f app.log` | first/last lines; `-f` follows a growing file |
 
-Two notes that save real time. `uniq` only collapses *adjacent* duplicates,
-so it is nearly always preceded by `sort` — the same gotcha as
-`itertools.groupby` in [Section 39.3](../ch39-streams/03-pipelines.md).
-And `find ... -print0 | xargs -0` exists because filenames can contain
-spaces and newlines: the `-print0`/`-0` pair separates names with a zero byte
-instead, which no filename can contain.
+Two notes that save real time:
+
+- **`uniq` only collapses *adjacent* duplicates**, so it is nearly always
+  preceded by `sort` — the same gotcha as `itertools.groupby` in
+  [Section 39.3](../ch39-streams/03-pipelines.md).
+- **`find ... -print0 | xargs -0` exists because filenames can contain spaces
+  and newlines.** The `-print0`/`-0` pair separates names with a zero byte
+  instead, which no filename can contain.
 
 ## A complete build-and-test runner, dissected
 
@@ -784,14 +822,17 @@ source read 16 of 16 lines
 source read 4 of 16 lines
 ```
 
-Three things this makes concrete. The output is identical to the real shell
-command — the mapping from `|` to `stage(stream)` is exact. `partial` is
-doing the job that command-line flags do: `partial(head, 3)` *is* `head -3`,
-a stage with its option baked in. And the two counters show the property that
-makes pipelines scale: the full ranking had to read all sixteen lines because
-`sort` cannot emit anything until it has seen everything, but
-`grep ERROR | head -2` read only **four** lines before stopping. On a
-forty-gigabyte log that difference is the whole ball game.
+Three things this makes concrete:
+
+- **The mapping from `|` to `stage(stream)` is exact.** The output is identical
+  to the real shell command, produced by six generators instead of six
+  processes.
+- **`partial` does the job command-line flags do.** `partial(head, 3)` *is*
+  `head -3`: a stage with its option baked in.
+- **Early exit is real, and the counters prove it.** The full ranking had to
+  read all sixteen lines because `sort` cannot emit anything until it has seen
+  everything — but `grep ERROR | head -2` read only **four** lines before
+  stopping. On a forty-gigabyte log that difference is the whole ball game.
 
 !!! note "One honest difference from the real `cut`"
     Real `cut -d' '` does not collapse runs of spaces: two consecutive

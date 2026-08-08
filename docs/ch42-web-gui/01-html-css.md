@@ -40,19 +40,33 @@ flowchart TD
 
 That tree has a name: the **DOM**, the Document Object Model. Every angle
 bracket you type becomes a **node**; nodes contain other nodes; the whole page
-is one tree with a single root. CSS styles that tree by selecting nodes out of
-it, and JavaScript (section 42.3) changes the page by editing that tree — never
-by editing the text file. Once you see the tree behind the markup, "why is my
-`<div>` inside my `<p>`?" and "why does this style leak into that box?" become
-questions with visible answers.
+is one tree with a single root.
+
+!!! note "The one sentence this whole chapter rests on"
+
+    **A web page is a text document that the browser parses into a tree.**
+    CSS styles that tree by selecting nodes out of it, and JavaScript
+    (section 42.3) changes the page by editing that tree — never by editing
+    the text file.
+
+Once you see the tree behind the markup, "why is my `<div>` inside my `<p>`?"
+and "why does this style leak into that box?" become questions with visible
+answers.
 
 ## The document skeleton
 
-A real page needs a small amount of ceremony around the content. Save this as
-`page.html` on your own machine and double-click it — your browser will open
-it. **The Run button on this site cannot do that**: the Python sandbox in your
-browser tab has no way to render a document. Every HTML, CSS, and JavaScript
-block in this chapter is meant to be saved and opened locally.
+A real page needs a small amount of ceremony around the content.
+
+!!! tip "Save this file and open it in a browser"
+
+    Copy the block below into a file called `page.html` on your own machine
+    and **double-click it** — your browser will open it, and you can edit and
+    reload as often as you like.
+
+    **The Run button on this site cannot do that.** The Python sandbox in your
+    browser tab has no way to render a document, so every HTML, CSS, and
+    JavaScript block in this chapter is meant to be saved and opened locally.
+    It is the only way to experience these examples.
 
 ```html
 <!DOCTYPE html>
@@ -89,7 +103,7 @@ head.
 ## The elements you will actually use
 
 Ninety percent of real HTML is a dozen elements. Here they are in one file —
-save it, open it, and change things.
+**save it, open it in a browser, and change things.**
 
 ```html
 <h1>Brewing notes</h1>
@@ -126,15 +140,18 @@ save it, open it, and change things.
     keeps   its    spacing</code></pre>
 ```
 
-Three notes worth internalising now. **Headings are structure, not size** —
-use `<h1>` once for the page's subject, then `<h2>` for its sections and `<h3>`
-for their subsections, without skipping levels; make them smaller with CSS, not
-by picking `<h4>` because it looks right. **`alt` on an image is not optional**
-— it is the text a blind reader hears and the text everyone sees when the image
-fails to load; write what the picture *conveys*, and use `alt=""` only for
-purely decorative images. And **`<br>` is not a paragraph break** — it is a
-line break inside one paragraph, appropriate for poetry and postal addresses
-and almost nothing else.
+Three notes worth internalising now:
+
+- **Headings are structure, not size.** Use `<h1>` once for the page's
+  subject, then `<h2>` for its sections and `<h3>` for their subsections,
+  without skipping levels. Make them smaller with CSS, not by picking `<h4>`
+  because it looks right.
+- **`alt` on an image is not optional.** It is the text a blind reader hears
+  and the text everyone sees when the image fails to load. Write what the
+  picture *conveys*, and use `alt=""` only for purely decorative images.
+- **`<br>` is not a paragraph break.** It is a line break *inside* one
+  paragraph — appropriate for poetry and postal addresses, and almost nothing
+  else.
 
 ## Semantic elements, and why they matter
 
@@ -176,15 +193,21 @@ and choosing them costs nothing and buys a great deal:
 </body>
 ```
 
-The payoff is **accessibility**. A screen-reader user does not read a page
-top to bottom any more than you do; they jump. Their software offers "list all
+The payoff is **accessibility**. A screen-reader user does not read a page top
+to bottom any more than you do; they jump. Their software offers "list all
 landmarks" and "list all headings", and those lists are built from exactly
-these elements — `<nav>` becomes a navigation landmark, `<main>` becomes the
-"skip to content" target, headings become the table of contents. A page of
-`<div>`s offers nothing to jump to, so the user must listen to the entire
-navigation menu before reaching the article, on every single page. Search
-engines and browser reader modes use the same signals. Semantics are a
-five-second choice that makes your page usable by people who cannot see it.
+these elements:
+
+- `<nav>` becomes a **navigation landmark**;
+- `<main>` becomes the **"skip to content" target**;
+- headings become the **table of contents**.
+
+A page of `<div>`s offers nothing to jump to, so the user must listen to the
+entire navigation menu before reaching the article, on every single page.
+Search engines and browser reader modes use the same signals.
+
+**Semantics are a five-second choice that makes your page usable by people who
+cannot see it.**
 
 ## Forms: how a page collects data
 
@@ -272,10 +295,12 @@ Use a table when your data genuinely has rows and columns.
 </table>
 ```
 
-`<th>` marks a header cell and `scope` says whether it heads a column or a row.
-That is what lets a screen reader announce "Oolong, Water, 90 degrees Celsius"
-when the user lands on that cell, instead of a bare "90". `<caption>` names the
-table for someone who cannot see its position on the page.
+`<th>` marks a header cell and `scope` says whether it heads a column or a
+row. That is what lets a screen reader announce "Oolong, Water, 90 degrees
+Celsius" when the user lands on that cell, instead of a bare "90".
+
+`<caption>` names the table for someone who cannot see its position on the
+page.
 
 ## Attributes, ids, and classes
 
@@ -294,10 +319,11 @@ because they exist purely as hooks for CSS and JavaScript.
 <article id="post" class="card featured highlight">…</article>
 ```
 
-That element has one id and three classes. **Prefer classes.** Duplicate ids
-are invalid HTML, break `<label for>` and in-page links, and make
-`document.getElementById` return whichever one it finds first. Reserve ids for
-things that really are one-of-a-kind.
+That element has one id and three classes.
+
+**Prefer classes.** Duplicate ids are invalid HTML, break `<label for>` and
+in-page links, and make `document.getElementById` return whichever one it
+finds first. Reserve ids for things that really are one-of-a-kind.
 
 ## The browser forgives, and that is a trap
 
@@ -314,12 +340,16 @@ because the web is full of it. Feed a browser this:
 ```
 
 …and it will silently produce two paragraphs, a bold run, and a one-item list.
-Nothing complains. That is wonderful for reading the web and awful for writing
-it, because your bug does not announce itself — it just moves your layout three
-pixels or nests an element somewhere you did not intend, and you spend an hour
-in the developer tools finding out. Two defences: **close every element you
-open**, and run your page through a validator (the W3C's is free) before
-wondering why CSS is not applying.
+Nothing complains.
+
+That is wonderful for reading the web and awful for writing it, because your
+bug does not announce itself. It just moves your layout three pixels or nests
+an element somewhere you did not intend, and you spend an hour in the
+developer tools finding out. Two defences:
+
+1. **Close every element you open**, and check the nesting.
+2. **Run the page through a validator** (the W3C's is free) before wondering
+   why CSS is not applying.
 
 !!! tip "Open the developer tools now"
 
@@ -355,15 +385,20 @@ There are three ways to get that rule to the browser, and they are not equal.
 <p style="font-size: 1.25rem;">…</p>
 ```
 
-Prefer the external file. One stylesheet serves every page, the browser caches
-it, your markup stays readable, and every rule lives in one searchable place.
-Inline styles are the worst of the three: they cannot be reused, they cannot be
-cached, they clutter the content, and — as the next section shows — they win
-almost every specificity fight, which makes them impossible to override later.
+**Prefer the external file.** One stylesheet serves every page, the browser
+caches it, your markup stays readable, and every rule lives in one searchable
+place.
+
+Inline styles are the worst of the three: they cannot be reused, they cannot
+be cached, they clutter the content, and — as the next section shows — they
+win almost every specificity fight, which makes them impossible to override
+later.
 
 ## Selectors and specificity
 
-A handful of selector forms covers nearly everything:
+### The selector forms you will actually use
+
+A handful of them covers nearly everything:
 
 ```css
 p               { }   /* type: every <p>                                */
@@ -387,10 +422,16 @@ p::first-line   { }   /* pseudo-element: part of an element             */
 h1, h2, h3      { }   /* selector list: applies to all three            */
 ```
 
-When two rules set the same property on the same element, the winner is decided
-by **specificity**: count the ids, the classes (plus attribute selectors and
-pseudo-classes), and the element names in the selector, and compare those three
-numbers left to right.
+### Specificity: who wins when two rules disagree
+
+When two rules set the same property on the same element, the winner is
+decided by **specificity**. Score every selector in three steps:
+
+1. Count the **ids**.
+2. Count the **classes**, plus attribute selectors and pseudo-classes.
+3. Count the **element names**.
+
+Then compare those three numbers left to right.
 
 | Selector | ids | classes | elements | Specificity | Beats |
 |---|---|---|---|---|---|
@@ -405,11 +446,13 @@ numbers left to right.
 | a `style=""` attribute | — | — | — | higher than any selector | all of the above |
 | `!important` | — | — | — | outside the system | everything |
 
-The comparison is **left to right, and it does not carry**: one id beats eleven
-classes, because `1,0,0` is compared against `0,11,0` on the first number and
-stops there. Only when all three numbers tie does the last rule in source order
-win — which is why "just move it to the bottom of the file" sometimes works and
-sometimes does not.
+The comparison is **left to right, and it does not carry**: one id beats
+eleven classes, because `1,0,0` is compared against `0,11,0` on the first
+number and stops there.
+
+Only when all three numbers tie does the last rule in source order win — which
+is why "just move it to the bottom of the file" sometimes works and sometimes
+does not.
 
 !!! tip "Why isn't my style applying? — a triage in order"
 
@@ -456,8 +499,10 @@ Every element the browser draws is a rectangle built from four nested layers.
         └───────────────────────────────────────────┘
 ```
 
-Now the historical wart. By default, `width` sets the **content** width only,
-so padding and border are added *outside* it:
+### The historical wart, and the one-rule fix
+
+By default, `width` sets the **content** width only, so padding and border are
+added *outside* it:
 
 ```css
 .card {
@@ -479,9 +524,10 @@ essentially every real stylesheet begins with:
 ```
 
 `border-box` means "`width` is the width of the whole box, border included" —
-the padding and border eat inward instead of pushing outward. Now `width: 300px`
-occupies exactly 300 pixels and two of them fit in 600. Put those three lines
-at the top of every stylesheet you write.
+the padding and border eat inward instead of pushing outward. Now
+`width: 300px` occupies exactly 300 pixels and two of them fit in 600.
+
+**Put those three lines at the top of every stylesheet you write.**
 
 !!! note "Margins collapse; padding never does"
 
@@ -515,10 +561,17 @@ those you set on the container and those you set on the children.
 .toolbar .logo   { flex: 0 0 auto; }  /* never grow, never shrink            */
 ```
 
-Those six properties handle the overwhelming majority of layout work: a
-navigation bar (`row` + `space-between`), a centred hero (`center` + `center`),
-a card stack (`column` + `gap`), a responsive tag list (`wrap`). And the
-long-promised vertical centring is now genuinely two lines:
+Those six properties handle the overwhelming majority of layout work:
+
+| Want | Set |
+|---|---|
+| a navigation bar | `row` + `justify-content: space-between` |
+| a centred hero | `align-items: center` + `justify-content: center` |
+| a card stack | `column` + `gap` |
+| a responsive tag list | `flex-wrap: wrap` |
+| one child absorbing the slack | `flex: 1` on that child |
+
+And the long-promised vertical centring is now genuinely two lines:
 
 ```css
 .hero {
@@ -529,25 +582,30 @@ long-promised vertical centring is now genuinely two lines:
 }
 ```
 
-**CSS Grid** is flexbox's two-dimensional sibling: where flexbox arranges items
-along one axis, grid defines rows *and* columns at once, so it is the right
-tool for a page skeleton — `display: grid;
-grid-template-columns: 200px 1fr;` gives you a sidebar and a main area in two
-declarations, and `grid-template-areas` lets you draw the layout as ASCII art
-in the stylesheet and then reshuffle it for small screens without touching the
-HTML. The working rule of thumb: **grid for the page, flexbox for the
-components inside it**, and reach for grid the moment you find yourself nesting
-three flex containers to make a shape.
+### Grid, flexbox's two-dimensional sibling
+
+Where flexbox arranges items along one axis, **CSS Grid** defines rows *and*
+columns at once, which makes it the right tool for a page skeleton.
+`display: grid; grid-template-columns: 200px 1fr;` gives you a sidebar and a
+main area in two declarations, and `grid-template-areas` lets you draw the
+layout as ASCII art in the stylesheet and then reshuffle it for small screens
+without touching the HTML.
+
+The working rule of thumb: **grid for the page, flexbox for the components
+inside it** — and reach for grid the moment you find yourself nesting three
+flex containers to make a shape.
 
 ## Responsive design
 
 One page must work on a 360-pixel phone and a 2560-pixel monitor. Three tools
 do it.
 
-**Relative units instead of pixels.** `rem` is relative to the root font size,
-so a reader who has set a larger default font gets a proportionally larger
-page — a real accessibility win that `px` throws away. `%` and `fr` are
-relative to the container; `vw`/`vh` are percentages of the viewport.
+### 1. Relative units instead of pixels
+
+`rem` is relative to the root font size, so a reader who has set a larger
+default font gets a proportionally larger page — a real accessibility win that
+`px` throws away. `%` and `fr` are relative to the container; `vw`/`vh` are
+percentages of the viewport.
 
 ```css
 body      { font-size: 1rem; line-height: 1.6; }
@@ -556,7 +614,9 @@ h1        { font-size: 2.5rem; }        /* scales with the reader's setting */
 img       { max-width: 100%; height: auto; }   /* never overflow the parent */
 ```
 
-**Media queries** apply a block of rules only when a condition holds:
+### 2. Media queries
+
+A media query applies a block of rules only when a condition holds:
 
 ```css
 @media (min-width: 40rem)  { .grid { grid-template-columns: 1fr 1fr; } }
@@ -565,18 +625,27 @@ img       { max-width: 100%; height: auto; }   /* never overflow the parent */
 @media print { nav, footer { display: none; } }
 ```
 
-**Mobile-first** is the ordering convention: write the small-screen layout as
-the base rules with *no* media query, then add `min-width` queries that
-progressively enhance it for bigger screens. The alternative (desktop styles
-first, then `max-width` queries undoing them) means the least powerful device
-downloads and applies the most rules, and every override is a subtraction —
-harder to reason about and easy to leave inconsistent. Base rules simple, then
-add.
+### 3. Mobile-first ordering
+
+Write the small-screen layout as the base rules with *no* media query, then
+add `min-width` queries that progressively enhance it for bigger screens.
+
+The alternative — desktop styles first, then `max-width` queries undoing them
+— means the least powerful device downloads and applies the most rules, and
+every override is a subtraction: harder to reason about and easy to leave
+inconsistent. **Base rules simple, then add.**
 
 ## A complete styled page
 
-Two files. Save them in the same folder as `page.html` and `style.css`, then
-open `page.html` in a browser.
+!!! tip "Save both files and open the first one"
+
+    1. Save the HTML below as **`page.html`**.
+    2. Save the CSS below it as **`style.css`**, in the **same folder** — that
+       is what `<link rel="stylesheet" href="style.css">` is looking for.
+    3. Double-click `page.html`.
+
+    Then change a colour in `style.css`, reload, and watch it move. Reading
+    this page is not the same as seeing it.
 
 ```html
 <!DOCTYPE html>
@@ -684,27 +753,36 @@ h1, h2 { line-height: 1.2; }
 ```
 
 Read the stylesheet in the order its comments number it, because that order is
-a reusable structure for any stylesheet you write. **(1)** the `border-box`
-reset, so no width ever surprises you. **(2)** custom properties — `--accent`
-is declared once on `:root` and read with `var(--accent)` everywhere, so
-restyling the site is a one-line edit. **(3)** base typography set on `body`,
-where `color`, `font-family`, and `line-height` inherit down to everything
-automatically. **(4)** layout: `.bar` is a flex row pushing the logo and nav to
-opposite ends, `.container` uses `min()` so it is 60rem on a monitor and
-full-width-minus-a-gutter on a phone. **(5)** the components, written for the
-narrow screen first — `.cards` is a single-column grid. **(6)** exactly one
-media query, which upgrades that single column to three when there is room.
-The `.card.featured` selector is specificity `0,2,0`, so it beats the plain
-`.card` rule regardless of source order — and `:focus-visible` alongside
-`:hover` is what makes the navigation usable from a keyboard.
+a reusable structure for any stylesheet you write:
+
+1. **The reset.** `box-sizing: border-box` on everything, so no width ever
+   surprises you.
+2. **Design tokens.** `--accent` is declared once on `:root` and read with
+   `var(--accent)` everywhere, so restyling the site is a one-line edit.
+3. **Base typography, set on `body`**, where `color`, `font-family`, and
+   `line-height` inherit down to everything automatically.
+4. **Layout.** `.bar` is a flex row pushing the logo and nav to opposite ends;
+   `.container` uses `min()` so it is 60rem on a monitor and
+   full-width-minus-a-gutter on a phone.
+5. **Components, written for the narrow screen first** — `.cards` starts as a
+   single-column grid.
+6. **Exactly one media query**, which upgrades that single column to three
+   when there is room.
+
+Two details in there repay a second look. `.card.featured` has specificity
+`0,2,0`, so it beats the plain `.card` rule regardless of source order. And
+`:focus-visible` alongside `:hover` is what makes the navigation usable from a
+keyboard.
 
 ## Runnable: build the DOM in Python
 
 Enough looking. The browser's first job is to turn that text into a tree, and
 Python's standard library has an HTML tokenizer we can drive to do the same
-thing. `html.parser.HTMLParser` calls a method of ours for each start tag, end
-tag, and run of text; we keep a **stack of open elements** — exactly what a
-real browser keeps — and every new element is appended to whatever is on top.
+thing.
+
+`html.parser.HTMLParser` calls a method of ours for each start tag, end tag,
+and run of text. We keep a **stack of open elements** — exactly what a real
+browser keeps — and every new element is appended to whatever is on top.
 
 ```python
 from html.parser import HTMLParser
@@ -823,11 +901,13 @@ elements: ['article', 'h1', 'p', 'p', 'em', 'ul', 'li', 'li']
 
 That is the DOM: the same tree the mermaid diagram drew at the top of this
 page, now a live Python object graph with parent pointers, children lists,
-attributes, and text. `walk` is a recursive generator
-([Chapter 17](../ch17-recursion/index.md), [39.3](../ch39-streams/03-pipelines.md))
-yielding elements in **document order** — the order they appear in the source,
-which is the order the browser paints them and the order a screen reader reads
-them.
+attributes, and text.
+
+`walk` is a recursive generator
+([Chapter 17](../ch17-recursion/index.md),
+[39.3](../ch39-streams/03-pipelines.md)) yielding elements in **document
+order** — the order they appear in the source, which is the order the browser
+paints them and the order a screen reader reads them.
 
 ## Runnable: a mini CSS selector matcher
 
@@ -836,13 +916,19 @@ this node, does it match?* We support the four forms that carry most real
 stylesheets — `tag`, `.class`, `#id`, and descendant combinations of them — and
 we compute specificity while we are at it.
 
-The selector is split on whitespace into **compound selectors**, each parsed
-with a regular expression straight out of
-[section 41.2](../ch41-regex/02-groups-parsing.md). Matching then runs
-**right to left**, which is how real browser engines do it: check the node
-itself against the last piece, then walk up the parent chain looking for each
-earlier piece in turn. Right-to-left is enormously faster than left-to-right,
-because most nodes fail on the very first test.
+The algorithm is three steps:
+
+1. **Split the selector on whitespace** into **compound selectors**, each
+   parsed with a regular expression straight out of
+   [section 41.2](../ch41-regex/02-groups-parsing.md).
+2. **Match right to left**: check the node itself against the *last* piece,
+   then walk up the parent chain looking for each earlier piece in turn.
+3. **Score the specificity** — ids, classes, elements — and let the highest
+   score win.
+
+Step 2 is how real browser engines do it, and the reason is speed:
+right-to-left rejects almost every node on the very first test, where
+left-to-right would have to explore the whole subtree.
 
 ```python
 # continues
@@ -943,15 +1029,19 @@ a specificity fight over the same <li.hot>:
    winner: #post li
 ```
 
-Look at what became concrete. `.hot` matches **two** elements of different tag
-names, which is the entire point of classes. `ul .hot` matches only the list
-item, because the `<em>` has no `<ul>` ancestor — the descendant combinator is
-"somewhere above me", and the engine proved it by walking parent pointers.
-`h2` matches nothing and Python did not complain, exactly like CSS: a selector
-that matches no elements is not an error, which is why a typo in a selector
-produces silence rather than a message. And the fight at the bottom is decided
-on the very first number — `#post li` at `(1,0,1)` beats `ul li.hot` at
-`(0,1,2)` because one id outranks any pile of classes, no matter how long.
+Four things became concrete in that output:
+
+- **`.hot` matches two elements of different tag names** — which is the entire
+  point of classes.
+- **`ul .hot` matches only the list item**, because the `<em>` has no `<ul>`
+  ancestor. The descendant combinator means "somewhere above me", and the
+  engine proved it by walking parent pointers.
+- **`h2` matches nothing and Python did not complain** — exactly like CSS. A
+  selector that matches no elements is not an error, which is why a typo in a
+  selector produces silence rather than a message.
+- **The fight at the bottom is decided on the very first number.** `#post li`
+  at `(1,0,1)` beats `ul li.hot` at `(0,1,2)`, because one id outranks any
+  pile of classes however long.
 
 That is a real, if small, CSS engine: parse the selector, match right-to-left
 up the tree, score the specificity, highest score wins. Browsers add hundreds

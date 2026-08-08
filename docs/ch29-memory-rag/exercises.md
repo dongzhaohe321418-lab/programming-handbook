@@ -1,5 +1,69 @@
 # Chapter 29 · Exercises
 
+## The chapter in brief
+
+- Keyword search matches **strings**, and strings are not meanings — which is
+  why "automobile" finds nothing in a corpus that says "car"
+  ([29.1](01-embeddings-vector-search.md)).
+- An **embedding** is a vector chosen so that similar meanings land in similar
+  directions, and **cosine similarity** is the angle between two of them.
+- Normalizing every vector once, at insert time, turns cosine similarity into a
+  plain dot product — so a whole search is one matrix multiply.
+- **TF-IDF** gives you the entire machinery of vector search — vectors,
+  weighting, top-$k$ — with none of the semantics; real embeddings keep the
+  machinery and replace the vectorizer.
+- Brute-force search is $O(n \cdot d)$ per query, and **IVF** and **HNSW** buy
+  speed by giving up exactness, measured as **recall@k** and steered by one
+  knob (`nprobe`, `ef_search`).
+- **Hybrid search** fuses a lexical and a semantic retriever with **reciprocal
+  rank fusion**, which combines *ranks* rather than incomparable scores.
+- **RAG** is architecturally humble: look the answer up, paste it into the
+  prompt, and ask ([29.2](02-rag-pipeline.md)).
+- **Chunking is the whole ballgame** — a boundary through the middle of a fact
+  destroys it for every value of $k$, and overlap is the cheapest insurance
+  against that.
+- A **bi-encoder** retrieves wide because its vectors were computed offline; a
+  **cross-encoder** reranks narrow because it reads the query and the chunk
+  together.
+- RAG has two scoreboards: retrieval (**recall@k** and **MRR**) and generation
+  (faithfulness and answer relevance), and the fixes for them are unrelated.
+- Agent memory splits into **working, episodic, semantic and procedural**, and
+  only the first lives in the context window for free
+  ([29.3](03-agent-memory.md)).
+- Context is a budget paid every turn — and keeping the prompt's stable prefix
+  byte-identical is what makes **prefix caching** pay.
+- A sliding window ranks by recency and loses the user's name; a **score over
+  recency, relevance and importance** keeps it, and forgetting must be weighted
+  by importance too.
+- Similarity search cannot **chain**, so multi-hop and corpus-wide questions
+  need a **knowledge graph**: triples, an adjacency map, BFS with a citation
+  trail, and communities for global answers ([29.4](04-graphrag.md)).
+- Extraction costs a model call per chunk and the graph goes stale globally, so
+  measure vector RAG first and add structure when the metrics demand it.
+
+### Key terms
+
+| Term | One-line reminder |
+| --- | --- |
+| [embedding](../appendix/E-ai-glossary.md#e) | a vector standing for a piece of text, where nearby means similar in meaning |
+| [cosine similarity](../concept-index.md#c) | the cosine of the angle between two vectors; on unit vectors, just a dot product |
+| TF-IDF / BM25 | lexical vectors weighted by word rarity — unbeatable on rare exact tokens |
+| approximate nearest neighbour (ANN) | an index that returns *almost always* the right top-$k$, far faster |
+| [recall@k](../concept-index.md#r) | of the chunks that should have been retrieved, the fraction in the top $k$ |
+| MRR | mean of one over the rank of the first correct hit — the reranker's metric |
+| [hybrid search](../appendix/E-ai-glossary.md#h) | run a lexical and a semantic retriever, then merge them |
+| [reciprocal rank fusion](../concept-index.md#r) | merge ranked lists by $\sum 1/(k + \text{rank})$, using ranks only |
+| [chunking](../appendix/E-ai-glossary.md#c) | splitting a document into the passages you embed, retrieve and cite |
+| [RAG](../appendix/E-ai-glossary.md#r) | retrieve relevant text, put it in the prompt, then generate |
+| [cross-encoder](../appendix/E-ai-glossary.md#c) | scores a `(query, chunk)` pair jointly; accurate, and too slow for a corpus |
+| working / episodic / semantic / procedural memory | now, what happened, what is true, and how to do it |
+| [prefix caching](../appendix/E-ai-glossary.md#p) | the server skips prefilling an exact token prefix it has already seen |
+| [knowledge graph](../concept-index.md#k) | entities as nodes, labelled relations as edges, stored as triples |
+| [GraphRAG](../appendix/E-ai-glossary.md#g) | extract a graph, traverse it for multi-hop answers, summarize communities for global ones |
+
+Now the drills — work them in order, because the retrieval problems build the
+intuitions the memory and graph problems assume.
+
 Eight problems on retrieval, RAG, memory, and knowledge graphs. They build on
 [29.1](01-embeddings-vector-search.md), [29.2](02-rag-pipeline.md),
 [29.3](03-agent-memory.md), and [29.4](04-graphrag.md), and every solution runs
@@ -534,7 +598,7 @@ was dropped.
     assert n_tokens(context) <= BUDGET
     ```
 
-    6263 tokens of material go in and 3850 come out, keeping 10 of 12 chunks
+    6263 tokens of material go in and 3849 come out, keeping 10 of 12 chunks
     and the 13 most recent turns. Three details are the exercise. **Order:**
     system and tools go first so a prefix cache can reuse them
     ([Section 27.1](../ch27-inference/01-kv-cache.md)); the volatile turns go

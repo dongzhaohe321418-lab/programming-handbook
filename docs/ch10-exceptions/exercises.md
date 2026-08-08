@@ -1,5 +1,54 @@
 # Exercises
 
+## The chapter in brief
+
+- `sys.argv` is a plain list of strings, and element 0 is the script's own
+  name — the user's first argument is `sys.argv[1]`
+  ([10.1](01-cli-programs.md)).
+- Because arguments arrive as text, `argv[1] + argv[2]` *concatenates*;
+  convert with `int()` or `float()` before computing anything.
+- A well-mannered tool checks its argument count first, prints a **usage
+  message** when the call is wrong, and reports failure to the shell with a
+  non-zero **exit code**.
+- An exception is an *object* describing a failure: it abandons the normal
+  flow and flies up the call chain looking for a handler
+  ([10.2](02-exceptions.md)).
+- `try`/`except` lets the program survive a failure — and it should survive
+  *narrowly*, because a bare `except` swallows your own bugs and manufactures
+  plausible wrong answers.
+- `else` is the success lane; `finally` runs no matter what, even when the
+  exception escapes unhandled.
+- `raise` is how your own functions refuse nonsense, on the principle that a
+  wrong value travels while an exception stops.
+- A handler can catch a failure raised many calls below it, which is why
+  exception control flow is called **non-linear**.
+- Java splits exceptions into checked and unchecked and makes the compiler
+  police the checked ones; in Python every exception is unchecked.
+- A traceback is read bottom-up: the last line says *what*, the bottom frame
+  says *where*, and walking upward says *how we got there*
+  ([10.3](03-stack-traces.md)).
+- When the bottom frame sits inside a library, the bug is almost always in
+  the last frame that belongs to your own files.
+- Two stories separated by "During handling of the above exception" means
+  chaining — and the bottom-most story is still the newest.
+
+### Key terms
+
+| Term | Reminder |
+| --- | --- |
+| [`sys.argv`](../concept-index.md) | the command-line words handed to your program, script name at index 0 |
+| usage message | the one-line reminder of how the tool is meant to be called |
+| [exit code](../concept-index.md) | the integer a program hands the shell — 0 success, non-zero failure |
+| [exception](../concept-index.md) | an object describing a failure, raised instead of returning a wrong answer |
+| [`try` / `except` / `finally`](../concept-index.md) | meet a failure, take the success lane, and clean up whatever happens |
+| [raising an exception](../concept-index.md) | refusing an impossible argument loudly, at the line where it appeared |
+| bare `except` | the handler that catches everything — including the typo you have not found yet |
+| [traceback](../concept-index.md) | the call stack, printed at the instant an exception ran out of handlers |
+| [frame (stack)](../concept-index.md) | one entry of that stack: file, line, function, and source line |
+| exception chaining | a second exception raised while the first was still being handled |
+
+Now the drills.
+
 Exceptions reward practice at prediction: for every "predict" exercise,
 write the exact output — including which handler fires — *before* running.
 Difficulty: ● warm-up, ●● standard, ●●● challenge.

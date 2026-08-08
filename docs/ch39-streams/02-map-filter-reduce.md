@@ -20,8 +20,10 @@ Stream operations up against their Python equivalents one for one.
 
 Every pipeline in the rest of this chapter is some arrangement of those
 three. Notice the shapes: map preserves the count, filter can only shrink it,
-reduce collapses it. If you can say which of the three a piece of code is
-doing, you can usually delete the loop.
+reduce collapses it.
+
+**If you can say which of the three a piece of code is doing, you can usually
+delete the loop.**
 
 ## `map` — transform every item
 
@@ -136,11 +138,15 @@ consuming a second time:
   -> []
 ```
 
-Two lessons in one output. First, **`map` did no work at all** until `list()`
-pulled on it — the work happens at consumption time, not construction time.
-Second, an iterator is **single-use**: the second `list(result)` is empty
-because the iterator is exhausted. If you need the results twice, materialise
-them once with `list(...)` and reuse that.
+Two lessons in one output:
+
+1. **`map` did no work at all** until `list()` pulled on it. The work happens
+   at consumption time, not construction time.
+2. **An iterator is single-use.** The second `list(result)` is empty because
+   the iterator is exhausted. If you need the results twice, materialise them
+   once with `list(...)` and reuse that.
+
+### One item at a time, through every stage
 
 Laziness gets more interesting when stages are chained, because items flow
 through the whole pipeline *one at a time* rather than stage by stage:
@@ -180,11 +186,12 @@ got: []
 
 Read the interleaving carefully: `double(1)`, then immediately `is_big(2)?`,
 then back for the next item. The pipeline does **not** double everything and
-then filter everything. Each element is pulled through every stage before the
-next element starts. That is what makes a chain of lazy stages usable on a
-file bigger than memory — the subject of
-[section 39.3](03-pipelines.md) — and it is exactly how Java Streams behave
-too.
+then filter everything. **Each element is pulled through every stage before
+the next element starts.**
+
+That is what makes a chain of lazy stages usable on a file bigger than
+memory — the subject of [section 39.3](03-pipelines.md) — and it is exactly
+how Java Streams behave too.
 
 ## Comprehensions: the Pythonic spelling
 
@@ -292,11 +299,13 @@ print("   best    :", max(by_item, key=by_item.get))
    best    : widget
 ```
 
-Each stage is a single expression that takes a list and returns a new list —
-no stage edits the one before it, which means you can print, test, or reorder
-any stage independently. That is the payoff of the pure-function discipline
-from [section 39.1](01-lambdas.md). Note `{**r, "total": ...}` in stage 3: it
-builds a *new* dict with one extra key rather than mutating `r`.
+Each stage is a single expression that takes a list and returns a new list.
+No stage edits the one before it, which means you can print, test, or reorder
+any stage independently — the payoff of the pure-function discipline from
+[section 39.1](01-lambdas.md).
+
+Note `{**r, "total": ...}` in stage 3: it builds a *new* dict with one extra
+key rather than mutating `r`.
 
 !!! tip "Money and floats"
 
@@ -345,9 +354,11 @@ enumerate:
    4. doohickey     7.50
 ```
 
-Seven one-line aggregations, no loop bodies to get wrong. `sum(1 for r in sales if ...)`
+Six one-line aggregations, no loop bodies to get wrong. `sum(1 for r in sales if ...)`
 is the idiomatic "count matching items", and `enumerate(..., start=1)` gives
 you the rank without a manual counter.
+
+### `zip`, and the row it drops without telling you
 
 `zip` is the one that repays a closer look, because it fails silently:
 
@@ -379,9 +390,11 @@ strict-safe check: False
 
 The third line is the trap: `zip([1, 2, 3], ["a", "b"])` quietly produces two
 pairs and drops the 3. No warning, no error — just a row missing from your
-report. On Python 3.10 and later, `zip(a, b, strict=True)` raises a
-`ValueError` instead, and it is worth the extra word whenever the two inputs
-are *supposed* to be the same length.
+report.
+
+On Python 3.10 and later, `zip(a, b, strict=True)` raises a `ValueError`
+instead, and it is worth the extra word whenever the two inputs are *supposed*
+to be the same length.
 
 ## `reduce`, done carefully
 
@@ -466,13 +479,16 @@ empty input is not an error in your data, it is Tuesday. Note also that the
 initial value fixes the *type* of the result — `reduce(op, rows, {})` folds
 into a dict, `reduce(op, rows, [])` into a list.
 
-**Why Python de-emphasizes `reduce`.** Almost every real fold already has a
-name: `sum`, `math.prod`, `max`, `min`, `any`, `all`, `"".join`,
-`set().union`, `collections.Counter`. Those names say what the fold *means*,
-where `reduce(lambda a, b: a + b, xs, 0)` makes the reader simulate a loop in
-their head. Reach for `reduce` when the combining step is genuinely custom
-and associative — merging dictionaries, intersecting many sets, composing a
-list of functions — and use the named tool otherwise.
+### Why Python de-emphasizes `reduce`
+
+Almost every real fold already has a name: `sum`, `math.prod`, `max`, `min`,
+`any`, `all`, `"".join`, `set().union`, `collections.Counter`. Those names say
+what the fold *means*, where `reduce(lambda a, b: a + b, xs, 0)` makes the
+reader simulate a loop in their head.
+
+Reach for `reduce` when the combining step is genuinely custom and
+associative — merging dictionaries, intersecting many sets, composing a list
+of functions — and use the named tool otherwise.
 
 ```python
 from functools import reduce
@@ -537,6 +553,8 @@ produces a result).
     System.out.println(names.stream().mapToInt(String::length).sum());
     ```
 
+### Nothing runs without a terminal operation
+
 Java's laziness is exactly Python's. Build a chain with no terminal operation
 and nothing runs at all:
 
@@ -550,8 +568,11 @@ Stream<String> pending = names.stream()
 long count = pending.filter(n -> n.startsWith("A")).count();
 ```
 
-Two Java-specific pieces have no exact Python spelling. The first is
-`Optional`, the return type of `findFirst`, `min`, and `max` — a box that
+Two Java-specific pieces have no exact Python spelling.
+
+### `Optional`, and Python's `next(it, default)`
+
+`Optional` is the return type of `findFirst`, `min`, and `max` — a box that
 either holds a value or is empty, forcing the caller to handle "nothing
 matched" instead of returning `null`:
 
@@ -580,6 +601,8 @@ Barbara
 none found
 ```
 
+### `parallelStream()`, one word wide
+
 The second is `parallelStream()`, which splits the work across the JVM's
 common fork/join pool by changing one word:
 
@@ -592,15 +615,19 @@ double total = orders.parallelStream()
 !!! warning "When `parallelStream()` actually pays"
 
     Switching `stream()` to `parallelStream()` is one word and often makes
-    things **slower**. It pays only when all of the following hold: the
-    source splits cheaply (an `ArrayList` or an array — not a `LinkedList` or
-    a file), the collection is large (thousands of elements, not dozens), the
-    work per element is genuinely CPU-bound, and the lambdas are stateless
-    and side-effect free. Otherwise the cost of splitting, scheduling, and
-    merging dominates. Two extra traps: every parallel stream in the JVM
-    shares one common pool by default, so one long job stalls the others, and
-    `forEach` gives you no ordering guarantee (use `forEachOrdered` if you
-    need it). Measure before and after; never assume.
+    things **slower**. It pays only when *all four* of these hold:
+
+    1. **The source splits cheaply** — an `ArrayList` or an array, not a
+       `LinkedList` or a file.
+    2. **The collection is large** — thousands of elements, not dozens.
+    3. **The work per element is genuinely CPU-bound.**
+    4. **The lambdas are stateless and side-effect free.**
+
+    Otherwise the cost of splitting, scheduling, and merging dominates. Two
+    extra traps: every parallel stream in the JVM shares one common pool by
+    default, so one long job stalls the others, and `forEach` gives you no
+    ordering guarantee (use `forEachOrdered` if you need it). Measure before
+    and after; never assume.
 
     Python's story is different but rhymes: in the standard CPython build the
     **global interpreter lock** means threads do not speed up CPU-bound
@@ -640,8 +667,10 @@ double total = orders.parallelStream()
 
 The correspondence is close enough that translating a Stream chain to Python
 is mechanical, which is what Exercise 39.6 in the
-[chapter exercises](exercises.md) asks you to do. The deep similarity is not coincidence: both are the same lazy pull model,
-and both were shaped by the same functional-programming tradition.
+[chapter exercises](exercises.md) asks you to do.
+
+The deep similarity is not coincidence: both are the same lazy pull model, and
+both were shaped by the same functional-programming tradition.
 
 !!! warning "Common mistakes"
 

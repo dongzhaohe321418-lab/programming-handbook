@@ -115,6 +115,8 @@ very differently, and the difference is worth seeing side by side.
     String first = names.get(0);   // no cast needed: compiler KNOWS
     ```
 
+### Java: checked by the compiler
+
 In Java, `List<String>` is enforced by the **compiler**: the parameter
 `<String>` becomes part of the type, and code that violates it does not
 compile — the error below is caught before the program ever runs:
@@ -124,6 +126,8 @@ names.add(42);
       ^^^^^^^
 error: incompatible types: int cannot be converted to String
 ```
+
+### Python: checked by your tools, if you run them
 
 Python's `list[str]` looks similar but is honestly weaker: it is a **type
 hint**, checked by *tools* (editors, and checkers such as `mypy`) — not by
@@ -139,9 +143,19 @@ print(shout("oops"))     # wrong type — but Python runs it anyway!
 ```
 
 The second call passes a plain string where a list of strings was promised.
-No error: iterating a string yields its characters, so you get
-`O O P S` — silently wrong-shaped output instead of a compile-time stop. A
-type checker flags `shout("oops")` immediately; the interpreter never will.
+No error: iterating a string yields its characters, so you get `O O P S` —
+silently wrong-shaped output instead of a compile-time stop. A type checker
+flags `shout("oops")` immediately; the interpreter never will.
+
+So the two languages differ in *who* checks and *when*:
+
+| | Java `List<String>` | Python `list[str]` |
+| --- | --- | --- |
+| Who checks | the compiler | a separate tool (editor, `mypy`) |
+| When | before the program runs | whenever you choose to run the checker |
+| Is it optional? | no — the code will not compile | yes — the interpreter ignores hints |
+| Violation results in | a compile error | a wrong-looking result, or nothing at all |
+
 That is the honest deal with Python typing: hints are machine-checkable
 *documentation*, valuable precisely because tools and teammates read them —
 but the runtime safety net of Java generics is not there.

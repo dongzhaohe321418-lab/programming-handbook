@@ -34,6 +34,18 @@ flowchart LR
 A stack needs one busy end; a queue needs **two** — and that difference is
 about to matter.
 
+### Stack vs queue at a glance
+
+| | Stack | Queue |
+| --- | --- | --- |
+| Discipline | last in, first out (LIFO) | first in, first out (FIFO) |
+| Busy ends | one | two |
+| Add / remove | `push` / `pop`, same end | `enqueue` at the back, `dequeue` at the front |
+| Serves | the newest item | the oldest item |
+| Python spelling | a list: `append` / `pop` | a deque: `append` / `popleft` |
+| Natural jobs | brackets, undo, the call stack, depth-first search | print spoolers, ticket lines, breadth-first search |
+| Risk if misused | — | starvation: with LIFO, early arrivals may wait forever |
+
 ## The naive version: a plain list
 
 The straightforward translation uses `append` for enqueue and `pop(0)` for
@@ -50,12 +62,13 @@ print("waiting:", queue)
 ```
 
 This prints `serving: alice` then `waiting: ['bob', 'carol']` — correct
-behaviour. The problem is hidden in what `pop(0)` had to do: a list stores
-its elements contiguously, so removing slot 0 forces **every remaining
-element to shift one slot left** to close the gap. Bob moved, carol moved —
-with three people that is nothing, with a hundred thousand it is a hundred
-thousand moves *per dequeue*: $O(n)$ each, $O(n^2)$ to drain the queue.
-Let's catch it in the act:
+behaviour. The problem is hidden in what `pop(0)` had to do: a list stores its
+elements contiguously, so removing slot 0 forces **every remaining element to
+shift one slot left** to close the gap.
+
+Bob moved, carol moved. With three people that is nothing; with a hundred
+thousand it is a hundred thousand moves *per dequeue* — $O(n)$ each, and
+$O(n^2)$ to drain the whole queue. Let's catch it in the act:
 
 ```python
 from collections import deque
@@ -156,9 +169,14 @@ flowchart LR
     B["next free slot<br>(front + size) % 6"] -.-> s5
 ```
 
-Nothing ever shifts. Dequeue advances `front` one step clockwise; enqueue
-writes one step past the last occupied slot; and `% capacity` turns the row
-of slots into a ring — index 5 plus one step is index 0 again.
+Nothing ever shifts. Three rules run the whole structure:
+
+1. **Dequeue** reads the slot at `front`, then advances `front` one step
+   clockwise.
+2. **Enqueue** writes one step past the last occupied slot — at index
+   `(front + size) % capacity`.
+3. **`% capacity` turns the row of slots into a ring** — index 5 plus one step
+   is index 0 again.
 
 ```python
 class CircularQueue:
@@ -209,12 +227,13 @@ dequeued: b
 slots: ['e', None, 'c', 'd'] | front index: 2
 ```
 
-Read the final line carefully: the queue's *logical* order is `c, d, e`
-(front at index 2, then 3, then wrapping to 0), even though `e` physically
-sits in slot 0 — the `%` made the indices lap the array. Every operation is
-a genuine $O(1)$: one read, one write, one modulo. This is precisely the
-trick inside `deque`-style structures, hardware buffers, and keyboards'
-key-press queues.
+Read the final line carefully: the queue's *logical* order is `c, d, e` (front
+at index 2, then 3, then wrapping to 0), even though `e` physically sits in
+slot 0 — the `%` made the indices lap the array.
+
+Every operation is a genuine $O(1)$: one read, one write, one modulo. This is
+precisely the trick inside `deque`-style structures, hardware buffers, and
+keyboards' key-press queues.
 
 ## Worked simulation: the printer queue
 
@@ -271,13 +290,17 @@ t=7: printer starts recipe
 t=7: recipe done
 ```
 
-Everything the queue promised is visible here. `photo` is a one-page job
-that arrived while a three-page job was printing — it still waits its turn,
-because FIFO preserves *arrival order*, not job size. The printer sits idle
-at `t=6` because the queue is empty, then serves `recipe` the moment it
-arrives. Swap the deque for a stack and re-imagine the output: the last
-job in would print first, and early jobs could wait forever — a scheduling
-policy called *starvation*. Discipline is destiny.
+Everything the queue promised is visible here:
+
+- **FIFO preserves arrival order, not job size.** `photo` is a one-page job
+  that arrived while a three-page job was printing, and it still waits its
+  turn.
+- **An empty queue means an idle printer.** Nothing happens at `t=6`, then
+  `recipe` is served the moment it arrives.
+
+Swap the deque for a stack and re-imagine the output: the last job in would
+print first, and early jobs could wait forever — a failure mode called
+*starvation*. Discipline is destiny.
 
 !!! note "Where queues go next: breadth-first search"
 
@@ -285,10 +308,12 @@ policy called *starvation*. Discipline is destiny.
     a tree *level by level*: visit a node, enqueue its children, repeat.
     Generalised to any graph, that algorithm is **breadth-first search
     (BFS)** — it explores everything one step away, then two steps, then
-    three, which is why it finds shortest routes. It is a centrepiece of the
-    data-structures courses previewed in
-    [Chapter 25](../ch25-next/01-cs400-preview.md), and the queue is its
-    beating heart.
+    three, which is why it finds shortest routes.
+    [Section 37.2](../ch37-graphs/02-traversal.md) builds BFS in full on real
+    graphs, and it is this exact `deque` doing the work: enqueue the
+    neighbours, dequeue the next frontier node, repeat. The queue is the
+    algorithm's beating heart, which is why swapping it for a stack turns
+    BFS into depth-first search.
 
 ## Queues in Java
 
@@ -316,11 +341,14 @@ policy called *starvation*. Discipline is destiny.
     System.out.println(q.poll());     // bob
     ```
 
-`Queue` is an interface; `ArrayDeque` is the usual implementation — a
-resizable circular buffer, exactly the structure you just built. Note
-Java's two method families, echoing the raise-vs-`None` contract discussion
-from [section 19.2](02-stacks.md): `add`/`remove`/`element` throw exceptions
-on failure, while `offer`/`poll`/`peek` return `false` or `null` instead.
+`Queue` is an interface; `ArrayDeque` is the usual implementation — a resizable
+circular buffer, exactly the structure you just built.
+
+Note Java's two method families, echoing the raise-vs-`None` contract
+discussion from [section 19.2](02-stacks.md):
+
+- **`add` / `remove` / `element`** throw an exception on failure.
+- **`offer` / `poll` / `peek`** return `false` or `null` instead.
 
 !!! warning "Common mistakes"
 

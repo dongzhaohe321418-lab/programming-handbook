@@ -35,9 +35,10 @@ every language provides the same six:
 | **Diagnostics** | `expected <3> but was <4>`, with a stack trace | you fix the bug without adding print statements |
 
 The last one deserves emphasis. `assert stack.size() == 1` tells you the
-assertion failed; `assertEquals(1, stack.size())` tells you it found 4. On a
-failure you did not cause, in code you did not write, that difference is
-minutes versus an afternoon.
+assertion failed; `assertEquals(1, stack.size())` tells you it found 4.
+
+On a failure you did not cause, in code you did not write, **that difference
+is minutes versus an afternoon.**
 
 ## JUnit 5, annotation by annotation
 
@@ -66,11 +67,22 @@ class ArrayStackTest {
 }
 ```
 
-Two conventions matter. The **expected value comes first** in
-`assertEquals` — reversing the arguments does not break the test, but it
-prints the failure message backwards, which is worse than useless at 2 a.m.
-And the method name is a sentence: the report shows method names, so
-`popReturnsTheMostRecentlyPushedItem` is documentation that cannot go stale.
+Read the body and you see the **arrange, act, assert** rhythm from
+[Section 24.2](../ch24-practice/02-testing.md) in three steps:
+
+1. **Arrange** — build the world the test needs: a fresh `ArrayStack`, two
+   pushes.
+2. **Act** — perform the one operation under test: `stack.pop()`.
+3. **Assert** — state what must now be true, and nothing else.
+
+Two conventions matter as well:
+
+- **The expected value comes first** in `assertEquals`. Reversing the
+  arguments does not break the test, but it prints the failure message
+  backwards, which is worse than useless at 2 a.m.
+- **The method name is a sentence.** The report shows method names, so
+  `popReturnsTheMostRecentlyPushedItem` is documentation that cannot go stale.
+
 Unlike JUnit 4, neither the class nor the methods need to be `public`.
 
 ### `assertThrows` — testing that something fails correctly
@@ -90,10 +102,11 @@ void poppingAnEmptyStackThrows() {
 ```
 
 `assertThrows` fails if the code does *not* throw, or throws the wrong type,
-and returns the exception so you can assert on its message. The error path is
-part of the specification, and it is the part beginners forget: an empty
-stack that returns `null` instead of throwing has a bug that no
-happy-path test will ever find.
+and returns the exception so you can assert on its message.
+
+**The error path is part of the specification**, and it is the part beginners
+forget: an empty stack that returns `null` instead of throwing has a bug that
+no happy-path test will ever find.
 
 ### `assertAll` — see every failure, not just the first
 
@@ -156,14 +169,23 @@ class BinarySearchTreeTest {
 }
 ```
 
-`@BeforeAll` and `@AfterAll` must be `static`, because they run once for the
-whole class rather than per instance — the one exception being a class
-annotated `@TestInstance(Lifecycle.PER_CLASS)`, which asks JUnit for a single
-shared instance and therefore allows non-static hooks. The `@AfterEach` here
-is worth copying:
-checking the structure's **invariant** after every single test is how the
-data-structure chapters recommend you work, and a framework hook makes it
-automatic.
+The four hooks fire at different moments:
+
+| Hook | Runs | Must be `static`? |
+|---|---|---|
+| `@BeforeAll` | once, before the first test in the class | yes |
+| `@BeforeEach` | before **every** test method | no |
+| `@AfterEach` | after every test method, pass or fail | no |
+| `@AfterAll` | once, after the last test in the class | yes |
+
+The two `All` hooks must be `static` because they run once for the whole class
+rather than per instance — the one exception being a class annotated
+`@TestInstance(Lifecycle.PER_CLASS)`, which asks JUnit for a single shared
+instance and therefore allows non-static hooks.
+
+The `@AfterEach` here is worth copying: checking the structure's **invariant**
+after every single test is how the data-structure chapters recommend you work,
+and a framework hook makes it automatic.
 
 ### `@DisplayName` — reports humans can read
 
@@ -210,10 +232,16 @@ void aBalancedTreeStaysLogarithmic(int keys, int maxHeight) {
 ```
 
 Each row becomes a separately reported test, so a failure names the exact
-input. `@ValueSource` supplies one argument per case; `@CsvSource` supplies
-several; `@MethodSource` points at a method that returns the cases when they
-are too complex for a string. This is the framework's answer to the
-table-driven style of [Section 24.2](../ch24-practice/02-testing.md).
+input. Three sources cover most needs:
+
+- **`@ValueSource`** — one argument per case.
+- **`@CsvSource`** — several arguments per case, written as a comma-separated
+  string.
+- **`@MethodSource`** — a method that returns the cases, for anything too
+  complex to write as a string.
+
+This is the framework's answer to the table-driven style of
+[Section 24.2](../ch24-practice/02-testing.md).
 
 ### `@Nested`, `@Disabled`, and `assertTimeout`
 
@@ -257,26 +285,51 @@ class RingBufferTest {
         assertTimeout(Duration.ofMillis(200), () -> {
             Trie trie = new Trie();
             for (int i = 0; i < 100_000; i++) trie.insert("word" + i);
-            assertEquals(10, trie.wordsWithPrefix("word999").size());
+            assertEquals(111, trie.wordsWithPrefix("word999").size());
         });
     }
 }
 ```
 
-`@Nested` groups tests that share a *situation*, and each group gets its own
-fixtures — this is how you avoid a class with fourteen boolean flags in
-`@BeforeEach`. `@Disabled` skips a test and **requires a reason**: a skipped
-test with no explanation becomes permanent. `assertTimeout` runs the code in
-the calling thread and reports afterwards if it took too long;
-`assertTimeoutPreemptively` runs it in another thread and aborts it, which is
-what you want for something that might hang, but which is unsafe if the code
-touches thread-local state.
+Three separate ideas in that one listing:
+
+- **`@Nested` groups tests that share a *situation***, and each group gets its
+  own fixtures. This is how you avoid a class with fourteen boolean flags in
+  one `@BeforeEach`.
+- **`@Disabled` skips a test and requires a reason.** A skipped test with no
+  explanation becomes permanent.
+- **`assertTimeout` runs the code in the calling thread** and reports
+  afterwards if it took too long. `assertTimeoutPreemptively` runs it in
+  another thread and aborts it — what you want for something that might hang,
+  but unsafe if the code touches thread-local state.
 
 !!! warning "Timing assertions are the number-one source of flaky tests"
     A 200 ms limit that passes on your laptop will fail on a loaded CI runner
     that is sharing a core with five other jobs. Use generous limits, use
     them rarely, and prefer asserting on *operation counts* — "this lookup
     visited at most 12 nodes" — which are deterministic.
+
+### JUnit 5 and pytest, feature for feature
+
+Every idea above has a pytest spelling, which is why moving between the two
+costs an afternoon rather than a week:
+
+| Idea | JUnit 5 | pytest |
+|---|---|---|
+| Mark a test | `@Test` | a function named `test_*` |
+| Equality | `assertEquals(expected, actual)` | `assert actual == expected` |
+| Expect an exception | `assertThrows(E.class, fn)` | `with pytest.raises(E):` |
+| Per-test setup | `@BeforeEach` | a fixture, or `setup_method` |
+| Once per class | `@BeforeAll` (static) | `@pytest.fixture(scope="class")` |
+| Many inputs | `@ParameterizedTest` + `@CsvSource` | `@pytest.mark.parametrize` |
+| Readable name | `@DisplayName("…")` | the function name and its docstring |
+| Skip, with a reason | `@Disabled("issue #412")` | `@pytest.mark.skip(reason=…)` |
+| Grouping | `@Nested` inner class | a class named `Test*`, or a module |
+| Float tolerance | `assertEquals(a, b, delta)` | `pytest.approx(b, abs=delta)` |
+| Machine-readable report | Surefire XML | `--junitxml=results.xml` — the same format |
+
+The differences are cosmetic because the *problem* is the same one, and JUnit
+solved it first.
 
 ## The lifecycle, and the flaky test that ignores it
 
@@ -340,12 +393,14 @@ run([test_adding_one_item, test_a_new_cart_is_empty])
     FAIL  test_a_new_cart_is_empty: expected 0 items, found 1
 ```
 
-Same code, same assertions, two different verdicts. In a real suite the order
-changes when someone adds a test, renames a class, or turns on parallel
-execution — so the failure appears weeks later, in a pull request that
-touched nothing related, and everybody blames the wrong change. The fix is
-never "add a `sleep`" or "re-run the job"; it is to give each test its own
-state:
+Same code, same assertions, two different verdicts.
+
+In a real suite the order changes when someone adds a test, renames a class,
+or turns on parallel execution — so the failure appears weeks later, in a pull
+request that touched nothing related, and everybody blames the wrong change.
+
+The fix is never "add a `sleep`" or "re-run the job". It is to give each test
+its own state:
 
 ```java
 class ShoppingCartTest {
@@ -379,15 +434,17 @@ $ ./gradlew test --info                        # show output from passing tests
 $ open build/reports/tests/test/index.html     # a browsable HTML report
 ```
 
-Both write a machine-readable XML report in the JUnit format — which is worth
+Both write a machine-readable XML report in the JUnit format, which is worth
 knowing because it became the *lingua franca*: pytest writes it with
-`--junitxml=results.xml`, and essentially every CI system knows how to read
-it and annotate a pull request with the failures.
+`--junitxml=results.xml`, and essentially every CI system knows how to read it
+and annotate a pull request with the failures.
+
+### The CI job that gives a pull request its teeth
 
 That is the connection to [Section 24.1](../ch24-practice/01-git-workflow.md).
-The workflow described there — branch, commit, pull request, review — gets
-its teeth from a CI job that runs the suite on every push and blocks the
-merge if anything is red:
+The workflow described there — branch, commit, pull request, review — only
+bites when a CI job runs the suite on every push and blocks the merge if
+anything is red:
 
 ```yaml
 name: tests
@@ -411,14 +468,19 @@ the merge itself.
 
 ## Testing the hard things
 
-**Exceptions** — covered above: `assertThrows`, and assert on the message so
-that the error is *useful*, not merely present.
+### Exceptions
 
-**Deep equality** — `assertEquals` calls `.equals()`. For a class that does
-not override it, that is identity comparison, so two structurally identical
-objects are "not equal" and the failure message shows two values that look
-the same. Either implement `equals`/`hashCode` (records do it for you) or
-compare the parts. For collections, use the assertion that matches the shape:
+Covered above: `assertThrows`, and assert on the message so that the error is
+*useful*, not merely present.
+
+### Deep equality
+
+`assertEquals` calls `.equals()`. For a class that does not override it, that
+is identity comparison, so two structurally identical objects are "not equal"
+and the failure message shows two values that look the same.
+
+Either implement `equals`/`hashCode` (records do it for you) or compare the
+parts. For collections, use the assertion that matches the shape:
 
 ```java
 assertArrayEquals(new int[]{1, 2, 3}, sorter.sort(new int[]{3, 1, 2}));
@@ -426,7 +488,8 @@ assertIterableEquals(List.of("a", "b"), trie.wordsWithPrefix("")); // order matt
 assertEquals(Set.of("a", "b"), new HashSet<>(trie.wordsWithPrefix(""))); // it does not
 ```
 
-**Floating point** — never with `==`.
+### Floating point — never with `==`
+
 [Section 5.1](../ch05-under-the-hood/01-numeric-pitfalls.md) showed why
 `0.1 + 0.2 != 0.3`: binary fractions cannot represent those decimals exactly,
 so arithmetic accumulates tiny errors. Both languages give you a tolerance:
@@ -449,20 +512,25 @@ so arithmetic accumulates tiny errors. Both languages give you a tolerance:
 
 Choose the delta deliberately: a tolerance of `1e-9` on a physics simulation
 that accumulates a million operations is far too strict, and `0.5` on a
-currency calculation is far too loose. If you find yourself widening a delta
-until a test passes, the test is no longer testing anything.
+currency calculation is far too loose. **If you find yourself widening a delta
+until a test passes, the test is no longer testing anything.**
 
-**Property-based testing** attacks the problem that you only ever write the
-test cases you thought of. Instead of examples, you state a *property* that
-must hold for all inputs, and the library generates hundreds of cases and
-shrinks any failure to a minimal example. **jqwik** does this for Java
-(`@Property`, `@ForAll`); **Hypothesis** does it for Python (`@given` plus
-strategies). Both are third-party libraries, and both are exceptionally good
-at finding the empty list, the duplicate key, and the Unicode surrogate you
-never considered. Properties worth asserting about the structures in this
-part: sorting is idempotent and preserves multiset contents; inserting then
-deleting a key restores the original tree; a serialiser followed by a parser
-is the identity function.
+### Property-based testing
+
+This attacks the problem that you only ever write the test cases you thought
+of. Instead of examples, you state a *property* that must hold for all inputs;
+the library generates hundreds of cases and shrinks any failure to a minimal
+example.
+
+- **jqwik** does this for Java (`@Property`, `@ForAll`); **Hypothesis** does it
+  for Python (`@given` plus strategies). Both are third-party libraries.
+- Both are exceptionally good at finding the empty list, the duplicate key,
+  and the Unicode surrogate you never considered.
+
+Properties worth asserting about the structures in this part: sorting is
+idempotent and preserves multiset contents; inserting then deleting a key
+restores the original tree; a serialiser followed by a parser is the identity
+function.
 
 ## A JUnit-style micro-framework you can run
 
@@ -688,9 +756,10 @@ Tests run: 10, Failures: 1, Errors: 0
 Read the report the way you would read a real one. Nine tests passed, so the
 buffer is broadly right; one failed, and the diagnostic says the whole story
 without you opening a debugger: after four pushes into a capacity-3 buffer
-there were **four** items. The `hint` string is doing exactly what
-JUnit's optional message argument does — turning "4 is not 3" into "4 is not
-3, and 3 is the capacity".
+there were **four** items.
+
+The `hint` string is doing exactly what JUnit's optional message argument
+does — turning "4 is not 3" into "4 is not 3, and 3 is the capacity".
 
 The bug is `>` where `>=` belongs: `push` only drops the oldest item once the
 buffer has already *exceeded* its capacity, so it always holds one item too
@@ -729,8 +798,9 @@ Tests run: 10, Failures: 0, Errors: 0
 
 Every framework you will ever use is this, plus polish: discovery by
 inspecting modules instead of a decorator, stack traces trimmed to your code,
-coloured output, XML reports, parallel workers, and plugins. The core is a
-list of callables and a `try`/`except`.
+coloured output, XML reports, parallel workers, and plugins.
+
+**The core is a list of callables and a `try`/`except`.**
 
 ## Test doubles: stub, mock, and fake
 
@@ -746,9 +816,11 @@ genuinely different things:
 | **Mock** | records the calls made to it so the test can assert on them | "was `send()` called exactly once, with this address?" |
 
 The clock is the example everybody meets first, because the alternative is a
-test that sleeps. A cache with a 30-second time-to-live tested against the
-real clock takes 31 seconds to run and is flaky on a loaded machine. Tested
-against a **fake clock**, it takes microseconds and is exact:
+test that sleeps.
+
+A cache with a 30-second time-to-live tested against the real clock takes 31
+seconds to run and is flaky on a loaded machine. Tested against a **fake
+clock**, it takes microseconds and is exact:
 
 ```python
 class FakeClock:
@@ -829,18 +901,20 @@ emails the fake recorded: [('user:8@example.com', 'Your session expired')]
 Look at what made this possible: `TTLCache` takes its clock as a constructor
 argument instead of calling `time.time()` internally. That is **dependency
 injection**, and it is the design decision — not the testing library — that
-makes the code testable. A class that reaches out and grabs its
-dependencies can only be tested by monkey-patching; a class that is *handed*
-them can be tested by handing it something else. Java's Mockito and Python's
-`unittest.mock` automate the bookkeeping, but the fifteen-line hand-written
-fake above is often clearer, and it never lies about an API that has since
-changed.
+makes the code testable.
+
+A class that reaches out and grabs its dependencies can only be tested by
+monkey-patching; a class that is *handed* them can be tested by handing it
+something else. Java's Mockito and Python's `unittest.mock` automate the
+bookkeeping, but the fifteen-line hand-written fake above is often clearer,
+and it never lies about an API that has since changed.
 
 ## What to test, and what not to
 
-The last honest section. [Section 24.2](../ch24-practice/02-testing.md)
-showed that 100% line coverage can miss the empty-input case entirely, and
-that is the key to reading coverage numbers correctly: **coverage tells you
+The last honest section. [Section 24.2](../ch24-practice/02-testing.md) showed
+that 100% line coverage can miss the empty-input case entirely.
+
+That is the key to reading coverage numbers correctly: **coverage tells you
 what was executed, never what was verified.** A test suite that calls every
 line and asserts nothing scores 100%.
 
@@ -866,11 +940,14 @@ Not worth testing:
 - **Exact log messages or private method names**, which change constantly
   without any behaviour changing.
 
-And a working target: aim for a suite that is fast enough to run on every
-save (seconds, not minutes), deterministic enough that a red result is always
-a real bug, and specific enough that a failure names the cause. A suite with
-those three properties gets run. One without them gets ignored, then
-disabled, then deleted.
+And a working target — aim for a suite that is:
+
+1. **Fast** enough to run on every save: seconds, not minutes.
+2. **Deterministic** enough that a red result is always a real bug.
+3. **Specific** enough that a failure names the cause.
+
+A suite with those three properties gets run. One without them gets ignored,
+then disabled, then deleted.
 
 !!! warning "Common mistakes"
     - **Arguments backwards in `assertEquals`.** Expected first, actual
@@ -937,6 +1014,8 @@ disabled, then deleted.
     still passes, because `@before_each` builds `RingBuffer(3)`, which is a
     legal capacity. That failure-versus-error split is what separates "the
     behaviour is wrong" from "the test could not even run" — and if you
-    instead broke `__init__` for *valid* capacities, `@before_each` would
-    raise and the report would show nine ERRORs, pointing straight at the
-    fixture rather than at nine unrelated tests.
+    instead broke `__init__` for *valid* capacities, `@before_each` would raise
+    before any test body ran — and because `run_tests` calls the hook *outside*
+    its `try`, that exception escapes the runner entirely: one traceback
+    pointing straight at the fixture instead of ten identical reports. (A real
+    framework wraps the hook too, and reports one error per test.)

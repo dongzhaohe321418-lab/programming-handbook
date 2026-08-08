@@ -48,10 +48,15 @@ for v, nbrs in graph.items():
 ## Breadth-first search: rings around the start
 
 BFS uses a [queue](../ch19-stacks-queues/03-queues.md) — first in, first out.
-Put the start vertex in, then repeatedly take the front vertex out, and push
-every unvisited neighbour onto the back. Because the queue is FIFO, everything
-at distance 1 enters before anything at distance 2, so vertices come out in
-non-decreasing order of distance. That is the whole guarantee.
+Put the start vertex in, then repeatedly take the front vertex out and push
+every unvisited neighbour onto the back.
+
+!!! note "The BFS guarantee"
+
+    Because the queue is FIFO, everything at distance 1 enters before anything
+    at distance 2. So vertices come out in **non-decreasing order of
+    distance** — and that single fact is where every BFS result on this page
+    comes from.
 
 Starting at `A`, the rings are:
 
@@ -201,11 +206,14 @@ leave A
 DFS visit order: A -> B -> D -> E -> F -> C -> G
 ```
 
-The indented `enter`/`leave` trace *is* the DFS tree, drawn sideways. The
-order in which vertices are first entered — `A B D E F C G` — is called the
-**pre-order**; the order in which they are left is the **post-order**, here
-`D C G F E B A`. Both are useful, and the post-order turns out to be the key
-to topological sorting later on this page.
+The indented `enter`/`leave` trace *is* the DFS tree, drawn sideways, and it
+yields two orderings worth naming:
+
+- **Pre-order** — the order vertices are first entered: `A B D E F C G`.
+- **Post-order** — the order they are left: `D C G F E B A`.
+
+Both are useful, and the post-order turns out to be the key to topological
+sorting later on this page.
 
 Compare that trace with the tree traversals of
 [Chapter 20](../ch20-bst/03-traversals-balance.md) and you will recognise it
@@ -258,14 +266,16 @@ stack DFS, neighbours pushed reversed:   A -> B -> D -> E -> F -> C -> G
 Both lines are correct depth-first searches. They differ because a stack
 reverses whatever you push into it: pushing `B` then `C` means `C` comes off
 first. To reproduce the *recursive* order exactly, push the neighbours in
-reverse. Textbooks and interviewers rarely mention this, and it is the single
-most common reason a hand-traced DFS disagrees with a running one.
+reverse.
+
+Textbooks and interviewers rarely mention that, and it is the single most
+common reason a hand-traced DFS disagrees with a running one.
 
 Note also that the stack version marks vertices visited on **pop**, not on
 push, and therefore needs the `if v in visited: continue` guard — a vertex can
-sit in the stack more than once. That is the mirror image of BFS's rule, and
-it is deliberate: marking on pop is what lets DFS reach a vertex by the
-deepest available route.
+sit in the stack more than once. That is the mirror image of BFS's rule, and it
+is deliberate: marking on pop is what lets DFS reach a vertex by the deepest
+available route.
 
 !!! warning "Recursive DFS has a depth limit"
 
@@ -422,9 +432,11 @@ fifteen times. Left alone, the loop runs until memory fails.
 
 The fix is one `set` and two lines, and the reason it is a `set` rather than a
 list is the $O(1)$ membership test from
-[Chapter 14](../ch14-beyond/01-collections-tour.md). Note that a visited set
-does something subtler than "prevent infinite loops": it guarantees each
-vertex is processed **exactly once**, which is what makes the cost linear.
+[Chapter 14](../ch14-beyond/01-collections-tour.md).
+
+Note that a visited set does something subtler than "prevent infinite loops":
+it guarantees each vertex is processed **exactly once**, which is what makes
+the cost linear.
 
 ## The cost: $O(V + E)$, derived
 
@@ -489,8 +501,9 @@ for n in (1000, 2000, 4000, 8000):
 ```
 
 The "neighbour looks" column is exactly $2E$ every time — never more, never
-less — and doubling $V$ doubles both the work and the milliseconds. That is
-what $O(V + E)$ looks like on a clock.
+less — and doubling $V$ roughly doubles the milliseconds too. (The absolute
+times depend on your machine; the counts do not.) That is what $O(V + E)$ looks
+like on a clock.
 
 ## Application 1 — connected components
 
@@ -622,13 +635,15 @@ cycle has even length.
 
 ## Application 3 — cycle detection
 
-Detecting a cycle takes two different algorithms depending on whether the
-graph is directed, and the difference trips up nearly everyone the first time.
+Detecting a cycle takes two different algorithms depending on whether the graph
+is directed, and the difference trips up nearly everyone the first time.
 
-**Undirected: track the parent.** In an undirected graph, every edge `u — v`
-looks like a cycle from `u`'s point of view, because `v`'s neighbour list
-contains `u` right back. So the rule is: seeing an already-visited neighbour
-means a cycle *unless* that neighbour is the vertex you just came from.
+### Undirected: track the parent
+
+In an undirected graph, every edge `u — v` looks like a cycle from `u`'s point
+of view, because `v`'s neighbour list contains `u` right back. So the rule is:
+seeing an already-visited neighbour means a cycle *unless* that neighbour is
+the vertex you just came from.
 
 ```python
 def has_cycle_undirected(graph):
@@ -661,9 +676,10 @@ ring  A-B, A-C, B-D, C-D   has a cycle? True
 edges in the tree: 3 = V - 1, the signature of an acyclic connected graph
 ```
 
-**Directed: three colours.** The parent trick does not work on a directed
-graph, because `u → v` does not imply `v → u`. Instead, track *where each
-vertex is in the traversal*:
+### Directed: three colours
+
+The parent trick does not work on a directed graph, because `u → v` does not
+imply `v → u`. Instead, track *where each vertex is in the traversal*:
 
 - **white** — not visited yet;
 - **grey** — visiting now: it is on the current recursion path;
@@ -716,9 +732,11 @@ DAG:          None
 ```
 
 The grey stack is doing double duty: it detects the cycle *and* reports it, by
-slicing itself from the repeated vertex onward. Being able to print the actual
-cycle — not just "yes there is one" — is what makes this useful in a build
-tool, where the error message needs to name the files involved.
+slicing itself from the repeated vertex onward.
+
+Being able to print the actual cycle — not just "yes there is one" — is what
+makes this useful in a build tool, where the error message needs to name the
+files involved.
 
 ## Application 4 — topological sort
 
@@ -743,9 +761,14 @@ graph LR
 There are two standard algorithms, and it is worth knowing both because they
 fail differently and produce different (equally valid) orders.
 
-**Kahn's algorithm** is BFS on in-degrees. Repeatedly take a vertex with
-in-degree 0 — nothing left blocking it — output it, and decrement the
-in-degree of everything it points at.
+### Kahn's algorithm — BFS on in-degrees
+
+Repeat one move until the graph runs out:
+
+1. Take a vertex whose in-degree is **0** — nothing left is blocking it.
+2. Output it.
+3. Decrement the in-degree of everything it points at, and enqueue any that
+   just reached 0.
 
 ```python
 from collections import deque
@@ -795,10 +818,11 @@ a legal study plan:
   semester 6: Compilers
 ```
 
-**DFS-based topological sort** is even shorter, and rests on a small
-observation: in a DAG, a vertex *finishes* (turns black) only after everything
-reachable from it has finished. So the reverse of the post-order is a
-topological order.
+### DFS-based topological sort — reverse the post-order
+
+This one is even shorter, and rests on a small observation: in a DAG, a vertex
+*finishes* (turns black) only after everything reachable from it has finished.
+So the reverse of the post-order is a topological order.
 
 ```python
 courses = {
@@ -840,14 +864,15 @@ edges pointing backwards: [] -> valid
 ```
 
 Two different orders — Kahn put `Algorithms` before `OS`, DFS put `OS` first —
-and *both are correct*, because there is no edge between those two courses.
-A DAG generally has many topological orders; an algorithm is required to
-produce one, not a specific one.
+and *both are correct*, because there is no edge between those two courses. A
+DAG generally has many topological orders; an algorithm is required to produce
+one, not a specific one.
 
-**And what if the prerequisites are impossible?** Add one edge that closes a
-loop — say the Compilers course secretly requires Discrete, which requires
-DataStruct, which requires Algorithms, which requires Compilers — and Kahn's
-algorithm cannot start it:
+### What if the prerequisites are impossible?
+
+Add one edge that closes a loop — say the Compilers course secretly requires
+Discrete, which requires DataStruct, which requires Algorithms, which requires
+Compilers — and Kahn's algorithm cannot start it:
 
 ```python
 # raises ValueError
@@ -885,9 +910,11 @@ print(kahn(courses))
 ```
 
 The error names exactly the courses caught in the loop, which is what a good
-build tool prints. Notice that Kahn's algorithm detects the cycle *for free* —
-it does not need a separate check, it simply notices it ran out of ready
-vertices before running out of graph.
+build tool prints.
+
+Notice that Kahn's algorithm detects the cycle *for free*. It does not need a
+separate check; it simply notices that it ran out of ready vertices before it
+ran out of graph.
 
 ## Application 5 — shortest paths without weights
 
@@ -949,10 +976,12 @@ it contains a shortest path to *every* reachable vertex simultaneously. One
 $O(V + E)$ traversal answers "how far is everything from here?" for the whole
 graph, which is a much better deal than it first appears.
 
-There are two ways to lose this guarantee, and both are common. Use a stack
-instead of a queue and you get *a* path, generally a terrible one. Put weights
-on the edges and "fewest edges" stops meaning "cheapest route" — which is
-exactly where [§37.3](03-shortest-paths.md) begins.
+There are two ways to lose this guarantee, and both are common:
+
+- **Use a stack instead of a queue.** You still get *a* path, generally a
+  terrible one.
+- **Put weights on the edges.** "Fewest edges" stops meaning "cheapest route"
+  — which is exactly where [§37.3](03-shortest-paths.md) begins.
 
 !!! warning "Common mistakes"
 

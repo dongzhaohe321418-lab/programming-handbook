@@ -38,9 +38,13 @@ for i, W in enumerate(Ws, start=1):
 ```
 
 The plain stack's signal collapses towards zero; the residual stack keeps a
-healthy magnitude. The same thing happens to gradients on the way back. In a
-plain chain the gradient is a *product* of per-layer factors, so factors
-below 1 multiply into oblivion — the classic **vanishing gradient**:
+healthy magnitude.
+
+### Why the gradient needs the same highway
+
+The same thing happens to gradients on the way back. In a plain chain the
+gradient is a *product* of per-layer factors, so factors below 1 multiply
+into oblivion — the classic **vanishing gradient**:
 
 ```python
 import numpy as np
@@ -55,12 +59,13 @@ print(f"residual 20-layer gradient: {grad_res:.3e}")
 print(f"ratio: {grad_res / grad_plain:.3e}")
 ```
 
-About $1.6 \times 10^{-5}$ versus about $9.6 \times 10^{3}$ — the residual
+About $1.6 \times 10^{-5}$ versus about $9.6 \times 10^{3}$: the residual
 version delivers a gradient roughly $6 \times 10^{8}$ times larger, which is
-the difference between "trains" and "does not train". The `+ x` turns a product of
-small numbers into a product of numbers *above* 1, which is why transformers
-can be 32, 80, or 120 layers deep at all. Every block in a transformer
-therefore has this shape:
+the difference between "trains" and "does not train".
+
+**The `+ x` turns a product of small numbers into a product of numbers
+*above* 1**, and that is why transformers can be 32, 80, or 120 layers deep
+at all. Every block in a transformer therefore has this shape:
 
 ```text
 x = x + Attention(x)
@@ -103,15 +108,19 @@ print("row std devs (~1)  :", np.round(y.std(axis=-1), 4))
 ```
 
 Both rows come out on the same scale despite starting four orders of
-magnitude apart. Note it normalises *across the features of one token*, not
-across the batch — which is why it works fine with sequences of any length
-and any batch size.
+magnitude apart. Note that it normalises *across the features of one token*,
+not across the batch — which is why it works fine with sequences of any
+length and any batch size.
 
-**Where** you put it matters. The original 2017 transformer used **post-LN**
-(normalize after adding the residual); every large modern model uses
-**pre-LN** (normalize the input to the sub-layer, leave the residual path
-clean), because post-LN deep stacks need learning-rate warm-up and still
-tend to diverge.
+### Pre-LN versus post-LN: where you put it matters
+
+- **post-LN** (the original 2017 transformer): normalize *after* adding the
+  residual.
+- **pre-LN** (every large modern model): normalize the input to the
+  sub-layer and leave the residual path clean.
+
+Post-LN wins on paper and loses in practice: deep post-LN stacks need
+learning-rate warm-up and still tend to diverge.
 
 ```mermaid
 flowchart LR
@@ -128,9 +137,11 @@ flowchart LR
 ```
 
 In pre-LN the residual path from input to output contains *no* normalization
-at all — an uninterrupted highway from layer 1 to layer 80. Many current
-models also swap LayerNorm for **RMSNorm**, which skips the mean subtraction
-and divides by the root-mean-square only; it is cheaper and works as well.
+at all — an uninterrupted highway from layer 1 to layer 80.
+
+Many current models also swap LayerNorm for **RMSNorm**, which skips the mean
+subtraction and divides by the root-mean-square only. It is cheaper, and it
+works just as well.
 
 ## The feed-forward network: where the thinking happens
 
@@ -143,12 +154,15 @@ $$
 \qquad d_{\text{ff}} \approx 4 \, d_{\text{model}}
 $$
 
-The 4× expansion is a convention that stuck because it works: the wide
-middle layer gives the network room to compute many independent features per
-token before compressing back. Without the non-linearity $\phi$, two stacked
-matrix multiplies would collapse into one matrix — the FFN would be pointless.
-Modern models use **GELU** or **SwiGLU** rather than ReLU because their
-smooth curve near zero trains better.
+Three design choices are packed into that one line:
+
+- **The 4× expansion** is a convention that stuck because it works: the wide
+  middle layer gives the network room to compute many independent features
+  per token before compressing back.
+- **The non-linearity $\phi$ is not optional.** Without it, two stacked
+  matrix multiplies collapse into a single matrix and the FFN is pointless.
+- **The choice of non-linearity is GELU or SwiGLU**, not ReLU, because their
+  smooth curve near zero trains better.
 
 ```python
 import numpy as np
@@ -177,10 +191,13 @@ print("\nFFN parameters:", W1.size + W2.size,
       "vs attention parameters:", 4 * d_model * d_model)
 ```
 
-Note the last line: with the 4× rule the FFN holds *twice* as many
-parameters as the attention block it sits next to. In most large models,
-roughly two-thirds of the weights are in feed-forward layers — attention
-gets the fame, the FFN gets the storage.
+Note the last line. With the 4× rule the FFN holds *twice* as many parameters
+as the attention block it sits next to.
+
+!!! note "Attention gets the fame; the FFN gets the storage"
+    In most large models **roughly two-thirds of the weights live in
+    feed-forward layers.** If you are budgeting memory, that is the term to
+    look at first — and Exercise 26.5 makes you compute it for a 70B model.
 
 ## Stacking blocks into a model
 
@@ -205,9 +222,10 @@ flowchart TB
 
 Everything between the embedding and the final norm preserves the shape
 `(n_tokens, d_model)`, which is exactly why blocks stack without any glue
-code. The last step, the **unembedding**, maps each token's vector back to
-one score per vocabulary entry — those scores are the **logits** of
-Section 26.4.
+code.
+
+The last step, the **unembedding**, maps each token's vector back to one
+score per vocabulary entry. Those scores are the **logits** of Section 26.4.
 
 ### A complete transformer forward pass
 
@@ -282,11 +300,13 @@ print("   probabilities sum to", round(float(probs.sum()), 6))
 ```
 
 **You have just run a transformer.** Token IDs went in; a probability
-distribution over the vocabulary came out. The weights are random, so the
-prediction (`<eos>` at 0.198) is meaningless — training is the process of
-nudging those random numbers until the distribution puts its mass on
-plausible continuations. But the architecture, the data flow, and the shapes
-are the real thing, and nothing else is hidden inside a real model.
+distribution over the vocabulary came out.
+
+The weights are random, so the prediction (`<eos>` at 0.198) is meaningless.
+Training is the process of nudging those random numbers until the
+distribution puts its mass on plausible continuations. But the architecture,
+the data flow, and the shapes are the real thing, and nothing else is hidden
+inside a production model.
 
 !!! note "What is toy, what is faithful"
     Toy: dimensions (8 instead of 4096), depth (2 instead of 32+), vocabulary
@@ -327,8 +347,11 @@ print("\nSo 'cat sat on mat' and 'mat on sat cat' are the SAME to attention.")
 ```
 
 `True`. Without extra help, "the cat chased the dog" and "the dog chased the
-cat" are indistinguishable — clearly unacceptable. Three fixes are in
-common use:
+cat" are indistinguishable — clearly unacceptable.
+
+### Three ways to inject position
+
+Three fixes are in common use:
 
 | Scheme | Idea | Used by |
 | --- | --- | --- |
@@ -413,8 +436,9 @@ have simply never seen index 200,000.
 ## MHA, MQA, GQA: paying for the KV cache
 
 During generation the model caches every token's keys and values so it does
-not recompute them — the **KV cache**. That cache is proportional to the number of **key/value heads** — so architects
-buy memory back by letting several query heads *share* one KV head.
+not recompute them — the **KV cache**. That cache is proportional to the
+number of **key/value heads**, so architects buy memory back by letting
+several query heads *share* one KV head.
 
 ```mermaid
 flowchart TB
@@ -432,6 +456,14 @@ flowchart TB
         q4["Q1..Q8"] --- kv4["KV1"]
     end
 ```
+
+The three schemes differ in exactly one number, $H_{kv}$:
+
+| Scheme | Query heads | KV heads | Cache versus MHA | Quality cost |
+| --- | --- | --- | --- | --- |
+| **MHA** — multi-head | $h$ | $h$ | baseline | none; it is the original |
+| **GQA** — grouped-query | $h$ | $h / g$ | $g\times$ smaller | usually too small to measure |
+| **MQA** — multi-query | $h$ | 1 | $h\times$ smaller | noticeable on some tasks |
 
 The KV-cache size in bytes is
 
@@ -455,9 +487,10 @@ for scheme, n_kv in [("MHA", 32), ("GQA", 8), ("MQA", 1)]:
 ```
 
 2 GiB of cache *per sequence* for plain MHA — on top of the weights, and
-multiplied by every concurrent user. GQA with 8 KV heads cuts it exactly 4×
-for a quality loss usually too small to measure, which is why Llama-2-70B
-and most models since use it.
+multiplied by every concurrent user. GQA with 8 KV heads cuts that exactly
+4× for a quality loss usually too small to measure, which is why Llama-2-70B
+and most models since use it. [Section 27.1](../ch27-inference/01-kv-cache.md)
+turns this formula into a capacity plan.
 
 ## FlashAttention: same maths, different memory traffic
 
@@ -476,15 +509,21 @@ print(f"quadratic/linear ratio at this length: {seq / 256:.0f}x")
 ```
 
 **FlashAttention** (Dao et al., 2022) observes that GPUs are far more
-limited by memory *traffic* than by arithmetic. It splits Q, K, and V into
-tiles that fit in the GPU's fast on-chip memory, computes the softmax
-incrementally with a running maximum and running sum, and accumulates the
-output tile by tile — so the full $n \times n$ matrix is **never
-materialised**. Memory use becomes linear in sequence length instead of
-quadratic, and it is exact: the same numbers as the naive version, bit-level
-differences aside. It is not an approximation, not a different model, and
-not something you implement yourself — it ships inside PyTorch, vLLM, and
-every serious inference engine.
+limited by memory *traffic* than by arithmetic. It rearranges the same
+computation in three moves:
+
+1. **Tile** Q, K, and V into blocks that fit in the GPU's fast on-chip
+   memory.
+2. **Compute the softmax incrementally**, carrying a running maximum and a
+   running sum from tile to tile.
+3. **Accumulate the output tile by tile**, so the full $n \times n$ matrix is
+   **never materialised**.
+
+Memory use becomes linear in sequence length instead of quadratic. Three
+things it is *not*: it is not an approximation (the numbers match the naive
+version, bit-level differences aside), not a different model, and not
+something you implement yourself — it ships inside PyTorch, vLLM, and every
+serious inference engine.
 
 ## Counting parameters
 
@@ -520,12 +559,17 @@ print(f"weights at fp16: {total * 2 / 2**30:.1f} GiB")
 ```
 
 Exactly right — 6,738,415,616 parameters, which is what "7B" rounds to. Two
-lessons: the FFN dominates (135M of the 202M per block), and a model's
-memory footprint for weights is simply parameters × bytes per parameter,
-12.6 GiB in fp16 — the number that decides whether the model fits on your
-GPU at all. (Storing each weight in 8 or 4 bits instead of 16 —
-**quantization** — is how a 7B model is squeezed onto a laptop; the
-footprint scales exactly linearly with the bits.)
+lessons:
+
+- **The FFN dominates**: 135M of the 202M parameters per block.
+- **Weight memory is just parameters × bytes per parameter**: 12.6 GiB in
+  fp16, the number that decides whether the model fits on your GPU at all.
+
+Storing each weight in 8 or 4 bits instead of 16 — **quantization** — is how
+a 7B model is squeezed onto a laptop, and the footprint scales exactly
+linearly with the bits.
+[Section 27.4](../ch27-inference/04-quantization-deploy.md) measures what
+that costs.
 
 !!! warning "Common mistakes"
     - **Confusing $d_{\text{model}}$ with the vocabulary size.** One is the

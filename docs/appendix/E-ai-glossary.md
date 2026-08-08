@@ -114,7 +114,7 @@ token.
     chunk boundary is a design decision with real consequences: too small
     and the answer is split across chunks, too large and the embedding
     averages away what made the passage relevant. See
-    [29.1](../ch29-memory-rag/01-embeddings-vector-search.md).
+    [29.2](../ch29-memory-rag/02-rag-pipeline.md).
 
 **constrained decoding**
 :   Restricting the sampler at each step to tokens that can still lead to a
@@ -297,7 +297,7 @@ token.
 :   Combining keyword scoring (BM25) with dense embedding similarity, then
     fusing the two ranked lists. Each covers the other's blind spot: exact
     identifiers for keyword search, paraphrases for embeddings. See
-    [29.2](../ch29-memory-rag/02-rag-pipeline.md).
+    [29.1](../ch29-memory-rag/01-embeddings-vector-search.md).
 
 ## I
 
@@ -310,7 +310,8 @@ token.
 **instruction tuning**
 :   Supervised fine-tuning on (instruction, response) pairs, which turns a
     raw next-token predictor into something that answers questions and
-    follows formats. It is where a base model becomes a chat model. See
+    follows formats. It is where a base model becomes a chat model. (The
+    chapters call the data *SFT instruction pairs*.) See
     [32.1](../ch32-data/01-why-data.md).
 
 ## J
@@ -340,9 +341,10 @@ token.
 
 **KV cache**
 :   The stored keys and values for every token already processed, so each
-    new token attends to them instead of recomputing them. It turns
-    generation from quadratic to linear in work — and it is usually the
-    thing that runs you out of GPU memory. See
+    new token attends to them instead of recomputing them. It turns the
+    *projection* work from quadratic to linear; the total number of attention
+    scores still grows as $\Theta(n^2)$. It is also usually the thing that runs
+    you out of GPU memory. See
     [27.1](../ch27-inference/01-kv-cache.md).
 
 ## L
@@ -369,8 +371,10 @@ token.
 **LoRA, QLoRA**
 :   Fine-tuning by training a small pair of low-rank matrices alongside
     frozen weights, so you update a fraction of a percent of the parameters.
-    QLoRA is the same idea on top of a 4-bit quantized base model. See
-    [27.4](../ch27-inference/04-quantization-deploy.md).
+    QLoRA is the same idea on top of a 4-bit quantized base model. Named here
+    because you will meet it constantly; this handbook does not build it —
+    [27.4](../ch27-inference/04-quantization-deploy.md) covers the 4-bit base
+    model QLoRA sits on.
 
 **loop guard**
 :   An agent guard that fingerprints each action as (tool, normalised
@@ -453,8 +457,9 @@ token.
 **PEFT (parameter-efficient fine-tuning)**
 :   The family of methods that adapt a model by training a small number of
     new or selected parameters while the rest stay frozen. LoRA and QLoRA
-    are the members you will actually meet. See
-    [27.4](../ch27-inference/04-quantization-deploy.md).
+    are the members you will actually meet. Not built anywhere in this
+    handbook; the closest section is
+    [27.4](../ch27-inference/04-quantization-deploy.md) on quantized weights.
 
 **perplexity**
 :   The exponential of the average negative log-likelihood the model assigns
@@ -481,6 +486,7 @@ token.
     prompt in parallel and is compute-bound; **decode** produces one token
     at a time and is memory-bandwidth-bound. Nearly every serving
     optimisation targets one phase or the other. See
+    [27.1](../ch27-inference/01-kv-cache.md) and
     [27.2](../ch27-inference/02-batching.md).
 
 **prefix caching**
@@ -642,7 +648,8 @@ token.
 :   The instruction block placed before the conversation that sets the
     model's role, constraints and format. It occupies context on every call,
     which is exactly why keeping it byte-stable makes prefix caching pay.
-    See [26.1](../ch26-llm-internals/01-tokenization.md).
+    See [26.1](../ch26-llm-internals/01-tokenization.md) and
+    [27.1](../ch27-inference/01-kv-cache.md).
 
 ## T
 
@@ -722,5 +729,6 @@ token.
 **zero-shot**
 :   Asking for a task with no examples in the prompt, relying on the
     instruction alone. Instruction tuning is what made this work; a base
-    model generally needs few-shot examples instead. See
+    model generally needs few-shot examples instead. The chapters do not use
+    this term; the closest treatment is few-shot prompting in
     [33.1](../ch33-eval/01-benchmarks.md).

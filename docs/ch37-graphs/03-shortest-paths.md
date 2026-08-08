@@ -105,13 +105,15 @@ Step 2 is the whole algorithm, and it is a *claim*, not an observation. It says:
 Why should that be true? Suppose we pop $u$ with tentative distance $d$, and
 suppose some better route to $u$ exists. That route must leave the settled
 region somewhere, crossing to an unsettled vertex $x$ before eventually
-reaching $u$. But $x$'s tentative distance is *at most* the length of that
-route's prefix, and the rest of the route adds more length — so $x$'s tentative
-distance is less than $d$, and $x$, not $u$, would have been popped. Contradiction.
+reaching $u$.
+
+But $x$'s tentative distance is *at most* the length of that route's prefix,
+and the rest of the route adds more length. So $x$'s tentative distance is less
+than $d$, and $x$, not $u$, would have been popped. Contradiction.
 
 Read that argument once more and notice the assumption it leans on: *the rest
 of the route adds more length*. That is true only when every edge weight is
-non-negative. Remember it; it is the load-bearing sentence of this page.
+non-negative. Remember it — it is the load-bearing sentence of this page.
 
 ### The centrepiece: Dijkstra traced on a road map
 
@@ -242,18 +244,17 @@ Python's `heapq` has no such operation, and neither do most heap
 implementations, because finding an arbitrary element inside a binary heap
 costs $O(n)$ unless you maintain a side index from vertex to heap position.
 
-So real code does one of two things.
+So real code does one of two things:
 
-**Decrease-key** keeps exactly one heap entry per vertex and maintains a
-`position` dictionary so the entry can be found and sifted up in $O(\log V)$.
-The heap never exceeds $V$ entries. It is the version in the textbook analysis,
-and it is genuinely more code: every swap inside the heap must update the
-position map.
-
-**Lazy deletion** — what the block above does — simply pushes a *new* entry and
-leaves the stale one behind. When a stale entry surfaces, the `if u in settled`
-check throws it away. The heap can grow to $O(E)$ entries instead of $O(V)$,
-and there are up to $E$ pops instead of $V$.
+- **Decrease-key** keeps exactly one heap entry per vertex, plus a `position`
+  dictionary so the entry can be found and sifted up in $O(\log V)$. The heap
+  never exceeds $V$ entries. It is the version in the textbook analysis, and it
+  is genuinely more code: every swap inside the heap must update the position
+  map.
+- **Lazy deletion** — what the block above does — simply pushes a *new* entry
+  and leaves the stale one behind. When a stale entry surfaces, the
+  `if u in settled` check throws it away. The heap can grow to $O(E)$ entries
+  instead of $O(V)$, and there are up to $E$ pops instead of $V$.
 
 The costs come out almost the same, which is why lazy deletion wins in practice:
 
@@ -265,8 +266,10 @@ $$
 
 Since $E \ge V - 1$ in a connected graph, both are $O(E \log V)$. Lazy deletion
 uses more memory and less code, and the constant factor on "less code" is
-usually the one that matters. One rule though: with lazy deletion you **must**
-check for staleness on pop, either with a `settled` set as above or with
+usually the one that matters.
+
+One rule comes with it, though: with lazy deletion you **must** check for
+staleness on pop, either with a `settled` set as above or with
 `if d > dist[u]: continue`. Skip it and every stale entry re-relaxes the whole
 neighbourhood.
 
@@ -347,12 +350,15 @@ for v in ("Depot", "Hub", "Port", "Yard"):
    Yard         6      5   WRONG (off by 1)
 ```
 
-Trace the failure exactly. Depot is settled at 0, giving `Port = 2` and
-`Hub = 3`. Port has the smaller tentative distance, so Port is popped and
-**settled at 2** — the algorithm has now promised that 2 is final. Only
-afterwards is Hub popped, and the edge Hub → Port with weight $-2$ would have
-given 1 — but Port is settled, so the edge is skipped. The error then
-propagates: Yard was computed from the wrong Port distance and is wrong too.
+Trace the failure exactly, one step at a time:
+
+1. Depot is settled at 0, giving `Port = 2` and `Hub = 3`.
+2. Port has the smaller tentative distance, so Port is popped and **settled at
+   2** — the algorithm has now promised that 2 is final.
+3. Only afterwards is Hub popped. The edge Hub → Port with weight $-2$ would
+   have given 1, but Port is settled, so the edge is skipped.
+4. The error propagates: Yard was computed from the wrong Port distance, so it
+   is wrong too.
 
 !!! warning "The failure is silent"
 
@@ -360,28 +366,35 @@ propagates: Yard was computed from the wrong Port distance and is wrong too.
     plausible, wrong distance table. If your weights can ever be negative, no
     amount of testing on positive-weight graphs will reveal it.
 
-A tempting patch is to delete the `if v in settled: continue` line and let
-vertices be re-settled. That does produce the right answer here, but it is no
-longer Dijkstra — it has become a slow, unstructured Bellman-Ford, it can
-re-expand vertices exponentially many times on adversarial graphs, and it still
-loops forever if the graph has a **negative cycle** (a cycle whose weights sum
-to less than zero, around which you can lap forever getting cheaper). Another
-tempting patch is to add a constant to every weight to make them all positive:
-that changes the answer, because it penalises paths with more edges. Neither
-patch is a fix. The fix is a different algorithm.
+### Two tempting patches, both wrong
+
+- **Delete the `if v in settled: continue` line** and let vertices be
+  re-settled. It does produce the right answer here — but it is no longer
+  Dijkstra. It has become a slow, unstructured Bellman-Ford, it can re-expand
+  vertices exponentially many times on adversarial graphs, and it still loops
+  forever on a **negative cycle** (a cycle whose weights sum to less than zero,
+  around which you can lap forever getting cheaper).
+- **Add a constant to every weight** so they are all positive. That changes the
+  answer, because the shift penalises paths in proportion to how many edges
+  they have.
+
+Neither is a fix. The fix is a different algorithm.
 
 ## Bellman-Ford: slower, and right
 
 Bellman-Ford abandons the greedy commitment entirely. It never settles
 anything. Instead it relaxes **every edge in the graph**, $V-1$ times.
 
-The reasoning is a small induction. After one pass over all edges, every
-shortest path that uses one edge is correct. After two passes, every shortest
-path using two edges is correct. A shortest path in a graph with no negative
-cycle visits no vertex twice, so it has at most $V-1$ edges — hence $V-1$
-passes suffice. And if a $V$-th pass still improves something, then some path
-with $V$ edges beats every shorter one, which is only possible if a negative
-cycle exists.
+The reasoning is a small induction:
+
+1. After one pass over all edges, every shortest path that uses **one** edge is
+   correct.
+2. After two passes, every shortest path using **two** edges is correct — and
+   so on.
+3. A shortest path in a graph with no negative cycle visits no vertex twice, so
+   it has at most $V-1$ edges. Hence $V-1$ passes suffice.
+4. If a $V$-th pass *still* improves something, then some path with $V$ edges
+   beats every shorter one — which is only possible if a negative cycle exists.
 
 ```python
 INF = float("inf")
@@ -436,9 +449,13 @@ cheapest Depot -> Yard: Depot -> Hub -> Port -> Yard = 5
 
 Correct on the first pass, in fact — because the edge list happened to be in a
 lucky order. Bellman-Ford is not clever; it is *thorough*, and thoroughness is
-what buys correctness here. Notice the edge-list representation from
-[§37.1](01-representations.md) is exactly the right input: the algorithm never
-asks "who are $u$'s neighbours?", only "give me every edge again".
+what buys correctness here.
+
+Notice that the edge-list representation from
+[§37.1](01-representations.md) is exactly the right input here: the algorithm
+never asks "who are $u$'s neighbours?", only "give me every edge again".
+
+### Detecting a negative cycle
 
 Now the detector, on a graph you can lap forever:
 
@@ -479,9 +496,11 @@ print(bellman_ford(vertices, edges, "S", trace=True))
 Every pass drops the distances by exactly one, forever, and then the final
 check raises. "Shortest path" is *undefined* on such a graph — there is no
 shortest path, only cheaper and cheaper ones — so raising is the honest
-response. This detector is how currency-arbitrage finders work: model exchange
-rates as $-\log(\text{rate})$ edges and a negative cycle *is* a profitable
-sequence of trades.
+response.
+
+This detector is how currency-arbitrage finders work: model exchange rates as
+$-\log(\text{rate})$ edges, and a negative cycle *is* a profitable sequence of
+trades.
 
 ## Choosing between them
 
@@ -494,10 +513,13 @@ sequence of trades.
 | Bellman-Ford | $O(V E)$ | $O(V)$ | **yes**, and detects negative cycles | cheapest paths from one source |
 | Floyd-Warshall | $O(V^3)$ | $O(V^2)$ | yes (no negative cycles) | cheapest paths between *all* pairs |
 
-The practical decision tree is short. Unweighted? BFS. Weighted,
-non-negative? Dijkstra. Any negative weights? Bellman-Ford. Need every pair and
-$V$ is small (a few hundred)? Floyd-Warshall. Have a good guess at the
-remaining distance? A\*.
+The practical decision tree is short:
+
+- **Unweighted?** BFS.
+- **Weighted, all non-negative?** Dijkstra.
+- **Any negative weights?** Bellman-Ford.
+- **Need every pair, and $V$ is small (a few hundred)?** Floyd-Warshall.
+- **Have a good guess at the remaining distance?** A\*.
 
 ## A\*: Dijkstra with a hunch
 
@@ -514,19 +536,27 @@ where $g(v)$ is the distance actually travelled to $v$ (what Dijkstra uses) and
 $h(v)$ is a **heuristic** — an estimate of the remaining distance from $v$ to
 the goal. Setting $h(v) = 0$ everywhere gives back Dijkstra exactly.
 
-The heuristic must be **admissible**: it must never *overestimate* the true
-remaining cost. That is the condition under which A\* still returns an optimal
-path, and the argument is the greedy invariant again — if $h$ never
-overestimates, then popping the smallest $f$ still means popping a vertex whose
-$g$ is already final.
+### The heuristic must be admissible
+
+!!! note "Admissibility"
+
+    A heuristic is **admissible** when it never *overestimates* the true
+    remaining cost. That is the condition under which A\* still returns an
+    optimal path.
+
+The argument is the greedy invariant again: if $h$ never overestimates, then
+popping the smallest $f$ still means popping a vertex whose $g$ is already
+final.
 
 On a grid where you may move up, down, left, or right, and every step costs at
-least 1, the **Manhattan distance** $|r_1 - r_2| + |c_1 - c_2|$ is admissible:
-you cannot possibly reach the goal in fewer steps than that, so it never
-overestimates. (Straight-line Euclidean distance is admissible too, and weaker
-— it under-estimates more, so it guides less.)
+least 1, the **Manhattan distance** $|r_1 - r_2| + |c_1 - c_2|$ is admissible —
+you cannot possibly reach the goal in fewer steps than that. (Straight-line
+Euclidean distance is admissible too, and weaker: it under-estimates more, so
+it guides less.)
 
-Here is A\* and Dijkstra as the same function, run on two 31×31 grid maps: an
+### Two maps, three heuristics
+
+Here are A\* and Dijkstra as the same function, run on two 31×31 grid maps: an
 open plain, and one with a band of mud in the middle that costs 20 per cell
 instead of 1.
 
@@ -601,22 +631,23 @@ mud band    5x Manhattan (NOT adm.)          123       286     28
 
 Three lessons in six rows.
 
-**The payoff is real.** On the open plain, Dijkstra expands 675 of the 961
+**1. The payoff is real.** On the open plain, Dijkstra expands 675 of the 961
 cells — it fans out in a diamond in every direction — while A\* expands 29, one
 per step of the path. A twenty-three-fold reduction, same answer.
 
-**The payoff shrinks when the heuristic is a poor guess.** On the mud map the
-true cost is 56 but Manhattan still says 28, because it knows nothing about
-mud. The estimate is admissible (it never overestimates) so the answer is still
-optimal, but it under-guesses so badly that A\* only saves about a fifth of the
-work. **A heuristic helps in proportion to how well it predicts.**
+**2. The payoff shrinks when the heuristic is a poor guess.** On the mud map
+the true cost is 56 but Manhattan still says 28, because it knows nothing about
+mud. The estimate is admissible, so the answer is still optimal — but it
+under-guesses so badly that A\* saves only about a fifth of the work. **A
+heuristic helps in proportion to how well it predicts.**
 
-**Breaking admissibility breaks the answer.** Multiplying Manhattan by 5 makes
-the estimate wildly optimistic about progress toward the goal — it *over*states
-remaining cost, so A\* stops caring about cost already paid and charges
-straight at the goal. It is fast (286 expansions instead of 569) and it is
-wrong: it drives straight through the mud for a cost of 123 instead of 56, more
-than double. Notice the trap — the returned path is *shorter in steps* (28
+**3. Breaking admissibility breaks the answer.** Multiplying Manhattan by 5
+makes the estimate *over*state remaining cost, so A\* stops caring about cost
+already paid and charges straight at the goal. It is fast (286 expansions
+instead of 569) and it is wrong: it drives through the mud for a cost of 123
+instead of 56, more than double.
+
+Notice the trap in that last row. The returned path is *shorter in steps* (28
 versus 56) and looks perfectly reasonable. Nothing about the output announces
 that it is not optimal.
 
@@ -686,17 +717,22 @@ graph diameter (longest shortest path): 7
 The direct road A → D is 7, but the table says 6, via B and C: $3 + 2 + 1$. The
 whole table was computed with 64 comparisons.
 
-The loop order matters and is the most common Floyd-Warshall bug: `k` must be
-the **outermost** loop. Written `for i / for j / for k` the algorithm silently
-produces wrong answers, because the dynamic-programming argument requires all
-pairs to be updated for a given intermediate vertex before moving on.
+### The loop order is the classic bug
+
+`k` must be the **outermost** loop. Written `for i / for j / for k` the
+algorithm silently produces wrong answers, because the dynamic-programming
+argument requires all pairs to be updated for a given intermediate vertex
+before moving on to the next one.
+
+### When it is the right tool
 
 The cost is $O(V^3)$ time and $O(V^2)$ space, with a tiny constant — three
 integer operations in the inner loop, and no heap. For $V = 300$ that is 27
-million operations, a second or two in Python and milliseconds in C. Beyond
-about a thousand vertices, $V^3$ becomes a billion and you should run Dijkstra
-from each source instead — which costs $O(V E \log V)$ and is far better on a
-sparse graph.
+million operations: a second or two in Python, milliseconds in C.
+
+Beyond about a thousand vertices, $V^3$ becomes a billion and you should run
+Dijkstra from each source instead, which costs $O(V E \log V)$ and is far
+better on a sparse graph.
 
 !!! warning "Common mistakes"
 

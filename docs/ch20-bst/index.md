@@ -4,26 +4,31 @@ Every structure so far — arrays, lists, stacks, queues — has been a *line*:
 one thing after another. This chapter introduces the first structure shaped
 like the problems it solves: the **tree**, a hierarchy of nodes branching
 from a single root, exactly the shape of a file system, an org chart, or a
-tournament bracket. Trees are also where
-[Chapter 17](../ch17-recursion/index.md)'s recursion stops being a party
-trick and becomes the natural way to think: every node of a tree is itself
-the root of a smaller tree, so almost every tree algorithm is a few lines
-that call themselves on the left and right halves.
+tournament bracket.
+
+Trees are also where [Chapter 17](../ch17-recursion/index.md)'s recursion
+stops being a party trick and becomes the natural way to think: every node
+of a tree is itself the root of a smaller tree, so almost every tree
+algorithm is a few lines that call themselves on the left and right halves.
 
 The star of the chapter is the **binary search tree (BST)**: a binary tree
 that keeps everything smaller to the left and everything larger to the
 right, *everywhere*. That one invariant lets insert, search, and delete all
 run in time proportional to the tree's **height** — and in a bushy tree the
 height of $n$ nodes is only about $\log_2 n$. A million items, roughly
-twenty steps. We build the full structure honestly: insert, search, min and
-max, and all three cases of delete, each one drawn before it is coded.
+twenty steps.
 
-The chapter closes with the two ideas that set up everything after it: the
-four classic **traversals** (including the level-by-level walk powered by
-[Chapter 19](../ch19-stacks-queues/03-queues.md)'s queue), and the
-**balance problem** — the honest admission that feeding a BST sorted input
-degrades it into a linked list, and the reason self-balancing trees exist
-(they await in [Chapter 25](../ch25-next/01-cs400-preview.md)).
+We build the full structure honestly: insert, search, min and max, and all
+three cases of delete, each one drawn before it is coded. The chapter then
+closes with the two ideas that set up everything after it:
+
+- **The four classic traversals** — three recursive walks, plus the
+  level-by-level walk powered by
+  [Chapter 19](../ch19-stacks-queues/03-queues.md)'s queue.
+- **The balance problem** — the honest admission that feeding a BST sorted
+  input degrades it into a linked list, and the reason self-balancing trees
+  exist (previewed in [Chapter 25](../ch25-next/01-cs400-preview.md) and
+  built for real in [Chapter 35](../ch35-balanced-trees/index.md)).
 
 ## After this chapter you can …
 

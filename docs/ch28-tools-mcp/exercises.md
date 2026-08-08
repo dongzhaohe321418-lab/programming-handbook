@@ -1,5 +1,61 @@
 # Chapter 28 · Exercises
 
+## The chapter in brief
+
+- A model cannot calculate, cannot know today's date, and has no hands — and
+  all three gaps close the same way: **let it ask your program to run a
+  function** ([28.1](01-function-calling.md)).
+- The model never executes anything. It emits *text*; your dispatcher parses
+  it, calls Python, and appends the result to the conversation.
+- One round of tool use costs **two** model calls, because the model has to be
+  shown the result before it can talk about it.
+- A **JSON Schema** is the contract, and its `description` fields are a
+  prompt: the model chooses tools by reading them.
+- Your **dispatcher is the security boundary** — allowlist the tool name, the
+  enum values, and the property names, and never `eval()` model output.
+- "Reply in JSON" fails in a short, stable list of ways; syntax is repairable,
+  but truncation must be **refused, never guessed**
+  ([28.2](02-structured-output.md)).
+- **Constrained decoding** sets forbidden logits to $-\infty$, so invalid
+  tokens have probability exactly zero — a structural guarantee, not a
+  statistical one.
+- Constraints buy *syntax*, never *sense*, which is why validate-and-retry
+  still earns its place alongside them.
+- $M$ applications times $N$ systems is $M \times N$ integrations; a protocol
+  in the middle makes it $M + N$ ([28.3](03-mcp-protocol.md)).
+- **MCP** speaks JSON-RPC 2.0 over stdio or HTTP, and its three primitives —
+  tools, resources, prompts — are sorted by *who decides to use them*.
+- A **notification has no `id`** and gets no reply; a tool that merely failed
+  returns `isError: true`, not a JSON-RPC error.
+- A real server is an ordinary project with an SDK, narrow idempotent tools,
+  paginated results, tests over dicts, logs on stderr, and resolved paths
+  ([28.4](04-building-mcp-server.md)).
+
+### Key terms
+
+| Term | One-clause reminder |
+| --- | --- |
+| [Function calling](../appendix/E-ai-glossary.md) | The model emits a tool name and arguments; your code runs the tool |
+| [Tool use](../appendix/E-ai-glossary.md) | The same idea, named from the model's side |
+| [JSON Schema](../appendix/E-ai-glossary.md) | A JSON document describing the shape of other JSON documents |
+| `enum` | An allowlist of legal values, enforceable by your validator |
+| `additionalProperties: false` | Reject any field the schema did not name |
+| Dispatcher | The function that maps a validated tool name to a real Python call |
+| Confused deputy | A trusted component acting on an attacker's instructions it cannot distinguish from yours |
+| [Structured output](../appendix/E-ai-glossary.md) | Getting a model to emit parseable, schema-conforming data |
+| [Constrained decoding](../appendix/E-ai-glossary.md) | Masking logits so ungrammatical tokens can never be sampled |
+| [MCP](../appendix/E-ai-glossary.md) | Model Context Protocol: an open standard for connecting hosts to capabilities |
+| [JSON-RPC 2.0](../appendix/E-ai-glossary.md) | The request / response / notification message format MCP uses |
+| Host, client, server | The app the user runs, its per-connection connector, and the capability provider |
+| Notification | A request with no `id`, and therefore no reply |
+| Capability negotiation | The `initialize` exchange in which both sides declare what they support |
+| `isError: true` | A tool that ran and failed — a result for the model, not a protocol error |
+
+The [concept index](../concept-index.md) points each of these at the section
+where it is built.
+
+Now the problems.
+
 Eight problems on schemas, structured output, and the protocol. They build on
 [28.1](01-function-calling.md), [28.2](02-structured-output.md),
 [28.3](03-mcp-protocol.md), and [28.4](04-building-mcp-server.md), and every

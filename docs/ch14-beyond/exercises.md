@@ -1,5 +1,53 @@
 # Exercises
 
+## The chapter in brief
+
+- A **set** is unordered and duplicate-free, and it answers `in` almost
+  instantly ([14.1](01-collections-tour.md)).
+- Sets do mathematics: union (`|`), intersection (`&`), and difference (`-`)
+  turn "compare these two groups" into one-liners — and `{}` is an empty
+  *dict*, not an empty set.
+- A **dictionary** maps keys to values, `d.get(key, default)` is the polite
+  way to ask for a possibly missing key, and `in` tests the keys.
+- The one-line counting pattern, `counts[word] = counts.get(word, 0) + 1`,
+  replaces ten lines of list scanning — and `Counter` and `defaultdict`
+  package it for you.
+- A **tuple** is a small immutable record, which is what makes it
+  **hashable** and therefore usable as a dict key; a list is not.
+- Three questions choose your collection: does order matter, are duplicates
+  meaningful, and how will you look things up?
+- The same problem solved with a list and with a set differs in speed by a
+  factor in the hundreds, because one scans and the other computes where to
+  look ([14.2](02-choosing-algorithms.md)).
+- Counting **steps** is reproducible where milliseconds are noisy: linear
+  search examines up to $n$ elements, binary search about 14 for 10,000.
+- The **doubling experiment** names the growth pattern from the outside — a
+  time ratio near 2 is linear work, near 4 is quadratic.
+- Write the clear version first, measure before optimizing, and when
+  measurement says act, change the *algorithm* rather than the spelling.
+- A GUI turns control flow inside out: events queue up, the framework's
+  **event loop** dispatches them, and your registered **handlers** run
+  ([14.3](03-guis-and-beyond.md)).
+- A handler is passed to the framework *without* parentheses — writing
+  `command=say_hello()` calls it once during setup and registers `None`.
+
+### Key terms
+
+| Term | Reminder |
+| --- | --- |
+| [set (collection)](../concept-index.md) | unordered, duplicate-free, built for the question "is it there?" |
+| [dictionary](../concept-index.md) | a mapping from keys to values, looked up in one step |
+| [tuple](../concept-index.md) | a small immutable record, unpackable and usable as a key |
+| [hash table](../concept-index.md) | the machinery under a set and a dict: compute the slot, don't search for it |
+| `Counter` / `defaultdict` | the standard library's pre-built counting and grouping patterns |
+| [linear search](../concept-index.md) | scan until you find it — up to $n$ comparisons |
+| [binary search](../concept-index.md) | halve the sorted range each step — about $\log_2 n$ comparisons |
+| doubling experiment | time at $n$ and $2n$; the ratio names the growth pattern |
+| [event loop](../concept-index.md) | the framework's loop that takes queued events and calls your handlers |
+| callback | a function you hand over for someone else to call later |
+
+Now to the practice.
+
 These exercises cement the chapter's two habits: reaching for the right
 collection without hesitation, and settling speed questions with
 measurements instead of opinions. Predict before you run — starting with

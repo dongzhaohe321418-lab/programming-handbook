@@ -1,5 +1,60 @@
 # Chapter 39 · Exercises
 
+## The chapter in brief
+
+- A function in Python is an ordinary **value**: you can store it under a
+  second name, pass it as an argument, and return it from another function
+  ([39.1](01-lambdas.md)).
+- A `lambda` is a function of **one expression** and no name — and if it
+  deserves a name, it deserves a `def`.
+- Lambdas genuinely pay for themselves in exactly three places:
+  `sorted(key=...)`, `min`/`max` with a key, and callbacks.
+- A **closure** captures a *variable*, not its value, which is why lambdas
+  created in a loop all see the loop's final value — and why
+  `param=value` or a factory fixes it.
+- `functools.partial` freezes arguments at construction time, so it reads
+  better than a lambda and cannot fall into that trap.
+- A **pure function** — result from arguments only, nothing mutated — is
+  testable in one line, because its answer never depends on what ran before.
+- Almost all data work is three verbs: **map** (change each item), **filter**
+  (drop some), **reduce** (collapse to one)
+  ([39.2](02-map-filter-reduce.md)).
+- Comprehensions are the Pythonic spelling of map-and-filter; reach for `map`
+  only when the function already exists and takes one argument.
+- `map` and `filter` are **lazy** and **single-use**: nothing runs until
+  something consumes them, and the second pass is always empty.
+- Java's Streams are the same model with types — intermediate operations are
+  lazy, exactly one terminal operation pulls the data through, and every
+  operation has a Python equivalent.
+- A **generator** is how you write your own lazy stage, and a chain of them
+  processes any amount of data in constant memory — measured, not asserted
+  ([39.3](03-pipelines.md)).
+- A Unix pipeline is that same architecture at the process level: streaming,
+  backpressure, and blocking stages such as `sort` that no stream can flow
+  through.
+
+### Key terms
+
+| Term | One-clause reminder |
+|---|---|
+| First-class function | a function used as a value — stored, passed, returned |
+| Higher-order function | a function that takes a function, returns one, or both |
+| `lambda` | an anonymous function whose body is a single expression |
+| [Closure](../concept-index.md#c) | a function plus the captured variables it still needs |
+| Late binding | a captured variable is read at *call* time, not at capture time |
+| Pure function | the result depends only on the arguments, and nothing outside changes |
+| Predicate | a function returning true or false, of the kind `filter` takes |
+| Fold (`reduce`) | collapse a sequence into one value with a two-argument function |
+| Laziness | no work happens until something consumes the result |
+| [Generator](../concept-index.md#g) | a function containing `yield`; calling it returns a paused iterator |
+| Pipeline stage | a generator that takes an iterable and yields an iterable |
+| [Backpressure](../concept-index.md#b) | a slow consumer throttles a fast producer, because the consumer pulls |
+| Blocking stage | one that must see all the input before emitting anything, like `sort` |
+| Terminal operation | the Java Stream call that finally runs the chain |
+
+Full command reference for the pipe side of this chapter:
+[Appendix F](../appendix/F-toolchain-reference.md). Now put it to work.
+
 The functional style is learned by translation. Most of these exercises hand
 you code in one shape and ask for it in another — a loop into a
 comprehension, a Java Stream chain into Python, a nested loop into a

@@ -1,9 +1,61 @@
 # Exercises
 
-These exercises rehearse the whole practice loop: describing changes,
-merging them, testing them, and making them readable. Several put you in
-the reviewer's chair — the fastest way to grow as an author is a stint as
-the audience. Do Exercise 24.4 on paper *before* running anything.
+## The chapter in brief
+
+- Teams work on **branches** — one per task, cheap to make, deleted after
+  merging — so `main` is always releasable ([24.1](01-git-workflow.md)).
+- The daily loop is: pull, branch, commit small, push, open a **pull
+  request**, let CI and reviewers run, merge.
+- A merge is **three-way**: Git takes any line only one side changed, and
+  only conflicts when both sides changed the same line differently.
+- Resolving a conflict is editing: choose the right content, delete all
+  three marker lines, `git add`, `git commit` — and rerun the tests.
+- A commit message needs an **imperative subject** under ~50 characters and
+  a body explaining *why*, because the diff already shows *what*.
+- `.gitignore` keeps machine-regenerated files and secrets out of history;
+  **tags** pin the exact commits you ship.
+- Every unit test has the same three beats: **arrange, act, assert** — one
+  behavior per test ([24.2](02-testing.md)).
+- Repetitive tests become **table-driven** ones: the data in a list, the
+  logic in a single loop.
+- Test rows come from the **edge-case checklist**: empty/one/many,
+  boundaries, duplicates, order, invalid input.
+- The error path is part of the contract, so tests must *expect* exceptions
+  rather than avoid them.
+- **Coverage** is a good alarm and a bad certificate: 100% of lines
+  executed still misses the input you never considered.
+- Every bug becomes a **regression test** — written failing first, then kept
+  forever.
+- Readable code comes from **intention-revealing names**, functions with one
+  nameable job, and comments that record *why*
+  ([24.3](03-style-review.md)).
+- Surface style (PEP 8, Google Java Style) is delegated to **formatters and
+  linters**, never to review comments.
+- A **self-review of your own diff** before committing catches most of what
+  a human reviewer would otherwise spend attention on.
+
+### Key terms
+
+| Term | What it means |
+| --- | --- |
+| [branch (Git)](../concept-index.md#b) | an independent line of development, merged back when done |
+| [merge conflict](../concept-index.md#m) | both sides changed the same lines, so Git asks a human |
+| [pull request](../concept-index.md#p) | a review conversation attached to a branch before it merges |
+| [commit (Git)](../concept-index.md#c) | one logical change, described in the imperative mood |
+| [arrange–act–assert](../concept-index.md#a) | the three-beat shape of nearly every good unit test |
+| [fixture (test)](../concept-index.md#f) | reusable setup a test asks for by name |
+| table-driven test | one loop over a list of cases, instead of copy-pasted tests |
+| edge-case checklist | empty/one/many, boundaries, duplicates, order, invalid input |
+| [coverage (test)](../concept-index.md#c) | which lines the tests executed — necessary, never sufficient |
+| regression test | a test born from a real bug, kept so it cannot return |
+| [refactoring](../concept-index.md#r) | changing structure without changing behavior |
+| [PEP 8](../concept-index.md#p) | Python's shared surface style, enforced by robots |
+| [code review](../concept-index.md#c) | reading a change for correctness, clarity, scope, and tests |
+
+Now the practice. These exercises rehearse the whole loop: describing
+changes, merging them, testing them, and making them readable. Several put
+you in the reviewer's chair — the fastest way to grow as an author is a stint
+as the audience. Do Exercise 24.4 on paper *before* running anything.
 
 ### Exercise 24.1 — Repair the commit subjects ●
 

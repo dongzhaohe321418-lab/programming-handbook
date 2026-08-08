@@ -26,10 +26,12 @@ This prints all three lines. Change `temperature` to `20` and run it again:
 only `Forecast finished.` appears, because the two indented lines belong to
 the `if` and are skipped when the condition is `False`.
 
-The rule Python uses is beautifully simple: **every consecutive line indented
-under the `if` is inside it; the first line back at the old indentation is
-outside.** The standard indent is 4 spaces — pick that and never mix in tab
-characters, or Python will refuse to run the file.
+!!! note "The indentation rule, in one sentence"
+    Every consecutive line indented under the `if` is *inside* it; the first
+    line back at the old indentation is *outside*.
+
+The standard indent is 4 spaces. Pick that and never mix in tab characters,
+or Python will refuse to run the file.
 
 Here is the same program in Java. Where Python uses the colon and
 indentation, Java uses braces `{ }` — and indentation in Java is purely
@@ -136,8 +138,10 @@ flowchart TD
     D --> E
 ```
 
-Beware the impostor: a stack of *separate* `if` statements looks similar but
-behaves completely differently, because every condition gets tested:
+### The impostor: a stack of separate ifs
+
+A stack of *separate* `if` statements looks similar but behaves completely
+differently, because every condition gets tested:
 
 ```python
 score = 95
@@ -158,7 +162,9 @@ exclusive, you want one `if … elif … elif` chain, not three `if`s.
 Let's build a real branching program in stages, the way you would at a
 keyboard.
 
-**Stage 1 — pass/fail.** Start with the simplest version that does anything:
+### Stage 1 — pass/fail
+
+Start with the simplest version that does anything:
 
 ```python
 score = 83
@@ -169,9 +175,11 @@ else:
     print("fail")
 ```
 
-**Stage 2 — full letter grades.** Replace the two-way split with an `elif`
-chain. The key design decision: test the *highest* boundary first, so that
-each later test only sees scores the earlier ones rejected.
+### Stage 2 — full letter grades
+
+Replace the two-way split with an `elif` chain. The key design decision: test
+the *highest* boundary first, so that each later test only sees scores the
+earlier ones rejected.
 
 ```python
 score = 83
@@ -188,10 +196,11 @@ else:
     print("F")
 ```
 
-**Stage 3 — wrap it in a function and test the boundaries.** A grade
-assigner you can call is more useful than one with the score baked in — and
-testing values *on* each boundary (90, 60) as well as beside it (89, 59) is
-how you catch off-by-one mistakes:
+### Stage 3 — wrap it in a function and test the boundaries
+
+A grade assigner you can call is more useful than one with the score baked
+in. And testing values *on* each boundary (90, 60) as well as beside it
+(89, 59) is how you catch off-by-one mistakes:
 
 ```python
 def letter_grade(score):
@@ -254,10 +263,16 @@ cleanest structure is the next pattern.
 
 ## Guard patterns: early return
 
-Inside a function, `return` ends the call immediately — and that enables the
-**guard pattern**: check each disqualifying condition first, bail out at
-once, and let the "happy path" sit unindented at the bottom. (Functions and
-`return` are from
+Inside a function, `return` ends the call immediately, and that enables the
+**guard pattern** — three moves, in this order:
+
+1. **Check each disqualifying condition first**, one `if` per reason it could
+   fail.
+2. **Bail out at once** with a `return` as soon as one of those checks fires.
+3. **Let the happy path sit unindented** at the bottom, having survived every
+   guard above it.
+
+(Functions and `return` are from
 [Chapter 3](../ch03-functions/03-writing-functions.md).)
 
 ```python

@@ -50,9 +50,11 @@ flowchart LR
 
 Notice what is *not* here: no indices, no contiguous block. The nodes could
 be anywhere on the heap; only the `next` references hold the sequence
-together. Lose the reference to the first node and the whole chain becomes
-unreachable garbage — which is why every linked list class guards one
-precious attribute: `head`.
+together.
+
+That has one dramatic consequence. Lose the reference to the first node and
+the whole chain becomes unreachable garbage — which is why every linked list
+class guards one precious attribute: `head`.
 
 ## A LinkedList class, grown operation by operation
 
@@ -119,9 +121,12 @@ $O(1)$; we keep the class minimal here and fix this in the exercises.)
 
 ## prepend — the two-assignment splice
 
-Now the operation arrays are worst at. To insert at the front: aim the new
-node's `next` at the current front, then re-aim `head`. We will attach each
-new method to the existing class as we go — remember from
+Now the operation arrays are worst at. To insert at the front, in this order:
+
+1. **Aim the new node's `next` at the current front** — `node.next = self.head`.
+2. **Re-aim `head` at the new node** — `self.head = node`.
+
+We will attach each new method to the existing class as we go — remember from
 [Chapter 12](../ch12-classes/index.md) that a method is just a function
 whose first parameter is `self`, so `LinkedList.prepend = prepend` bolts it
 on exactly as if it had been written inside the `class` block.
@@ -155,11 +160,14 @@ flowchart TB
 ```
 
 **The order is load-bearing.** Swap the two assignments — `self.head = node`
-first — and the old front is no longer reachable when you try to point the
-new node at it: `node.next = self.head` would then aim the node at *itself*.
+first — and the old front is no longer reachable when you try to point the new
+node at it: `node.next = self.head` would then aim the node at *itself*.
+
 Draw first; the picture tells you step 1 must run while `head` still knows
-where the old front is. No shifting, no walking: front insertion is $O(1)$,
-exactly as the ADT cost table advertised.
+where the old front is.
+
+No shifting, no walking: front insertion is $O(1)$, exactly as the ADT cost
+table advertised.
 
 ## find — the traversal pattern, packaged
 
@@ -186,9 +194,17 @@ $O(n)$.
 
 ## delete — pointer surgery with the picture first
 
-To delete the node holding `20` from `5 -> 10 -> 20 -> 30`, the surgery is:
-walk a reference `prev` to the node *before* the target, then bridge over
-the target with **one** assignment, `prev.next = prev.next.next`:
+The surgery for deleting the node holding `20` from `5 -> 10 -> 20 -> 30` is
+three steps, only one of which writes anything:
+
+1. **Walk a reference `prev` to the node *before* the target** — here, the
+   node holding `10`. You must stand behind the target, because a singly
+   linked node has no way back.
+2. **Bridge over the target with one assignment** —
+   `prev.next = prev.next.next`. This reads the old route and re-aims it in a
+   single step.
+3. **Let go.** Nothing points at the removed node any more, so Python's
+   garbage collector reclaims it. You never "free" it yourself.
 
 ```mermaid
 flowchart TB
@@ -203,8 +219,13 @@ flowchart TB
     end
 ```
 
-The only wrinkle is the front: deleting the head node has no `prev`, so it
-gets its own branch that re-aims `head` instead:
+The only wrinkle is the front: the head node has no `prev`, so it needs its
+own branch that re-aims `head` instead. That gives the finished method three
+cases:
+
+- **Empty list** — nothing to delete, report failure.
+- **Target is the head** — re-aim `head` at `head.next`.
+- **Target is anywhere else** — walk `prev`, then bridge.
 
 ```python
 # continues
@@ -260,13 +281,17 @@ flowchart LR
     c["30 — lost: nothing points to it"]
 ```
 
-The discipline, stated once and used forever: **never overwrite a reference
-while it is the last road to a node you still need.** The correct single
-assignment `prev.next = prev.next.next` reads the old route and re-aims it
-in one step, so nothing needed is ever unreachable. When an operation needs
-several assignments (as doubly linked insertion will, next section), draw
-the picture and number the steps so each assignment only overwrites
-references you have already copied or no longer need.
+!!! note "The discipline, stated once and used forever"
+
+    **Never overwrite a reference while it is the last road to a node you
+    still need.**
+
+The correct single assignment `prev.next = prev.next.next` reads the old route
+and re-aims it in one step, so nothing needed is ever unreachable.
+
+When an operation needs several assignments — as doubly linked insertion will,
+next section — draw the picture and number the steps, so that each assignment
+only overwrites references you have already copied or no longer need.
 
 The class is now complete: `append`, `prepend`, `find`, `delete`,
 `__len__`, and `__repr__`, with every pointer move accounted for in a
@@ -311,11 +336,16 @@ indexing into the middle — would show the array winning by just as much:
 `items[n // 2]` is one address calculation, while a linked list must take
 `n // 2` steps of `walker = walker.next`.
 
-**So when does linked beat array?** When your workload is dominated by
-front insertions/removals (queues and deques), when you are splicing chains
-together or cutting them apart (an $O(1)$ re-aim versus copying), or when
-items must never move in memory once created. When you need random access
-by index, arrays win, full stop.
+**So when does linked beat array?** In three situations:
+
+- **The workload is dominated by front insertions and removals** — queues and
+  deques.
+- **You splice chains together or cut them apart** — an $O(1)$ re-aim, versus
+  copying whole blocks.
+- **Items must never move in memory once created** — other code may be holding
+  references to them.
+
+When you need random access by index, arrays win, full stop.
 
 !!! warning "Common mistakes"
     - **Losing the head.** Writing `self.head = self.head.next` to "walk"

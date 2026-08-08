@@ -4,10 +4,12 @@ Imagine a teacher who wants the class average of 100 test scores. With only
 the tools from earlier chapters, that program needs 100 variables —
 `score1`, `score2`, … `score100` — and an addition expression 100 names
 long. This section introduces the fix: a **collection**, one variable that
-holds many values in numbered slots. You will meet the Java **array** and
-the Python **list**, learn why their slots are numbered from 0, see what
-happens when you reach past the last slot, and finish with NumPy, the
-library that gives Python a "real" array when it needs one.
+holds many values in numbered slots.
+
+You will meet the Java **array** and the Python **list**, learn why their
+slots are numbered from 0, and see what happens when you reach past the last
+slot. We finish with NumPy, the library that gives Python a "real" array when
+it needs one.
 
 ## One variable per value does not scale
 
@@ -23,12 +25,15 @@ average = (score1 + score2 + score3) / 3
 print(average)
 ```
 
-It prints `84.0`, and it *works* — but look at the cost. Every new score
-means a new variable **and** an edit to the average line. There is no way
-to loop over `score1 … score100`, because variable names are fixed in the
-source code; a loop cannot manufacture them. And the program can never ask
-"how many scores do I have?" — that number is smeared across a hundred
-lines.
+It prints `84.0`, and it *works* — but look at the cost. Three problems, and
+every one of them gets worse as the class gets bigger:
+
+- **Every new score costs two edits**: a new variable *and* a longer average
+  line.
+- **A loop cannot help.** Variable names are fixed in the source code, so no
+  loop can manufacture `score1 … score100`.
+- **The program can never ask "how many scores do I have?"** That number is
+  smeared across a hundred lines.
 
 A collection solves all three problems at once:
 
@@ -247,11 +252,13 @@ print(scores.mean())
 87.0
 ```
 
-Two things to notice. First, `scores + 5` added 5 to *all five elements*
-in one expression — no loop. NumPy runs that loop internally in fast
-compiled code, which is the main reason it exists. Second, the array
-carries a **dtype** ("data type"): the single type every element must
-have.
+Two things to notice:
+
+- **`scores + 5` added 5 to *all five elements*** in one expression, with no
+  loop in sight. NumPy runs that loop internally in fast compiled code, which
+  is the main reason the library exists.
+- **The array carries a `dtype`** ("data type"): the single type that every
+  element must have.
 
 ```python
 import numpy as np

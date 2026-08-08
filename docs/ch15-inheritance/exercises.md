@@ -1,5 +1,55 @@
 # Exercises
 
+## The chapter in brief
+
+- Duplicated behaviour across sibling classes belongs in a **base class**,
+  written once and inherited by all of them
+  ([15.1](01-inheritance.md)).
+- `class Child(Parent)` in Python is `class Child extends Parent` in Java:
+  everything the parent has, the child has too.
+- Defining a method the parent already has **overrides** it — and Python has
+  no `@Override` check, so a misspelled name silently creates a new method.
+- If a child defines `__init__`, the parent's runs *only* if you call
+  `super().__init__(...)`; forget it and the object is born half-built.
+- `super().method(...)` inside an override lets you **extend** the parent's
+  behaviour instead of replacing it.
+- The **is-a test** decides between inheritance and composition: if the
+  sentence "a Child is a Parent" sounds forced, hold the object instead of
+  inheriting from it.
+- One loop over a list of mixed subclasses runs each object's own method —
+  that is **polymorphism**, and it means adding a new subclass requires no
+  change to the loop ([15.2](02-polymorphism.md)).
+- The method that runs is chosen from the *object's* class at the moment of
+  the call — **dynamic dispatch** — never from a declared variable type.
+- Java needs `List<Shape>` and explicit downcasts where Python needs only
+  that the object have the method: **duck typing**.
+- A ladder of `isinstance` checks that selects behaviour is polymorphism done
+  by hand; push each branch into its class as a method.
+- `abc.ABC` plus `@abstractmethod` turns an informal expectation into a
+  machine-checked **contract**, failing at construction rather than deep in a
+  loop ([15.3](03-interfaces.md)).
+- Contracts pay for themselves at plug-in and team scale; for a small script
+  you control end to end, duck typing is enough.
+
+### Key terms
+
+| Term | Reminder |
+| --- | --- |
+| [inheritance](../concept-index.md) | one class receives another's attributes and methods |
+| base class | the parent that holds the shared behaviour (also *superclass*) |
+| overriding | a child method replacing the inherited one of the same name |
+| `super()` | the parent-class view of this same object; used to chain and extend |
+| [composition](../concept-index.md) | one object *holding* another, the has-a alternative to inheriting |
+| [method resolution order](../concept-index.md) | the documented order Python searches classes for a method |
+| [polymorphism](../concept-index.md) | one piece of code, many underlying types, each behaving its own way |
+| dynamic dispatch | choosing the method from the object's class at call time |
+| upcasting / downcasting | Java's conversions to a general type (implicit) and back down (explicit, risky) |
+| [duck typing](../concept-index.md) | judging an object by the methods it has, not the family it belongs to |
+| [abstract base class](../concept-index.md) | a class with unimplemented `@abstractmethod`s that refuses to be instantiated |
+| protocol | an informal Python contract, such as "has `__len__`" |
+
+Now put it to work.
+
 Work these in order — they climb from reading inherited code to designing
 your own contracts. For every exercise: attempt first, peek second.
 

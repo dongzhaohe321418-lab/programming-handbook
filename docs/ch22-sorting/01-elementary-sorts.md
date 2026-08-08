@@ -1,25 +1,30 @@
 # 22.1 Elementary sorts
 
 Python's `sorted()` is faster than anything we will write in this chapter,
-so why study "slow" sorts at all? Three honest reasons. First,
-*transparency*: selection and insertion sort are simple enough to hold
-entirely in your head, which makes them the ideal specimens for practising
-invariants and cost analysis. Second, *they are not actually slow at small
-sizes* — for a dozen elements the quadratic sorts win on low overhead,
-which is why real libraries (Python's and Java's included) switch to
-insertion sort for tiny subarrays inside their fancy algorithms. Third,
-*building blocks*: you cannot appreciate what merge sort and quicksort buy
-you until you have counted what the elementary sorts cost.
+so why study "slow" sorts at all? Three honest reasons:
+
+- **Transparency.** Selection and insertion sort are simple enough to hold
+  entirely in your head, which makes them the ideal specimens for practising
+  invariants and cost analysis.
+- **They are not actually slow at small sizes.** For a dozen elements the
+  quadratic sorts win on low overhead — which is why real libraries
+  (Python's and Java's included) switch to insertion sort for tiny subarrays
+  inside their fancy algorithms.
+- **They are the building blocks.** You cannot appreciate what merge sort
+  and quicksort buy you until you have counted what the elementary sorts
+  cost.
 
 ## The experiment kit: counting comparisons
 
 Timing runs ([Chapter 16](../ch16-complexity/02-timing.md)) wobble with
 your machine's mood. For sorting there is a steadier instrument: count the
 **comparisons** — every time the algorithm asks "is this element smaller
-than that one?", increment a counter. Comparisons are the currency all our
-sorts spend, the counts are exactly reproducible, and they map straight
-onto the Big-O story. Every implementation in this chapter carries a
-counter, and the counters are where the lessons live.
+than that one?", increment a counter.
+
+Comparisons are the currency all our sorts spend, the counts are exactly
+reproducible, and they map straight onto the Big-O story. Every
+implementation in this chapter carries a counter, and the counters are where
+the lessons live.
 
 ## Selection sort, revisited
 
@@ -60,9 +65,11 @@ $$
 (n-1) + (n-2) + \dots + 1 = \frac{n(n-1)}{2} \approx \frac{n^2}{2},
 $$
 
-which is $O(n^2)$. But here is the interesting part — that count does not
-depend on the *values* at all. The inner loop scans every remaining
-element no matter what it finds. Watch:
+which is $O(n^2)$.
+
+But here is the interesting part: that count does not depend on the *values*
+at all. The inner loop scans every remaining element no matter what it finds.
+Watch:
 
 ```python
 import random
@@ -94,11 +101,12 @@ print(f"n(n-1)/2 for n={n}: {n * (n - 1) // 2:,}")
 ```
 
 All three lines print **79,800** — sorted, shuffled, or reversed, to the
-comparison. Selection sort is **oblivious**: it does identical work
-regardless of input, because it never uses what it learns mid-scan to skip
-anything. Hand it an already-sorted list and it will diligently
-double-check all 79,800 pairs. Remember this number; insertion sort is
-about to embarrass it.
+comparison.
+
+Selection sort is **oblivious**: it does identical work regardless of input,
+because it never uses what it learns mid-scan to skip anything. Hand it an
+already-sorted list and it will diligently double-check all 79,800 pairs.
+Remember this number; insertion sort is about to embarrass it.
 
 ## Insertion sort
 
@@ -107,11 +115,14 @@ your left hand sorted, pick up the next card, and slide it leftward into
 its place.
 
 The invariant is subtly different from selection sort's: *after processing
-element $i$, slots $0 \dots i$ are sorted **relative to each other*** —
-but they are not necessarily in their final positions, because a small
-card may still arrive and push them all rightward. Selection sort's prefix
-is *finally placed*; insertion sort's prefix is merely *locally tidy*.
-That difference is exactly what lets insertion sort quit early.
+element $i$, slots $0 \dots i$ are sorted **relative to each other*** — but
+they are not necessarily in their final positions, because a small card may
+still arrive and push them all rightward.
+
+!!! note "Two prefixes, two promises"
+    Selection sort's prefix is *finally placed*. Insertion sort's prefix is
+    merely *locally tidy* — and that weaker promise is exactly what lets
+    insertion sort quit a pass early.
 
 Trace it on `[7, 3, 9, 4, 2]` — each row is one pass, with the sorted
 prefix marked off by a `·`:
@@ -149,9 +160,10 @@ print(result)
 print("comparisons:", count)
 ```
 
-Nine comparisons for the trace above (1 + 1 + 3 + 4). Worst case — reversed
-input, every card slides all the way home — is the same
-$n(n-1)/2 \approx n^2/2$ as selection sort. But the `break` changes
+Nine comparisons for the trace above (1 + 1 + 3 + 4).
+
+The worst case — reversed input, every card sliding all the way home — is the
+same $n(n-1)/2 \approx n^2/2$ as selection sort. But the `break` changes
 everything on friendly inputs:
 
 ```python
@@ -202,14 +214,20 @@ Read this next to selection sort's flat 79,800 / 79,800 / 79,800:
 | random order | 79,800 | 40,145 |
 | reversed | 79,800 | 79,800 |
 
-On sorted input each new card needs exactly one look — $n-1 = 399$ total:
-that is $O(n)$, *linear*. Five out-of-place pairs cost just five extra
-comparisons. Random input costs about $n^2/4$ (each card slides halfway,
-on average) — half of selection's bill. Only the malicious reversed input
-makes the two sorts equal. **Insertion sort is adaptive: the closer the
-input is to sorted, the less it does.** This is its professional niche —
-data that is *almost* in order (a sorted file with a few appended records,
-a leaderboard after one score changes) — and it is why Timsort, coming in
+Row by row:
+
+- **Already sorted** — each new card needs exactly one look, $n-1 = 399$
+  total. That is $O(n)$, *linear*.
+- **Nearly sorted** — five out-of-place pairs cost exactly five extra
+  comparisons.
+- **Random** — about $n^2/4$, because each card slides halfway on average:
+  half of selection sort's bill.
+- **Reversed** — only this malicious input makes the two sorts equal.
+
+**Insertion sort is adaptive: the closer the input is to sorted, the less it
+does.** That is its professional niche — data that is *almost* in order (a
+sorted file with a few appended records, a leaderboard after one score
+changes) — and it is why Timsort, coming in
 [section 22.2](02-merge-quick.md), keeps insertion sort on staff.
 
 Drag the slider to feel the quadratic curve — note how doubling $n$
@@ -265,15 +283,16 @@ print(f"insertion on SORTED input would need just {size - 1}")
 
 ## Bubble sort, in one honest paragraph
 
-Bubble sort repeatedly sweeps the list, swapping adjacent out-of-order
-pairs; each sweep floats the largest remaining element to the end, and a
-sweep with zero swaps proves the list is sorted, allowing an early exit.
-It is taught everywhere because "swap neighbours until calm" is a
-wonderfully visual first sorting idea — and used almost nowhere, because it
-makes roughly as many comparisons as insertion sort but far more writes:
-elements shuffle one slot at a time instead of leaping into place. With
-the early-exit flag it shares insertion sort's $O(n)$ best case, and it
-remains $O(n^2)$ otherwise. Consider it cultural literacy.
+Bubble sort repeatedly sweeps the list, swapping adjacent out-of-order pairs.
+Each sweep floats the largest remaining element to the end, and a sweep with
+zero swaps proves the list is sorted — which allows an early exit.
+
+It is taught everywhere because "swap neighbours until calm" is a wonderfully
+visual first sorting idea, and used almost nowhere, because it makes roughly
+as many comparisons as insertion sort but far more writes: elements shuffle
+one slot at a time instead of leaping into place. With the early-exit flag it
+shares insertion sort's $O(n)$ best case, and it remains $O(n^2)$ otherwise.
+Consider it cultural literacy.
 
 ```python
 def bubble_sort(items):
@@ -318,19 +337,21 @@ for name, grade in insertion_sort_by_grade(records):
 ```
 
 Ben and Dana both scored 85, and Ben — who came first in the input — still
-comes first in the output; likewise Ava before Cody at 91. Insertion sort
-is stable, and the load-bearing character is that `>` in the `while`: a
-sliding card shifts only *strictly greater* neighbours, so it stops
-*behind* any equal one rather than jumping over it. Change `>` to `>=` and
-stability silently dies.
+comes first in the output; likewise Ava before Cody at 91.
 
-Why care? Because stable sorts **compose**. Sort those records by name
-first, then stably by grade, and each grade group comes out
-alphabetical — a two-level sort for free. Spreadsheets, database engines,
-and `sorted()` itself (guaranteed stable) all lean on this. Selection sort,
-by contrast, is not stable as usually written: its long-range swap can
-airlift an element clean over a twin — you will catch it red-handed in
-[the exercises](exercises.md).
+Insertion sort is stable, and the load-bearing character is that `>` in the
+`while`: a sliding card shifts only *strictly greater* neighbours, so it
+stops *behind* any equal one rather than jumping over it. Change `>` to `>=`
+and stability silently dies.
+
+Why care? Because stable sorts **compose**. Sort those records by name first,
+then stably by grade, and each grade group comes out alphabetical — a
+two-level sort for free. Spreadsheets, database engines, and `sorted()`
+itself (guaranteed stable) all lean on this.
+
+Selection sort, by contrast, is not stable as usually written: its long-range
+swap can airlift an element clean over a twin — you will catch it red-handed
+in [the exercises](exercises.md).
 
 !!! warning "Common mistakes"
     - **Blurring the two invariants.** Selection sort's prefix holds final

@@ -1,5 +1,53 @@
 # Exercises
 
+## The chapter in brief
+
+- `for item in obj:` is three moves in disguise: call `iter(obj)`, call
+  `next()` repeatedly, and stop when `StopIteration` is raised
+  ([19.1](01-iterators.md)).
+- An **iterable** hands out iterators; an **iterator** is one walk in
+  progress, and it only ever moves forward.
+- Implementing `__iter__` (and `__next__`) makes your own class work with
+  `for`, `in`, `list()`, `sum()`, and every other tool built on the protocol.
+- Iterators are one-shot: a second pass over an exhausted iterator sees
+  nothing, which explains many "my data vanished" mysteries.
+- A function containing **`yield`** is a generator function, and it replaces a
+  whole iterator class with a few lines.
+- A **stack** is LIFO — you may only touch one end — and that single
+  restriction is what brackets, undo, and the call stack all need
+  ([19.2](02-stacks.md)).
+- The top of a Python-list stack must be the list's **end**, where `append`
+  and `pop()` are amortised $O(1)$.
+- Bracket matching is one pass: push openers, pop and compare on closers, and
+  demand an empty stack at the end.
+- A data structure's API must choose between **raising** and **returning a
+  sentinel** on an impossible operation — and say so in its docstring.
+- A **queue** is FIFO, needs two busy ends, and serves the oldest item
+  ([19.3](03-queues.md)).
+- `list.pop(0)` shifts every remaining element, so the naive list queue is
+  $O(n)$ per dequeue; `collections.deque` is $O(1)$ at both ends.
+- A **circular buffer** builds a genuine $O(1)$ queue inside one fixed array
+  by letting the indices lap it with `%`.
+
+### Key terms
+
+| Term | Reminder |
+| --- | --- |
+| iterable | an object with `__iter__` — "you can loop over me" |
+| [iterator](../concept-index.md) | an object with `__next__` — one forward-only walk in progress |
+| [`StopIteration`](../concept-index.md) | the exception an iterator raises to say "no more values" |
+| [generator](../concept-index.md) | an iterator built automatically from a function containing `yield` |
+| `yield` | pause the function, hand out a value, resume here next time |
+| [stack](../concept-index.md) | a sequence touched at one end only |
+| [LIFO](../concept-index.md) | last in, first out — the stack discipline |
+| push / pop / peek | add on top, remove from the top, look at the top |
+| [queue](../concept-index.md) | add at the back, remove from the front |
+| [FIFO](../concept-index.md) | first in, first out — the queue discipline |
+| [`deque`](../concept-index.md) | double-ended queue; $O(1)$ at both ends, Python's real queue |
+| [circular buffer](../concept-index.md) | a fixed array whose front and back indices wrap with `%` |
+
+Time to drive them yourself.
+
 Work these in order — they start with prediction drills and end with a
 classic interview favourite. For each *predict* exercise, commit to an
 answer on paper **before** pressing Run.

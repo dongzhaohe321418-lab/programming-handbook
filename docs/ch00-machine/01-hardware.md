@@ -24,9 +24,11 @@ The word *memory* deserves a closer look, because it is where beginners get
 tripped up by everyday language. RAM is organised as a huge row of numbered
 cells, each holding one **byte** (a small unit of data we will define
 precisely in [section 0.2](02-binary.md)). The number of a cell is called
-its **address**. When the CPU wants a value, it asks for it *by address* —
-"give me whatever is in cell 4,982,113" — the way you would ask for a hotel
-room by its number, not by describing the guest.
+its **address**.
+
+When the CPU wants a value, it asks for it *by address* — "give me whatever
+is in cell 4,982,113" — the way you would ask for a hotel room by its
+number, not by describing the guest.
 
 We can model that idea in Python right now. A Python **list** is a numbered
 sequence of slots, so it makes a fine miniature RAM:
@@ -127,9 +129,13 @@ flowchart LR
 
 Because a stored program is just bytes in memory, programs can be loaded,
 copied, saved to disk — and even *inspected or changed* by other programs.
-Every tool you will ever use rests on this: an editor treats your program as
-text data, a compiler reads it as input, an operating system loads it into
-RAM like any other file. Watch it happen to our toy program:
+Every tool you will ever use rests on this:
+
+- an **editor** treats your program as text data;
+- a **compiler** reads it as input and writes another file out;
+- an **operating system** loads it into RAM like any other file.
+
+Watch it happen to our toy program:
 
 ```python
 program = [("LOAD", 2), ("ADD", 40), ("PRINT", None)]
@@ -156,10 +162,12 @@ differently:
 - **Storage is persistent**: an SSD or hard disk keeps its contents with
   the power off. "Saving a file" means copying data from RAM to storage.
 
-While a program runs, its variables live in RAM. To keep anything beyond
-the end of the program, you must write it to a file. Python can show the
-contrast (this page's runner has its own miniature file system, so this is
-safe to play with):
+!!! note "The consequence for every program you write"
+    While a program runs, its variables live in RAM. To keep anything beyond
+    the end of the program, you must write it to a file.
+
+Python can show the contrast (this page's runner has its own miniature file
+system, so this is safe to play with):
 
 ```python
 message = "kept in RAM"              # a variable: lives in memory only
@@ -243,13 +251,16 @@ for value in [0, 1, 2 ** 30, 2 ** 1000, 3.14, "", "a", "hello"]:
 ```
 
 Exact numbers vary between machines and Python builds, but two patterns
-should jump out. First, even the humble `0` costs far more than the byte or
-two you might expect — a Python value is a full object carrying bookkeeping
-information (its type, a reference count), not a bare number in a memory
-cell. Second, bigger values take more room: a 1000-bit number needs more
-bytes than `1`, and `"hello"` more than `"a"`. Memory is real, finite, and
-measurable — a fact that becomes very practical from
-[Chapter 9](../ch09-collections/index.md) onwards.
+should jump out:
+
+- **Even the humble `0` costs far more than the byte or two you might
+  expect.** A Python value is a full object carrying bookkeeping information
+  (its type, a reference count), not a bare number in a memory cell.
+- **Bigger values take more room.** A 1000-bit number needs more bytes than
+  `1`, and `"hello"` more than `"a"`.
+
+Memory is real, finite, and measurable — a fact that becomes very practical
+from [Chapter 9](../ch09-collections/index.md) onwards.
 
 !!! warning "Common mistakes"
 

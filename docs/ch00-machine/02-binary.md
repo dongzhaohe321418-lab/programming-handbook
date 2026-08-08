@@ -51,8 +51,13 @@ numeral $1101_2$ (the little 2 marks the base) means
 $$1101_2 = 1 \cdot 2^3 + 1 \cdot 2^2 + 0 \cdot 2^1 + 1 \cdot 2^0
         = 8 + 4 + 0 + 1 = 13 .$$
 
-**Binary → decimal by hand:** write the place values $\dots, 8, 4, 2, 1$
-under the bits from right to left, and add up the places holding a 1.
+### From binary to decimal, by hand
+
+Two steps, no arithmetic beyond addition:
+
+1. Write the place values $\dots, 8, 4, 2, 1$ under the bits, from right to
+   left.
+2. Add up the places that hold a 1.
 
 | bit | 1 | 1 | 0 | 1 |
 | --- | --- | --- | --- | --- |
@@ -76,9 +81,16 @@ print("total:", total)
 print("int('1101', 2) says:", int("1101", 2))
 ```
 
-**Decimal → binary by hand:** repeatedly divide by 2 and collect the
-remainders. Each remainder (0 or 1) is one binary digit, produced from the
-*least* significant end first. Converting 13:
+### From decimal to binary, by hand
+
+This one is a loop:
+
+1. Divide the number by 2; write down the quotient and the remainder.
+2. Repeat with the quotient, until the quotient reaches 0.
+3. Read the column of remainders **bottom to top** — that is the answer.
+
+Each remainder (0 or 1) is one binary digit, produced from the *least*
+significant end first, which is why step 3 reads upwards. Converting 13:
 
 | step | division | quotient | remainder |
 | --- | --- | --- | --- |
@@ -87,8 +99,8 @@ remainders. Each remainder (0 or 1) is one binary digit, produced from the
 | 3 | $3 \div 2$ | 1 | **1** |
 | 4 | $1 \div 2$ | 0 | **1** |
 
-Read the remainders bottom-to-top: $1101_2$. Stop when the quotient hits 0.
-Here is the same procedure as code, next to Python's built-in `bin()`:
+Read the remainders bottom-to-top: $1101_2$. Here is the same procedure as
+code, next to Python's built-in `bin()`:
 
 ```python
 original = 13        # try your own number and press Run again
@@ -126,11 +138,17 @@ four — no arithmetic required:
 | hex | 8 | 9 | A | B | C | D | E | F |
 
 So $11010111_2$ splits into $1101\,0111$, which the tables say is
-$\mathrm{D7}_{16}$ — two characters instead of eight. A byte is always
-exactly two hex digits, which is why hex shows up wherever raw bytes do:
-memory addresses, error codes, and the web's colour codes, where `#FF7F00`
-packs three bytes (red, green, blue). In Python, hex literals take a `0x`
-prefix, `hex()` converts to hex text, and `int(text, 16)` converts back:
+$\mathrm{D7}_{16}$ — two characters instead of eight.
+
+A byte is always exactly two hex digits, which is why hex shows up wherever
+raw bytes do:
+
+- **memory addresses** — long numbers nobody wants to read in decimal;
+- **error codes** — often a byte or two of packed flags;
+- **web colour codes** — `#FF7F00` packs three bytes (red, green, blue).
+
+In Python, hex literals take a `0x` prefix, `hex()` converts to hex text,
+and `int(text, 16)` converts back:
 
 ```python
 print(0xD7)                 # write a number in hex directly
@@ -158,15 +176,22 @@ width, say 8 bits. Then:
   every other place keeps its usual value.
 
 So `11111011` means $-128 + 64 + 32 + 16 + 8 + 0 + 2 + 1 = -5$. Eight bits
-then cover $-128$ to $+127$: still 256 patterns, just relabelled. The great
-prize of this convention is that *addition needs no special cases* — the
-same circuit that adds positive numbers adds negative ones correctly, with
-overflow bits simply falling off the end.
+then cover $-128$ to $+127$: still 256 patterns, just relabelled.
 
-A handy recipe for negating by hand: **flip every bit, then add 1**.
-Starting from 5 = `00000101`: flip → `11111010`, add 1 → `11111011`, which
-is $-5$. Here is a converter you can experiment with — it works for any
-width:
+!!! note "Why hardware designers chose this"
+    Under two's complement, *addition needs no special cases* — the same
+    circuit that adds positive numbers adds negative ones correctly, with
+    overflow bits simply falling off the end.
+
+### Negating by hand: flip, then add one
+
+To find the pattern for $-n$ from the pattern for $n$:
+
+1. Write $n$ in binary, padded to the full width — 5 is `00000101`.
+2. Flip every bit — `11111010`.
+3. Add 1 — `11111011`, which is $-5$.
+
+Here is a converter you can experiment with — it works for any width:
 
 ```python
 def to_twos_complement(value, bits=8):
@@ -210,8 +235,10 @@ convention. The 1960s **ASCII** standard assigned codes 0–127 to English
 letters, digits, and punctuation: `A` is 65, `a` is 97, `0` (the character)
 is 48. Its modern successor **Unicode** extends the same idea to every
 writing system — well over one hundred thousand characters, each with a
-numeric **code point**. Python's `ord()` gives the code point of a
-character, and `chr()` goes the other way:
+numeric **code point**.
+
+Python lets you look up both directions: `ord()` gives the code point of a
+character, and `chr()` turns a code point back into a character.
 
 ```python
 print(ord("A"), ord("B"), ord("a"))    # letters are consecutive numbers
@@ -237,14 +264,19 @@ print(0.1 + 0.2)
 print(0.1 + 0.2 == 0.3)
 ```
 
-The output is `0.30000000000000004` and `False`. Nothing is broken. Just as
-decimal cannot write $1/3$ exactly ($0.3333\ldots$ forever), *binary*
-cannot write $1/10$ exactly — it becomes an infinitely repeating binary
-fraction, and the computer stores only the first 53 bits or so. You are
-seeing a microscopic rounding error, baked in by the base-2 storage this
-whole section is about. For now, remember the rule of thumb: **never test
-two floating-point numbers for exact equality**. The full story — what
-those 53 bits are and how to compare safely — is in
+The output is `0.30000000000000004` and `False`. Nothing is broken.
+
+Just as decimal cannot write $1/3$ exactly ($0.3333\ldots$ forever),
+*binary* cannot write $1/10$ exactly — it becomes an infinitely repeating
+binary fraction, and the computer stores only the first 53 bits or so. You
+are seeing a microscopic rounding error, baked in by the base-2 storage this
+whole section is about.
+
+!!! tip "The rule of thumb to carry forward"
+    **Never test two floating-point numbers for exact equality.** Compare
+    with a tolerance instead: `abs(a - b) < 1e-9`.
+
+The full story — what those 53 bits are and how to compare safely — is in
 [Chapter 5](../ch05-under-the-hood/01-numeric-pitfalls.md).
 
 !!! warning "Common mistakes"

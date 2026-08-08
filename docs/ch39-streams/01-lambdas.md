@@ -13,9 +13,14 @@ value normally goes".
 ## A function is a value
 
 Here is the whole idea in one line: **`def name(...)` is an assignment
-statement**. It builds a function object and stores it under `name`. Which
-means the name is not special, and you can make more names for the same
-object.
+statement**. It builds a function object and stores it under `name`.
+
+Which means the name is not special. Once a function is an ordinary value
+there are exactly three things you can do with it, and the rest of this
+section is those three in order: **store** it, **pass** it, and **return**
+it.
+
+### Store it: two names, one function
 
 ```python
 def shout(text):
@@ -39,13 +44,14 @@ names: shout / shout
 `shout` and `yell` are two labels on one object, the way two variables can
 point at one list in [Chapter 9](../ch09-collections/01-references.md). The
 `__name__` attribute still says `shout` because that is the name the object
-was *born* with; the label you access it through is irrelevant. The single
-most common beginner slip in this whole section is writing `yell = shout()`
-— with parentheses you *call* the function and store its return value, which
-here would be an immediate `TypeError` for a missing argument.
+was *born* with; the label you access it through is irrelevant.
 
-That was storing a function. The second thing you can do with a value is
-**pass it as an argument**:
+**The parentheses are the whole difference.** The most common beginner slip
+in this section is writing `yell = shout()` — with parentheses you *call* the
+function and store its return value, which here would be an immediate
+`TypeError` for a missing argument.
+
+### Pass it: one function, many behaviours
 
 ```python
 def apply_to_all(func, items):
@@ -74,13 +80,15 @@ print(apply_to_all(str, numbers))      # built-ins are values too
 ```
 
 `apply_to_all` does not know or care what `func` does. It knows only that
-`func` can be called with one argument. That single parameter turns one
-six-line function into an unlimited family of transformations — and you have
-just hand-written `map`, which [section 39.2](02-map-filter-reduce.md) will
-formally introduce.
+`func` can be called with one argument.
 
-The third thing you can do with a value is **return it**. A function that
-returns a function is called a **factory**:
+That single parameter turns one six-line function into an unlimited family of
+transformations — and you have just hand-written `map`, which
+[section 39.2](02-map-filter-reduce.md) will formally introduce.
+
+### Return it: the factory pattern
+
+A function that returns a function is called a **factory**:
 
 ```python
 def make_tagger(tag):
@@ -141,11 +149,12 @@ names: double_def / <lambda>
 
 The only visible difference is the name: a lambda is anonymous, so its
 `__name__` is the placeholder `<lambda>`, which is what you will see in a
-traceback when one blows up. That is precisely why the code above is a bad
-habit in real programs: **if you are giving a lambda a name, use `def`**. The
-official Python style guide says so, and the reason is the traceback. Lambdas
-are for the throwaway case where the function is *an argument* and never gets
-a name at all.
+traceback when one blows up.
+
+That is precisely why the code above is a bad habit in real programs: **if you
+are giving a lambda a name, use `def`**. The official Python style guide says
+so, and the reason is the traceback. Lambdas are for the throwaway case where
+the function is *an argument* and never gets a name at all.
 
 ### The deliberate limits
 
@@ -183,9 +192,11 @@ print(area(3, 4), area(5))
 
 Three places, and outside them you should reach for `def`.
 
-**1. `sorted(key=...)`.** The `key` parameter takes a function; `sorted` calls
-it once per element and orders by whatever comes back. One list of records,
-three orderings, no copies of the sorting code:
+### 1. `sorted(key=...)`
+
+The `key` parameter takes a function; `sorted` calls it once per element and
+orders by whatever comes back. One list of records, four orderings, no copies
+of the sorting code:
 
 ```python
 records = [
@@ -214,14 +225,19 @@ by dept, then name   ['Ada', 'Barbara', 'Grace', 'Radia', 'Linus']
 by name length       ['Ada', 'Grace', 'Linus', 'Radia', 'Barbara']
 ```
 
-Two details worth pocketing. Returning a **tuple** from the key sorts by the
-first element, then breaks ties with the second — that is how "department,
-then name" happens in one line. And Grace comes before Barbara in the salary
-ordering even though they earn the same 145, because Python's sort is
-*stable*: equal keys keep their original relative order
-([Chapter 22](../ch22-sorting/index.md) made the same point about merge sort).
+Two details worth pocketing:
 
-**2. `min` and `max` with a key.** Same protocol, one winner:
+- **A tuple key sorts by layers.** Returning a **tuple** from the key sorts by
+  the first element, then breaks ties with the second — that is how
+  "department, then name" happens in one line.
+- **Python's sort is *stable*.** Grace comes before Barbara in the salary
+  ordering even though they earn the same 145, because equal keys keep their
+  original relative order ([Chapter 22](../ch22-sorting/index.md) made the
+  same point about merge sort).
+
+### 2. `min` and `max` with a key
+
+Same protocol, one winner:
 
 ```python
 # continues
@@ -242,11 +258,12 @@ Grace wins the salary tie because `max` keeps the *first* maximum it sees and
 Grace appears earlier in the list. Ties are a real source of "why did it pick
 that one?" bugs; the rule is first-wins for `max` and `min` alike.
 
-**3. Callbacks.** A callback is a function you hand to somebody else so *they*
-can call it later, when something happens. That is the entire architecture of
-the event loop from
-[section 14.3](../ch14-beyond/03-guis-and-beyond.md): the framework owns the
-loop, you supply the handlers.
+### 3. Callbacks
+
+A callback is a function you hand to somebody else so *they* can call it
+later, when something happens. That is the entire architecture of the event
+loop from [section 14.3](../ch14-beyond/03-guis-and-beyond.md): the framework
+owns the loop, you supply the handlers.
 
 ```python
 handlers = {}
@@ -359,11 +376,17 @@ separate cells?  True
 20 30
 ```
 
-`co_freevars` lists the names the inner function uses but does not define;
-`__closure__` holds one cell per free variable. Each *call* to the factory
-creates a fresh cell, which is why `double` and `triple` do not interfere.
-You will rarely poke at `__closure__` in real code — but seeing the cell
-turns "somehow it remembers" into a mechanism.
+Three things to read out of that output:
+
+- **`co_freevars`** lists the names the inner function uses but does not
+  define — here, `factor`.
+- **`__closure__`** holds one cell per free variable, and printing
+  `.cell_contents` shows the captured value.
+- **Each call to the factory creates a fresh cell**, which is why `double` and
+  `triple` do not interfere.
+
+You will rarely poke at `__closure__` in real code — but seeing the cell turns
+"somehow it remembers" into a mechanism.
 
 ### The late-binding trap
 
@@ -413,12 +436,15 @@ default-argument fix: [20, 30, 40]
 factory fix:          [20, 30, 40]
 ```
 
-**Fix 1** exploits the fact that default arguments are evaluated *when the
-function is defined*, so `factor=factor` snapshots the current value into a
-parameter. It is compact and idiomatic, though the repeated word looks odd
-the first time. **Fix 2** gives each lambda its own enclosing call, hence its
-own cell — the same mechanism you just printed. Prefer fix 2 when the body is
-more than trivial; it is easier to name and to test.
+**Fix 1 — a default argument snapshots the value.** Default arguments are
+evaluated *when the function is defined*, so `factor=factor` copies the
+current value into a parameter. It is compact and idiomatic, though the
+repeated word looks odd the first time.
+
+**Fix 2 — a factory gives each lambda its own cell.** Every call to
+`make_multiplier` creates a fresh enclosing scope, which is the mechanism you
+just printed. Prefer this one when the body is more than trivial; it is easier
+to name and to test.
 
 !!! note "The same trap in other languages"
 
@@ -459,9 +485,13 @@ partial keeps the original: True {'exponent': 2}
 ```
 
 `partial(power, exponent=2)` is roughly `lambda base: power(base, 2)`, with
-two advantages: the resulting object remembers what it wrapped (`.func`,
-`.args`, `.keywords`, which you just printed), and it does not fall into the
-late-binding trap because the arguments are captured at construction time.
+two advantages:
+
+- **It remembers what it wrapped.** `.func`, `.args`, and `.keywords` are all
+  readable — you just printed two of them — so a `partial` is debuggable in a
+  way a lambda is not.
+- **It cannot fall into the late-binding trap**, because the arguments are
+  captured at construction time rather than looked up at call time.
 
 ## The same ideas in Java
 
@@ -557,9 +587,12 @@ impure -> [15, 25, 35] | caller's list: [15, 25, 35]
 pure   -> [15, 25, 35] | caller's list: [10, 20, 30]
 ```
 
-Both return the right answer. Only one of them left the input alone. Now
-watch what the difference does to a test suite that shares a fixture — the
-same test, the same input, run twice:
+Both return the right answer. Only one of them left the input alone.
+
+### Why impurity breaks a test suite
+
+Now watch what the difference does to a test suite that shares a fixture —
+the same test, the same input, run twice:
 
 ```python
 # continues
@@ -588,11 +621,12 @@ pure test,   second run: True
 The impure test passes or fails depending on **what ran before it**. That is
 the single most demoralising kind of bug: a test suite that is green when you
 run one file and red when you run all of them, or that depends on alphabetical
-test order. Pure functions cannot have it. This is why the rest of the
-chapter — `map`, `filter`, comprehensions, generator pipelines — is built out
-of functions that return new data instead of editing old data. Purity is not
-a moral position; it is what makes a pipeline safe to reorder, re-run, cache,
-and eventually run in parallel.
+test order. Pure functions cannot have it.
+
+This is why the rest of the chapter — `map`, `filter`, comprehensions,
+generator pipelines — is built out of functions that return new data instead
+of editing old data. Purity is not a moral position; it is what makes a
+pipeline safe to reorder, re-run, cache, and eventually run in parallel.
 
 !!! warning "Common mistakes"
 

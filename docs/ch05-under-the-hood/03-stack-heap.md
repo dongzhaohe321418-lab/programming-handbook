@@ -3,19 +3,26 @@
 Where is a variable, actually? So far you have pictured variables as labelled
 boxes, and that picture has served well — but it cannot explain why a change
 to one list sometimes shows up in another, or how two functions can each have
-their own `n` without colliding. The real picture has two places: a tidy
-**call stack** of function workspaces that appear and vanish, and a big open
-**heap** where the objects themselves live. Learn to draw this picture and an
-entire category of "spooky action at a distance" bugs becomes something you
-can predict before you run the code.
+their own `n` without colliding.
+
+The real picture has two places:
+
+- the tidy **call stack** of function workspaces that appear and vanish;
+- the big open **heap** where the objects themselves live.
+
+Learn to draw this picture and an entire category of "spooky action at a
+distance" bugs becomes something you can predict before you run the code.
 
 ## Every call gets a frame
 
 When Python calls a function, it creates a **frame** (also called a *stack
-frame*): a fresh workspace holding that call's local names — its parameters
-and local variables — plus a bookmark recording where to resume when the
-function returns. Frames stack on top of each other, newest on top, and when
-a function returns, its frame is destroyed. Last in, first out.
+frame*) — a fresh workspace holding two things:
+
+- **that call's local names**: its parameters and its local variables;
+- **a bookmark** recording where to resume when the function returns.
+
+Frames stack on top of each other, newest on top, and when a function returns
+its frame is destroyed. Last in, first out.
 
 You can watch frames come and go by printing at each entry and exit:
 
@@ -50,10 +57,13 @@ Output:
 Read the indentation as the height of the stack. At the deepest moment, three
 frames are alive at once — the module level (the "main" frame), `breakfast`,
 and `make_coffee` on top. Then they unwind in reverse order: the most recently
-created frame is always the first destroyed. (This trace is exactly what a
-**stack trace** in an error message shows — the tower of frames alive at the
-moment of the crash — and it powers recursion in
-[Chapter 17](../ch17-recursion/01-call-stack.md).)
+created frame is always the first destroyed.
+
+This trace is exactly what a **stack trace** in an error message shows — the
+tower of frames alive at the moment of the crash — and it powers recursion in
+[Chapter 17](../ch17-recursion/01-call-stack.md).
+
+### Two frames can hold the same name
 
 Because every call gets its *own* frame, two frames can hold the same name
 without interfering:
@@ -82,9 +92,13 @@ object holding a sequence of values, like `["milk", "eggs"]`; lists get their
 own treatment in [Chapter 7](../ch07-arrays/01-arrays-vs-lists.md).)
 
 A name in a frame is only an *arrow* — a **reference** — pointing at an
-object in the heap. Assignment copies arrows, never objects. Passing an
-argument to a function copies an arrow into the new frame. Which means two
-names, even in different frames, can point at **one and the same object**:
+object in the heap. Three consequences follow, and between them they are the
+whole section:
+
+- **Assignment copies arrows**, never objects.
+- **Passing an argument** copies an arrow into the new frame.
+- **Therefore two names**, even in two different frames, can point at one and
+  the same object:
 
 ```mermaid
 flowchart LR
@@ -128,10 +142,12 @@ total: 7.5
 ```
 
 The list was *not* copied into the function — only the arrow was. One list,
-two names, in two different frames. This is why Python's way of passing
-arguments is cheap (an arrow is a few bytes, even if the list holds a million
-items) and why it has consequences we must respect: if a function *changes*
-the object its parameter points at, the caller sees the change.
+two names, in two different frames.
+
+That is why Python's way of passing arguments is cheap: an arrow is a few
+bytes, even if the list holds a million items. And it is why the mechanism has
+a consequence we must respect — if a function *changes* the object its
+parameter points at, the caller sees the change.
 
 ## Watching objects with `id()`
 
@@ -177,21 +193,26 @@ like C, the programmer must explicitly free every allocation — forget one and
 the program slowly eats all available memory (a *memory leak*). Python instead
 uses automatic **garbage collection**, built primarily on **reference
 counting**: every object keeps a count of how many arrows currently point at
-it. Assign `b = a` and the list's count rises; rebind `b = 3` or let a frame
-be destroyed and the counts of everything that frame pointed to fall. The
-instant an object's count hits zero — no name anywhere can reach it — Python
-reclaims its memory on the spot. (Reference counting alone cannot free two
-objects that point only at each other, so CPython adds a cycle detector that
-periodically sweeps such orphaned rings.)
+it. Assign `b = a` and the list's count rises; rebind `b = 3`, or let a frame
+be destroyed, and the counts fall. The instant a count hits zero — no name
+anywhere can still reach the object — Python reclaims its memory on the spot.
 
-Java reaches the same goal by a different route: instead of counting
-continuously, its garbage collector periodically *traces* every arrow
-reachable from the running program and reclaims whatever was never reached.
-Tracing batches the cleanup work (occasionally causing tiny "GC pauses"),
-while reference counting pays as it goes. The practical upshot is the same in
-both languages, and it is excellent news: you may freely create objects and
-simply drop them — the runtime, not you, is responsible for taking out the
-trash.
+Java reaches the same goal by a different route, and the two strategies are
+worth holding side by side:
+
+| Strategy | How it decides an object is dead | What it costs |
+| --- | --- | --- |
+| **reference counting** (CPython) | the object's own count of incoming arrows hits zero | a little work on every assignment, paid as it goes |
+| **tracing** (Java) | a sweep follows every arrow reachable from the running program; whatever is never reached is dead | batched work, and occasionally a tiny "GC pause" |
+
+!!! note "The one case counting cannot handle"
+    Reference counting alone can never free two objects that point only at
+    each other — their counts never reach zero. CPython therefore adds a cycle
+    detector that periodically sweeps up such orphaned rings.
+
+The practical upshot is the same in both languages, and it is excellent news:
+you may freely create objects and simply drop them. The runtime, not you, is
+responsible for taking out the trash.
 
 ## Two names, one list — the door to Chapter 9
 
@@ -199,9 +220,16 @@ You now hold the chapter's most valuable picture: **names on the stack,
 objects on the heap, assignment copies arrows.** It explains the `double(n)`
 example (numbers are immutable, so the callee can only *rebind its own
 arrow*), and it explains why `b.append("tea")` changed "both" lists — there
-was only ever one list. What it opens up next: aliasing versus copying,
-mutable versus immutable objects, and how Java's "primitives vs references"
-split maps onto Python's everything-is-an-object world. That is the business
+was only ever one list.
+
+What it opens up next:
+
+- aliasing versus copying;
+- mutable versus immutable objects;
+- how Java's "primitives vs references" split maps onto Python's
+  everything-is-an-object world.
+
+That is the business
 of [Chapter 9: values vs references](../ch09-collections/01-references.md) —
 when you get there, this section is the foundation it builds on.
 

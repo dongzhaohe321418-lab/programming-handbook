@@ -39,10 +39,13 @@ print(f"the set was roughly {list_time / set_time:.0f}x faster")
 
 The exact milliseconds depend on your machine, but the *shape* of the
 result never changes: the set wins by a factor in the hundreds. Why?
-Each `in words` walks the list until it finds a match — on average
-thousands of comparisons per lookup. Each `in word_set` computes the
-word's hash and jumps essentially straight to the answer. Same problem,
-same result, wildly different work.
+
+- **`t in words`** walks the list until it finds a match — on average
+  thousands of comparisons per lookup.
+- **`t in word_set`** computes the word's hash and jumps essentially straight
+  to the answer.
+
+Same problem, same result, wildly different amounts of work.
 
 ## Counting steps instead of milliseconds
 
@@ -91,11 +94,19 @@ target  9999: linear 10000 steps, binary 14 steps
 ```
 
 Linear search's cost depends entirely on where the target sits — 1 step
-if you are lucky, 10,000 if you are not. Binary search barely notices:
-each step halves the remaining range, so 10,000 items cost at most 14
-looks, because $2^{14} = 16384 > 10000$. Halving is the same trick the
-set's hash table exploits even more aggressively — and it only works
-because the data is *sorted*, a price linear search never has to pay.
+if you are lucky, 10,000 if you are not.
+
+Binary search barely notices: each step halves the remaining range, so
+10,000 items cost at most 14 looks, because $2^{14} = 16384 > 10000$. The
+halving only works because the data is *sorted*, a price linear search
+never has to pay.
+
+The set at the top of this page is faster still, and by a completely
+different trick: it does no halving at all. A hash table **computes** the
+storage slot straight from the key and goes there, so the cost of a lookup
+does not depend on how many items are stored —
+[Section 36.1](../ch36-hashing-tries/01-hash-tables.md) builds one from
+scratch and measures exactly that.
 
 ```yaml
 # widget-config
@@ -183,6 +194,7 @@ that is measurement noise — but the ratios tell the truth. An algorithm
 whose time quadruples on doubling will take a $10\times$ larger input
 $100\times$ longer; sizes that finish in a blink today can become an
 overnight run.
+
 Notice also that at $n = 500$ the quadratic function looks perfectly
 innocent — a couple of milliseconds. Small tests hide growth problems;
 doubling exposes them.
@@ -217,7 +229,11 @@ part of the handbook builds the theory that predicts these results for
 *any* machine: [Chapter 16](../ch16-complexity/index.md) names the
 growth patterns you just witnessed ($O(n)$, $O(n^2)$, $O(\log n)$) and
 turns today's lab notes into one of the sharpest tools in computer
-science.
+science. Much later, once $O(n \log n)$ sorting has come to feel like a
+law of nature, [Chapter 38](../ch38-linear-sorting/index.md) proves that
+it really is a law — for algorithms that work by comparing items — and
+then shows the loophole: sorts that run in linear time by never comparing
+two items at all.
 
 !!! warning "Common mistakes"
 

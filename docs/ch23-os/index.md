@@ -9,19 +9,23 @@ among dozens of programs at once, each living inside its own carefully fenced
 patch of memory. Most programming courses never open this box. We are going
 to open it.
 
-The payoff is practical, not just philosophical. Once you know what a
-*process* is, error messages about permissions and crashed programs make
-sense. Once you have seen the memory layout of a running program — stack,
-heap, and the segments in between — the stack traces from
-[Chapter 10](../ch10-exceptions/03-stack-traces.md) and the recursion limits
-from [Chapter 17](../ch17-recursion/01-call-stack.md) stop being folklore and
-become geometry. And once you follow your Python source through the
-interpreter's pipeline — text to syntax tree to bytecode to execution — you
-will finally see, end to end, the tower of machinery between the characters
-you type and the electrons that move. The last section closes a loop this
-handbook opened on page one: the Run buttons on this very site work because a
-Python interpreter has been compiled to run inside your browser — a virtual
-machine running inside a virtual machine.
+The payoff is practical, not just philosophical:
+
+- **Know what a *process* is**, and error messages about permissions and
+  crashed programs start making sense.
+- **See the memory layout of a running program** — stack, heap, and the
+  segments in between — and the stack traces from
+  [Chapter 10](../ch10-exceptions/03-stack-traces.md) and the recursion
+  limits from [Chapter 17](../ch17-recursion/01-call-stack.md) stop being
+  folklore and become geometry.
+- **Follow your Python through the interpreter's pipeline** — text to syntax
+  tree to bytecode to execution — and you finally see, end to end, the tower
+  of machinery between the characters you type and the electrons that move.
+
+The last section closes a loop this handbook opened on page one: the Run
+buttons on this very site work because a Python interpreter has been compiled
+to run inside your browser — a virtual machine running inside a virtual
+machine.
 
 **After this chapter you can …**
 

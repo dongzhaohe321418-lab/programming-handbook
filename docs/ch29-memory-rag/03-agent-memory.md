@@ -3,12 +3,14 @@
 Retrieval gets you facts. Memory gets you *continuity* — the difference
 between a search engine that answers each question from scratch and an
 assistant that knows you prefer zsh, that you are in UTC+1, and that you spent
-yesterday chasing an ingestion bug. The awkward truth underneath is that a
-language model has no memory at all: every call is stateless, and everything
-it "remembers" is text your program chose to put in the prompt. So agent
-memory is not a model feature. It is a *data structures* problem — what to
-store, how to rank it, and how to fit the winners into a fixed budget — which
-is why you already have every tool you need for it.
+yesterday chasing an ingestion bug.
+
+The awkward truth underneath is that a language model has no memory at all.
+Every call is stateless, and everything it "remembers" is text your program
+chose to put in the prompt. So agent memory is not a model feature. It is a
+*data structures* problem — what to store, how to rank it, and how to fit the
+winners into a fixed budget — which is why you already have every tool you need
+for it.
 
 ## Four memories, one context window
 
@@ -30,12 +32,18 @@ and writes them into the prompt. That is the entire subject of this section:
 
 ## The context window is a budget, and you pay it every turn
 
-Context is not free memory. It costs money per token, it costs latency because
-every prompt token must be prefilled
-([Section 27.1](../ch27-inference/01-kv-cache.md)), and it costs GPU memory
-because every token needs a KV cache entry. Worse, an agent resends its whole
-context on *every* call, so an unmanaged conversation's total input tokens grow
-quadratically with the number of turns.
+Context is not free memory. Every token you put in it is charged three times:
+
+- **Money**, per token, on the way in.
+- **Latency**, because every prompt token must be prefilled
+  ([Section 27.1](../ch27-inference/01-kv-cache.md)) before the first output
+  token appears.
+- **GPU memory**, because every token needs a KV cache entry for the whole
+  request.
+
+Worse, an agent resends its whole context on *every* call, so an unmanaged
+conversation's total input tokens grow **quadratically** with the number of
+turns.
 
 ```python
 PRICE_IN, PRICE_OUT = 3.0, 15.0   # illustrative USD per MILLION tokens
@@ -85,7 +93,7 @@ provider's numbers and rerun. What generalizes is the shape:
 - An unmanaged 20-turn session sends **147,500 input tokens** and costs
   **$0.5175**. Capping the context at 4000 tokens sends 72,500 and costs
   $0.2925 — a **2.0×** saving on input tokens, which at a thousand sessions a
-  day is $518 versus $293.
+  day is $518 versus $292.
 - Peak context also sets **latency**: prefilling 32,000 tokens costs about
   3413 ms of compute against 128 ms for 1200. Every one of those milliseconds
   happens *before the first output token appears*.
@@ -108,6 +116,8 @@ counter is the rule of thumb from
 [Section 26.1](../ch26-llm-internals/01-tokenization.md) — about four
 characters per token for English — implemented as a real function so the
 numbers are reproducible.
+
+### Strategy 1: a sliding window
 
 ```python
 CONVERSATION = [
@@ -172,13 +182,19 @@ print(f"\nthe last question is: {CONVERSATION[-2][1]!r}")
 
 The whole conversation is 290 tokens. A **sliding window** is the simplest
 possible policy — keep the newest turns, drop the oldest — and it takes four
-lines. Look at what it costs. At a 240-token budget the window keeps 16 of 20
-turns and has already forgotten Rosa's name and her timezone; at 120 tokens it
-knows none of the three facts. And the very last user question is *"what time
-will the restart finish in my timezone?"*, whose answer requires the timezone
-stated in **turn 0**. The sliding window's failure is not a rounding error. It
-is structural: recency and importance are different things, and a window can
-only see one of them.
+lines.
+
+Look at what it costs:
+
+- **At a 240-token budget** it keeps 16 of 20 turns and has already forgotten
+  Rosa's name and her timezone.
+- **At 120 tokens** it knows none of the three facts.
+- **The very last user question** is *"what time will the restart finish in my
+  timezone?"*, whose answer requires the timezone stated in **turn 0**.
+
+The sliding window's failure is not a rounding error. It is structural:
+**recency and importance are different things, and a window can only see one of
+them.**
 
 ### Strategy 2: summarize the old turns
 
@@ -239,12 +255,16 @@ crucially all three durable facts survive, because a summarizer keeps facts
 while a window keeps *recency*. The total context drops from 290 to 171 tokens
 while getting *more* useful.
 
-Summarization has a cost the window does not: it needs an extra model call, it
-adds latency at the moment it triggers, and it is lossy in a way you cannot
-predict. Anything the summarizer failed to consider important is gone forever —
-so real systems summarize *and* keep the raw turns in a store they can retrieve
-from, which is exactly what the `AgentMemory` class at the end of this section
-does.
+Summarization has three costs the window does not:
+
+- **An extra model call**, every time it triggers.
+- **A latency spike** at exactly the moment it triggers.
+- **Unpredictable loss.** Anything the summarizer failed to consider important
+  is gone forever.
+
+Which is why real systems summarize *and* keep the raw turns in a store they
+can retrieve from — exactly what the `AgentMemory` class at the end of this
+section does.
 
 ### Strategy 3: score-based selection
 
@@ -258,11 +278,14 @@ $$
 \;+\; w_i \cdot \underbrace{\text{importance}}_{\text{assigned when stored}}
 $$
 
-Recency decays with a half-life $h$ measured in turns. Relevance is overlap
-with the current query — the retrieval machinery of
-[Section 29.1](01-embeddings-vector-search.md), simplified here to term
-overlap. Importance is a number you attach when the memory is written: an
-identity fact scores high forever, a passing remark does not.
+The three terms, and where each number comes from:
+
+| Term | What it measures | Where it comes from |
+| --- | --- | --- |
+| **recency** $0.5^{\,\text{age}/h}$ | how long ago this was said | age in turns, halved every $h$ turns |
+| **relevance** $\lvert Q \cap M\rvert / \lvert Q\rvert$ | how much this memory has to do with the question | overlap between the query's terms $Q$ and the memory's terms $M$ — the retrieval machinery of [Section 29.1](01-embeddings-vector-search.md), simplified |
+| **importance** | how durable the fact is | a number you attach when the memory is written: identity facts score high forever, passing remarks do not |
+| $w_r, w_v, w_i$ | how much each term counts | your policy — tuned, not discovered |
 
 ```python
 # continues
@@ -307,11 +330,15 @@ nineteen turns old and decayed to 0.19 on recency, but rescued by relevance
 instead have kept the three newest memories, none of which mention a timezone.
 That is the entire argument for scoring in one comparison.
 
-The weights are a policy, not a discovery. Raise $w_i$ and the agent becomes
-conservative and repetitive; raise $w_r$ and it becomes forgetful; raise $w_v$
-and it becomes topic-obsessed and loses the thread. Tune them against a set of
-scripted conversations with known "must not forget" facts, exactly as you tuned
-$k$ in [Section 29.2](02-rag-pipeline.md).
+The weights are a policy, not a discovery. Each one has a characteristic
+failure when you push it too far:
+
+- **Raise $w_i$** and the agent becomes conservative and repetitive.
+- **Raise $w_r$** and it becomes forgetful.
+- **Raise $w_v$** and it becomes topic-obsessed and loses the thread.
+
+Tune them against a set of scripted conversations with known "must not forget"
+facts, exactly as you tuned $k$ in [Section 29.2](02-rag-pipeline.md).
 
 ### Strategy 4: hierarchical summary trees
 
@@ -357,25 +384,35 @@ print(f"  root + that group only: {zoom} tokens, versus "
       f"{sum(n_tokens(t) for _, t in CONVERSATION)} for the whole transcript")
 ```
 
-The tree costs 290 tokens at the leaves, 115 at level 1, and 27 at level 2. The
-top level alone is not enough to answer a detailed question — it is a table of
-contents — but combined with *one* descended branch it answers the dead-letter
-question in 83 tokens instead of 290. Scale that up: a hierarchy over a year of
-sessions lets an agent hold the gist of everything and the detail of exactly
-what it needs. Note the honest cost, visible in the numbers: level 2 kept 3
-facts out of the 8 the tree knows. **Every level up throws information away.**
-The tree works because you keep the lower levels and can descend, not because
-the summary is lossless.
+The tree costs 290 tokens at the leaves, 115 at level 1, and 27 at level 2.
+
+The top level alone is not enough to answer a detailed question — it is a table
+of contents — but combined with *one* descended branch it answers the
+dead-letter question in 83 tokens instead of 290. Scale that up: a hierarchy
+over a year of sessions lets an agent hold the gist of everything and the
+detail of exactly what it needs.
+
+Note the honest cost, visible in the numbers: level 2 kept 3 facts out of the 8
+the tree knows. **Every level up throws information away.** The tree works
+because you keep the lower levels and can descend, not because the summary is
+lossless.
 
 ## Keeping the prefix stable: the optimization nobody mentions
 
-Now for a practical point that costs nothing and is almost never taught. A
-server's prefix cache reuses KV entries for an *exact* token prefix
-([Section 27.1](../ch27-inference/01-kv-cache.md)). So the order in which you
-assemble a prompt determines how much of it has to be recomputed on every
-single call. Put the stable material first — system prompt, tool definitions,
-long documents — and the volatile material last — timestamps, the new user
-turn. Put them the other way round and you invalidate everything.
+Now for a practical point that costs nothing and is almost never taught.
+
+!!! note "The rule in one sentence"
+
+    A server's prefix cache reuses KV entries for an **exact** token prefix
+    ([Section 27.1](../ch27-inference/01-kv-cache.md)) — so **keeping a
+    prompt's stable prefix byte-identical is what makes caching pay**, and one
+    timestamp at the top throws all of it away.
+
+The order in which you assemble a prompt therefore decides how much of it has
+to be recomputed on every single call. Put the stable material first — system
+prompt, tool definitions, long documents — and the volatile material last —
+timestamps, the new user turn. Put them the other way round and you invalidate
+everything.
 
 ```python
 def tok(text):
@@ -433,8 +470,8 @@ recomputes **13.4×** more prompt tokens, because one timestamp at the top makes
 every following token a cache miss. Request 1 reuses 380 of its 412 tokens in
 the good layout and 5 of them in the bad one.
 
-The rule that falls out is simple and worth writing on the wall of your prompt
-builder:
+The ordering that falls out is worth writing on the wall of your prompt
+builder — most stable first, most volatile last:
 
 1. system prompt (never changes),
 2. tool definitions (change on deploy),
@@ -448,20 +485,19 @@ from scratch each turn — silently costs you the cache.
 
 ## Writing memories: what to store, and what to do when it changes
 
-Reading memory is the easy half. Writing it well requires three decisions.
+Reading memory is the easy half. Writing it well requires three decisions:
 
-**What to store.** Store *durable* things: identity, preferences, stable
-configuration, decisions and their reasons, corrections the user made. Do not
-store the whole transcript as "memories" — you will drown the scorer in noise.
-A useful test: would this still be true and useful next month?
-
-**Dedup.** The same fact restated should refresh recency, not add a row.
-Otherwise a preference the user mentions five times outvotes everything else.
-
-**Conflict.** When a new value contradicts an old one, the default rule is
-**newer overrides older**, keeping the old value as history rather than
-deleting it — you will want it when someone asks why the agent changed its
-mind.
+1. **What to store.** Store *durable* things: identity, preferences, stable
+   configuration, decisions and their reasons, corrections the user made. Do
+   not store the whole transcript as "memories" — you will drown the scorer in
+   noise. A useful test: *would this still be true and useful next month?*
+2. **How to dedup.** The same fact restated should refresh recency, not add a
+   row. Otherwise a preference the user mentions five times outvotes everything
+   else.
+3. **How to resolve conflict.** When a new value contradicts an old one, the
+   default rule is **newer overrides older** — keeping the old value as history
+   rather than deleting it, because you will want it when someone asks why the
+   agent changed its mind.
 
 ```python
 def write_memory(store, key, value, turn, importance=0.5):
@@ -509,22 +545,27 @@ for key, rec in sorted(store.items(), key=lambda kv: -retention(kv[1], 30)[0]):
 ```
 
 Read the last block carefully, because it contains a trap that real systems
-fall into. **Decay by recency alone forgets the wrong things.** At turn 30 the
-user's name has decayed to 0.189, and a threshold of 0.4 on recency alone
-deletes it — along with their shell preference — while keeping a timezone
-merely because it was restated recently. Weighting the decay by importance —
-here $0.4 \times \text{decay} + 0.6 \times \text{importance}$ — keeps all three
-identity facts (0.616, 0.573, 0.714) and drops only `atlas.batch_limit` at
-0.366, which is exactly the outcome you wanted. Forgetting is a feature;
-forgetting by age alone is a bug.
+fall into. **Decay by recency alone forgets the wrong things.**
+
+- **Recency only.** At turn 30 the user's name has decayed to 0.189, so a
+  threshold of 0.4 deletes it — along with their shell preference — while
+  keeping a timezone merely because it was restated recently.
+- **Importance-weighted**, here $0.4 \times \text{decay} + 0.6 \times
+  \text{importance}$. All three identity facts survive (0.616, 0.573, 0.714)
+  and only `atlas.batch_limit` is dropped, at 0.366.
+
+Forgetting is a feature; forgetting by age alone is a bug.
 
 ## Putting it together: the `AgentMemory` class
 
-Here is the centrepiece: one class holding all three stores, with three
-methods. `remember()` writes, with dedup and newer-overrides-older.
-`recall(query)` ranks across stores with the scoring function. And
-`build_context(budget_tokens)` assembles a prompt that **provably fits** the
-budget, laid out in the cache-friendly order.
+Here is the centrepiece: one class holding all three stores, behind three
+methods.
+
+| Method | What it does |
+| --- | --- |
+| `remember(...)` | writes, with dedup and newer-overrides-older |
+| `recall(query)` | ranks across stores with the scoring function above |
+| `build_context(budget)` | assembles a prompt, **measures the assembled string** against the budget, and trims live turns until it fits — laid out in the cache-friendly order |
 
 ```python
 import re
@@ -587,7 +628,7 @@ class AgentMemory:
 
     # ---------------- reading ----------------
     def build_context(self, query, budget_tokens, memory_share=0.5, verbose=True):
-        """Assemble a prompt guaranteed to fit in budget_tokens.
+        """Assemble a prompt, then trim live turns until it fits the budget.
 
         Layout: system prompt, then memories, then live turns, then the
         question — the cache-friendly order from Section 27.1.
@@ -669,16 +710,20 @@ print("the superseded value is kept:", mem.semantic["user.timezone"]["superseded
 Read the 70-token run against the sliding window from earlier in this section.
 The window at *240* tokens had already lost the timezone. `AgentMemory` at
 **70** tokens still has it — first line of the memory block — because it ranked
-by relevance and importance rather than by position in a list. That is the
-whole chapter's argument, reduced to two printouts: retrieval is what lets a
-small context behave like a large one.
+by relevance and importance rather than by position in a list.
+
+That is the whole chapter's argument, reduced to two printouts: **retrieval is
+what lets a small context behave like a large one.**
 
 Three properties worth noticing in the implementation:
 
-- **The budget is a guarantee, not a hope.** The final `while` loop drops the
+- **The budget is measured, not estimated.** The final `while` loop drops the
   oldest live turn until the assembled string genuinely fits, because newlines
   and headers cost tokens too. Estimating a budget and then blowing it is the
-  most common bug in context builders.
+  most common bug in context builders. (The loop can only drop *turns*: hand it
+  a budget too small for the system prompt plus the retrieved memories and it
+  runs out of things to trim, which is why the guard above rejects a budget
+  that cannot hold the fixed parts.)
 - **`memory_share` is the one real design knob.** At 0.5 the memory block and
   the live conversation each get half of the spare budget. Push it to 0.9 and
   the agent recites facts at you; push it to 0.1 and it forgets who you are.
@@ -742,7 +787,7 @@ Three properties worth noticing in the implementation:
         decayed to 0.19 after nineteen turns, but it scores 0.25 on relevance
         (the query shares the word "timezone") and 0.90 on importance
         (identity facts are marked durable when written), so the weighted sum
-        $0.25 \times 0.19 + 0.55 \times 0.25 + 0.20 \times 0.90 = 0.366$ beats a
+        $0.25 \times 0.193 + 0.55 \times 0.25 + 0.20 \times 0.90 = 0.366$ beats a
         recent but irrelevant, unimportant memory. A sliding window has no way to
         express any of that.
 

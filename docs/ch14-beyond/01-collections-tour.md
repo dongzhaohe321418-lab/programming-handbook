@@ -35,7 +35,13 @@ The second superpower is the `in` operator. Asking `x in some_list`
 scans the list item by item; asking `x in some_set` uses a hash-based
 trick to jump almost straight to the answer, no matter how large the set
 is. Section [14.2](02-choosing-algorithms.md) puts a stopwatch on this
-difference — it is not subtle.
+difference — it is not subtle. The trick itself is called a **hash
+table**, and it is not magic you have to take on faith forever:
+[Section 36.1](../ch36-hashing-tries/01-hash-tables.md) has you build a
+working `dict` — `get`, `put`, `remove`, `in` — out of nothing but a list
+and one arithmetic idea, and
+[36.2](../ch36-hashing-tries/02-collisions-resizing.md) deals with what
+happens when two keys want the same slot.
 
 Sets also support the operations you know from mathematics: union
 (`|`), intersection (`&`), and difference (`-`). They turn "compare
@@ -91,13 +97,15 @@ Grace is 45
 Alan is 41
 ```
 
-Three details carry most of the day-to-day work. First, `d[key]` raises
-`KeyError` if the key is missing, while `d.get(key, default)` returns
-your fallback instead — reach for `get` whenever absence is normal
-rather than a bug. Second, `in` checks *keys*, not values. Third, since
-Python 3.7 a dict remembers **insertion order** — the loop above prints
-pairs in the order they were added, which is why the output is
-predictable (it is *not* sorted; sort explicitly if you want that).
+Three details carry most of the day-to-day work:
+
+- **Missing keys.** `d[key]` raises `KeyError`, while `d.get(key, default)`
+  returns your fallback instead. Reach for `get` whenever absence is normal
+  rather than a bug.
+- **`in` checks the keys**, never the values.
+- **Order is insertion order.** Since Python 3.7 a dict remembers the order
+  pairs were added, which is why the loop's output is predictable. It is
+  *not* sorted — sort explicitly if that is what you want.
 
 The classic dict pattern is counting. Watch `get` do the heavy lifting:
 
@@ -225,9 +233,11 @@ point[0] = 99        # tuples cannot be modified
 
 ## Choosing a collection
 
-Three questions settle almost every case: does order matter? are
-duplicates meaningful? do you look things up by position, by key, or by
-"is it there?"
+Three questions settle almost every case:
+
+1. **Does order matter?**
+2. **Are duplicates meaningful?**
+3. **How do you look things up** — by position, by key, or by "is it there?"
 
 | You need … | Reach for | Because |
 | --- | --- | --- |

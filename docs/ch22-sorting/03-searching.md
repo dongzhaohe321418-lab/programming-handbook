@@ -24,10 +24,11 @@ print(linear_search(data, 72))       # 4
 print(linear_search(data, 40))       # -1
 ```
 
-Cost: $O(n)$ — a miss checks all $n$ elements, an average hit about
-$n/2$. This is what Python's `in` operator and `list.index` do on a list.
-Nothing beats it *on unsorted data*, because any element you skip could
-have been the target. To do better, you need a promise about the data's
+Cost: $O(n)$ — a miss checks all $n$ elements, an average hit about $n/2$.
+This is what Python's `in` operator and `list.index` do on a list.
+
+Nothing beats it *on unsorted data*, because any element you skip could have
+been the target. To do better, you need a promise about the data's
 arrangement — and "the data is sorted" is exactly such a promise.
 
 ## Binary search: the halving walk
@@ -83,12 +84,14 @@ print(binary_search(data, 40))    # -1  absent, between 38 and 41
 print(binary_search(data, 100))   # -1  absent, off the right end
 ```
 
-Five lines of logic — with a legendary bug record. The idea was published
-in 1946, yet by Donald Knuth's account the first version correct for
-*every* list size did not appear until 1962; and when Jon Bentley later
-asked groups of professional programmers to write it, roughly nine out of
-ten produced a buggy version. The failure modes are so classic they
-deserve exhibits.
+Five lines of logic — with a legendary bug record.
+
+The idea was published in 1946, yet by Donald Knuth's account the first
+version correct for *every* list size did not appear until 1962. And when Jon
+Bentley later asked groups of professional programmers to write it, roughly
+nine out of ten produced a buggy version.
+
+The failure modes are so classic they deserve exhibits.
 
 ## The bug museum
 
@@ -96,7 +99,9 @@ Every exhibit below is shown as *non-runnable* text, because two of them
 would loop forever in your browser. Compare each against the correct
 version above; the fix is always the rule in bold.
 
-**Exhibit A — the stale bound** (`hi = mid` instead of `mid - 1`):
+### Exhibit A — the stale bound
+
+The mistake: `hi = mid` where it should be `hi = mid - 1`.
 
 ```text
 while lo <= hi:
@@ -114,7 +119,9 @@ element is bigger than the target, and `hi = mid` changes *nothing* — the
 same state repeats forever. **After a failed probe, `mid` is disqualified;
 both updates must step past it** (`mid + 1` or `mid - 1`).
 
-**Exhibit B — the non-moving floor** (`lo = mid` instead of `mid + 1`):
+### Exhibit B — the non-moving floor
+
+The mistake: `lo = mid` where it should be `lo = mid + 1`.
 
 ```text
     elif items[mid] < target:
@@ -125,7 +132,9 @@ With a two-element region, `(lo + hi) // 2` rounds *down* to `lo`; if the
 probe says "go right", `lo = mid` re-creates the identical region. Same
 disease as Exhibit A, opposite wall.
 
-**Exhibit C — the shrunken loop** (`while lo < hi` instead of `<=`):
+### Exhibit C — the shrunken loop
+
+The mistake: `while lo < hi` where it should be `while lo <= hi`.
 
 ```text
 while lo < hi:              # BUG: quits while one candidate remains
@@ -136,8 +145,10 @@ one-element region unprobed, so it reports `-1` for targets that are
 present (try `2` in a one-element list mentally). **`lo <= hi` is correct
 precisely because both bounds are inclusive.**
 
-**Exhibit D — the overflow** (`mid = (lo + hi) / 2` in Java). Harmless in
-Python; a genuine, historic bug in Java:
+### Exhibit D — the overflow
+
+The mistake: `mid = (lo + hi) / 2` in Java. Harmless in Python; a genuine,
+historic bug in Java:
 
 === "Python"
 
@@ -158,12 +169,13 @@ Python; a genuine, historic bug in Java:
 
 Java's `int` tops out at $2^{31} - 1 \approx 2.1$ billion
 ([Chapter 5](../ch05-under-the-hood/01-numeric-pitfalls.md)), so `lo + hi`
-can wrap negative even when both indices are individually legal. This
-exact bug sat in Java's own `Arrays.binarySearch` for nine years before
-being noticed in 2006. The remedy `lo + (hi - lo) / 2` never forms a sum
-bigger than `hi`. Python's integers are arbitrary-precision, so
-`(lo + hi) // 2` is genuinely fine — but recognise the Java idiom when
-you meet it.
+can wrap negative even when both indices are individually legal. This exact
+bug sat in Java's own `Arrays.binarySearch` for nine years before being
+noticed in 2006.
+
+The remedy `lo + (hi - lo) / 2` never forms a sum bigger than `hi`. Python's
+integers are arbitrary-precision, so `(lo + hi) // 2` is genuinely fine —
+but recognise the Java idiom when you meet it.
 
 ## The recursive version
 
@@ -190,10 +202,12 @@ print(binary_search_rec(data, 72))   # 9
 print(binary_search_rec(data, 40))   # -1
 ```
 
-Both versions make identical probes; the recursion just stores `lo`/`hi`
-in stack frames instead of loop variables. The iterative form is the
-practical default (no stack depth, no call overhead) — the recursive form
-is worth writing once to see how neatly "search half" nests inside itself.
+Both versions make identical probes; the recursion just stores `lo`/`hi` in
+stack frames instead of loop variables.
+
+The iterative form is the practical default — no stack depth, no call
+overhead. The recursive form is worth writing once, to see how neatly
+"search half" nests inside itself.
 
 ## The standard library, as usual, got there first
 
@@ -218,15 +232,18 @@ bisect.insort(data, 40)               # insert, keeping the list sorted
 print(data[5:10])                     # [23, 38, 40, 41, 56]
 ```
 
-Note the different contract: our `binary_search` answers "*where is it?*
-(or −1)", while `bisect_left` answers "*where does it belong?*" — never
-−1. The pattern in the middle converts the second answer into the first.
-When duplicates exist, `bisect_left` finds the *leftmost* position — the
-find-first-occurrence problem in
-[the exercises](exercises.md) — and `insort` keeps a
-list sorted under a trickle of insertions (each one is an $O(\log n)$
-search plus an $O(n)$ shift, the sorted-list tax from
-[Chapter 21](../ch21-heaps/01-heap-property.md)).
+Note the different contract: our `binary_search` answers "*where is it?* (or
+−1)", while `bisect_left` answers "*where does it belong?*" — never −1. The
+pattern in the middle converts the second answer into the first.
+
+Two more things `bisect` gives you:
+
+- **Leftmost position on duplicates.** `bisect_left` finds the *first*
+  matching index — the find-first-occurrence problem in
+  [the exercises](exercises.md).
+- **`insort`,** which keeps a list sorted under a trickle of insertions.
+  Each one is an $O(\log n)$ search plus an $O(n)$ shift — the sorted-list
+  tax from [Chapter 21](../ch21-heaps/01-heap-property.md).
 
 === "Python"
 
@@ -253,9 +270,11 @@ search plus an $O(n)$ shift, the sorted-list tax from
     ```
 
 Java's version packs both answers into one `int`: non-negative means
-found-at-index, negative encodes where it *would* go. Both libraries
-demand **sorted input** — hand them an unsorted array and they return
-confident nonsense, not an error.
+found-at-index, negative encodes where it *would* go.
+
+!!! warning "Both libraries demand sorted input"
+    Hand `bisect` or `Arrays.binarySearch` an unsorted array and you get
+    confident nonsense, not an error. The precondition is yours to keep.
 
 ## The economics: when does sorting pay for itself?
 
@@ -287,15 +306,18 @@ for m in [1, 10, 33, 34, 100, 10_000]:
     print(f"{m:>8} | {scan:>15,} | {sort_then:>13,} | {winner}")
 ```
 
-For one search, sorting first is absurd — thirty times the work of a
-simple scan. The sort is an *investment*, repaid at roughly
-$n/2 - \log_2 n$ comparisons per subsequent search, and here the
-break-even lands between $m = 33$ and $m = 34$: from the mid-thirties on,
-sorting first wins, and by $m = 10{,}000$ it wins by a factor of several
-hundred. Hence the universal pattern — *load once, sort once, query
-forever* — behind phone contact lists, dictionary files, and database
-indexes. (If you *keep inserting* while querying, re-sorting each time
-wrecks the math — that moving-target workload is what
+For one search, sorting first is absurd — thirty times the work of a simple
+scan. The sort is an *investment*, repaid at roughly $n/2 - \log_2 n$
+comparisons per subsequent search.
+
+Here the break-even lands between $m = 33$ and $m = 34$: from the
+mid-thirties on, sorting first wins, and by $m = 10{,}000$ it wins by a
+factor of several hundred. Hence the universal pattern — *load once, sort
+once, query forever* — behind phone contact lists, dictionary files, and
+database indexes.
+
+(If you *keep inserting* while querying, re-sorting each time wrecks the
+math. That moving-target workload is what
 [binary search trees](../ch20-bst/index.md) and
 [heaps](../ch21-heaps/index.md) are for.)
 
@@ -315,6 +337,22 @@ wrecks the math — that moving-target workload is what
 | ------ | ----------- | ---- |
 | Linear search | none | $O(n)$ |
 | Binary search | sorted data | $O(\log n)$ |
+
+Both tables share an assumption worth saying out loud, because relaxing it is
+where the next improvements come from: every sort above works by *comparing*
+pairs of items, and every search above works by *looking* — scanning, or
+halving. Two later chapters give up one assumption each:
+
+- **[Chapter 38](../ch38-linear-sorting/index.md) gives up comparing.** It
+  sorts in $O(n)$ by using the keys themselves as array indices (counting,
+  radix, and bucket sort) — after first proving that abandoning comparisons
+  is the *only* way to beat $O(n \log n)$.
+- **[Chapter 36](../ch36-hashing-tries/index.md) gives up looking.** A hash
+  table *computes* where an item must be, answering "is it there?" in $O(1)$
+  on average and without sorting anything. That is why the `set` version of
+  the spelling checker in
+  [Section 14.2](../ch14-beyond/02-choosing-algorithms.md) beat the list scan
+  by a factor in the hundreds.
 
 !!! warning "Common mistakes"
     - **Binary-searching unsorted data.** No error, no warning — just

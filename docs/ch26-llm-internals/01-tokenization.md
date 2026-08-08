@@ -61,12 +61,17 @@ known = {"the", "of", "an", "unkind", "cat", "happy", "happiness"}
 print("word-level view:", [w if w in known else "<unk>" for w in word_tokens])
 ```
 
-Characters give a sequence more than five times longer — and since attention cost grows
-with the *square* of the sequence length (Section 26.2), that is expensive.
-Words give a short sequence but throw away real information: `<unk>` erases
-the fact that *unhappiness* is *un* + *happiness*. **Subword** tokenization
-takes the deal in the middle: common words stay whole, rare words break into
-reusable fragments, and nothing is ever unrepresentable.
+Each extreme fails in its own direction:
+
+- **Characters make the sequence more than five times longer.** Attention cost
+  grows with the *square* of the sequence length (Section 26.2), so a longer
+  sequence is expensive out of all proportion.
+- **Words make the sequence short but throw away real information.** `<unk>`
+  erases the fact that *unhappiness* is *un* + *happiness*.
+
+**Subword** tokenization takes the deal in the middle: common words stay
+whole, rare words break into reusable fragments, and nothing is ever
+unrepresentable.
 
 ## Byte-pair encoding, built from scratch
 
@@ -141,12 +146,16 @@ for step, (pair, count) in enumerate(merges, start=1):
     print(f"{step:>2}. {pair[0] + ' + ' + pair[1]:<16} -> {glued:<10} (seen {count}x)")
 ```
 
-Read that list top to bottom and you are watching a vocabulary being born.
-Step 1 glues `s` to the end-of-word marker because plural endings are
-everywhere. By step 5 the tokenizer owns the suffix `ness_` as a single
-symbol; by step 8 it owns the stem `happ`; by step 10 it owns the negation
-prefix `un`. Nobody told it about English morphology — those are just the
-pairs that paid off.
+Read that list top to bottom and you are watching a vocabulary being born:
+
+- **Step 1** glues `s` to the end-of-word marker, because plural endings are
+  everywhere.
+- **By step 5** the tokenizer owns the suffix `ness_` as a single symbol.
+- **By step 8** it owns the stem `happ`.
+- **By step 10** it owns the negation prefix `un`.
+
+Nobody told it about English morphology. Those are simply the pairs that paid
+off.
 
 ### Encoding with the merge list
 
@@ -224,14 +233,15 @@ for kind, s in samples.items():
     print(f"{kind} {len(s):>5} {len(s.split()):>5} {n_tok:>6}  {len(s) / n_tok:>10.2f}")
 ```
 
-Read the last column: familiar English packs over two characters into every
+Read the last column. Familiar English packs over two characters into every
 token, while everything else collapses towards **one character per token**.
 Digits, punctuation, code, and Japanese never won a merge in this corpus, so
-they fall back to their raw pieces. Real tokenizers show exactly this
-pattern for exactly this reason — one trained mostly on English web text
-spends several times more tokens per sentence on Hindi, Thai, or Chinese
-than on English. Same meaning, several times the price, several times the
-context window consumed.
+they fall back to their raw pieces.
+
+Real tokenizers show exactly this pattern for exactly this reason. One
+trained mostly on English web text spends several times more tokens per
+sentence on Hindi, Thai, or Chinese than on English — same meaning, several
+times the price, several times the context window consumed.
 
 !!! info "Whitespace is not free"
     Modern byte-level BPE attaches the leading space to a word, so `"the"`
@@ -242,8 +252,10 @@ context window consumed.
 
 ## Why tokenization explains weird LLM failures
 
-**Counting letters.** Ask a model how many `s` are in *happiness* and it may
-well get it wrong. Here is why: it never sees the letters.
+### Counting letters
+
+Ask a model how many `s` are in *happiness* and it may well get it wrong.
+Here is why: it never sees the letters.
 
 ```python
 # continues
@@ -255,15 +267,17 @@ print("as opaque IDs:", [token_id[p] for p in pieces], "<- no letters in here")
 print("letters hidden inside each ID:", [len(p.rstrip('_')) for p in pieces])
 ```
 
-To the model, `happ` is not the letters h-a-p-p; it is one ID — a row number
-in a lookup table, no more spelled-out than the number 12 is. Counting characters
-requires it to have *memorised the spelling of every token* and then do
-arithmetic on that memory. It is a genuinely hard task presented in a
-maximally unhelpful format — like being asked to count the strokes in a
-word you only ever hear spoken.
+To the model, `happ` is not the letters h-a-p-p. It is one ID — a row number
+in a lookup table, no more spelled-out than the number 12 is.
 
-**Arithmetic.** The same effect wrecks digit alignment. Watch what a BPE
-trained on numbers does:
+Counting characters therefore requires the model to have *memorised the
+spelling of every token* and then do arithmetic on that memory. It is a
+genuinely hard task presented in a maximally unhelpful format, like being
+asked to count the strokes in a word you only ever hear spoken.
+
+### Arithmetic and digit alignment
+
+The same effect wrecks arithmetic. Watch what a BPE trained on numbers does:
 
 ```python
 # continues
@@ -285,13 +299,17 @@ for s in ["2025", "1234", "2000", "999"]:
     print(f"{s:>5} -> {str(encode_number(s)):<28} {len(encode_number(s))} tokens")
 ```
 
-`2025` arrives as two chunks, `202` + `5`; `1234` arrives digit by digit;
-`2000` arrives as `2` + `000`. The units digit lands in a different token
-position in every one of them, so "add these two numbers" is not the tidy
-column-aligned task it is for you — the model has to learn arithmetic
-through a shredder. (Newer tokenizers deliberately split digits into fixed
-groups to reduce exactly this problem, and models still lean on tools for
-real arithmetic.)
+Look at how differently the same four-digit shape gets cut up:
+
+- `2025` arrives as two chunks, `202` + `5`.
+- `1234` arrives digit by digit.
+- `2000` arrives as `2` + `000`.
+
+The units digit lands in a different token position in every one of them. So
+"add these two numbers" is not the tidy column-aligned task it is for you —
+the model has to learn arithmetic through a shredder. (Newer tokenizers
+deliberately split digits into fixed groups to reduce exactly this problem,
+and models still lean on tools for real arithmetic.)
 
 ## Context windows are measured in tokens
 
@@ -312,12 +330,13 @@ for window in [4_096, 32_768, 128_000, 1_000_000]:
     print(f"{window:>9,} tokens  ~=  {pages:>6.1f} pages of English prose")
 ```
 
-Two consequences worth internalising now. First, the window is shared: your
-system prompt, the documents you paste, the conversation so far, and the
-model's own reply all draw from the same budget. Second, cost and latency
-grow with it — attention work grows quadratically with sequence length, and
-cache memory grows linearly, which is why every long-context system spends
-its ingenuity on exactly those two curves.
+Two consequences are worth internalising now:
+
+- **The window is shared.** Your system prompt, the documents you paste, the
+  conversation so far, and the model's own reply all draw from one budget.
+- **Cost and latency grow with it.** Attention work grows quadratically with
+  sequence length and cache memory grows linearly, which is why every
+  long-context system spends its ingenuity on exactly those two curves.
 
 ## Special tokens and chat templates
 
@@ -345,11 +364,15 @@ What is 2 + 2?<|end|>
 4<|eos|>
 ```
 
-The exact markers differ per model family and are shipped *with* the model;
-using the wrong template is a classic silent bug — the model still answers,
+The exact markers differ per model family and are shipped *with* the model.
+Using the wrong template is a classic silent bug: the model still answers,
 just noticeably worse, because the prompt no longer looks like its training
-data. Two practical rules follow: never invent your own role markers, and
-remember that `<eos>` is what stops generation (Section 26.4).
+data. Two practical rules follow:
+
+1. **Never invent your own role markers.** Use the template that ships with
+   the checkpoint.
+2. **Remember that `<eos>` is what stops generation** (Section 26.4). It is a
+   token in the vocabulary like any other.
 
 !!! warning "Common mistakes"
     - **Assuming one word = one token.** Budget with a tokenizer, not with

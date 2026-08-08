@@ -150,15 +150,19 @@ Java has the same idea with different manners:
     // for (String color : colors) { ... }
     ```
 
-The design difference is worth savouring. Java's `Iterator` makes you **peek
-before you step**: ask `hasNext()`, and only then call `next()`. Python's
-iterator makes you **leap and catch**: just call `next()`, and handle the
-`StopIteration` signal if you went one step too far. Python's style (often
-called "easier to ask forgiveness than permission") means there is exactly
-one way for *any* iterator to end, so `for`, `list()`, `sum()`, and friends
-all handle it with one mechanism. Java's style never uses an exception for
-normal control flow, which its designers considered cleaner. Both work; each
-language is consistent about its choice.
+The design difference is worth savouring:
+
+| | Java | Python |
+| --- | --- | --- |
+| The move | **peek before you step** | **leap and catch** |
+| How it reads | ask `hasNext()`, and only then call `next()` | just call `next()`, and handle the signal if you went too far |
+| End-of-data signal | a `false` return value | the `StopIteration` exception |
+| The argument for it | never uses an exception for normal control flow | exactly *one* way for any iterator to end |
+
+Python's style is often summarised as "easier to ask forgiveness than
+permission", and its payoff is uniformity: because every iterator ends the
+same way, `for`, `list()`, `sum()`, and friends all handle the ending with one
+mechanism. Both designs work; each language is consistent about its choice.
 
 ## The payoff: a `for`-ready linked list
 
@@ -232,11 +236,16 @@ True
 ```
 
 This is the payoff moment. We implemented *one* dunder method, and our class
-instantly works with `for`, `in`, `list()`, and every other tool built on
-the protocol. Note that `LinkedList` is the **iterable** (it hands out
-bookmarks) and `LinkedListIterator` is the **iterator** (it *is* one walk in
-progress). Keeping them separate means two loops over the same list get two
-independent bookmarks and never trample each other.
+instantly works with `for`, `in`, `list()`, and every other tool built on the
+protocol.
+
+Note who is who in that code:
+
+- **`LinkedList` is the iterable** — it hands out bookmarks.
+- **`LinkedListIterator` is the iterator** — it *is* one walk in progress.
+
+Keeping them separate means two loops over the same list get two independent
+bookmarks and never trample each other.
 
 ## One-shot iterators, reusable iterables
 
@@ -266,11 +275,12 @@ in doubt, capture the values with `list(...)` first.
 
 `LinkedListIterator` works, but it took a whole class to say "walk the chain
 and hand out values". Python has a shortcut so good that most programmers
-never write an iterator class again: any function containing **`yield`** is
-a **generator function**. Calling it runs *none* of its body; instead it
-returns a generator — an iterator that runs the body lazily, *pausing* at
-each `yield` to hand out a value and resuming from that exact spot on the
-next `next()`:
+never write an iterator class again: **any function containing `yield` is a
+generator function.**
+
+Calling such a function runs *none* of its body. Instead it returns a
+generator — an iterator that runs the body lazily, *pausing* at each `yield`
+to hand out a value and resuming from that exact spot on the next `next()`:
 
 ```python
 def countdown(start):
@@ -286,10 +296,11 @@ for number in countdown(3):
 
 The first `print` shows something like
 `<generator object countdown at 0x...>` — a generator object, ready but not
-started. The loop then prints `3`, `2`, `1`. When the function body finally
-ends, the generator raises `StopIteration` for us automatically. All the
-protocol machinery — `__iter__`, `__next__`, the exception — is generated
-from that one `yield` keyword.
+started. The loop then prints `3`, `2`, `1`, and when the function body
+finally ends, the generator raises `StopIteration` for us automatically.
+
+All the protocol machinery — `__iter__`, `__next__`, the exception — is
+generated from that one `yield` keyword.
 
 Watch it shrink our linked-list code. The bookmark class disappears, and
 `__iter__` becomes three lines of real work — walk, yield, advance:
@@ -332,6 +343,19 @@ Output: `['Intro', 'Groove', 'Finale']` — identical behaviour, a fraction of
 the code. Because `__iter__` is a generator function, each call returns a
 fresh generator, so the list is still safely re-iterable. From here on, when
 a data structure in this handbook needs iteration, we will write it this way.
+
+Generators are also the foundation of an entire programming style. Chained
+together — each one pulling values from the previous stage and yielding
+transformed ones — they become **pipelines** that stream a hundred million
+records through a few kilobytes of memory.
+
+Two later sections build that idea out.
+[Section 39.2](../ch39-streams/02-map-filter-reduce.md) introduces the verbs
+those stages are made of: `map`, `filter`, `reduce`, and Java's Streams API,
+which is the same idea with types attached. Then
+[39.3](../ch39-streams/03-pipelines.md) composes them, measures the constant
+memory footprint, and shows that the result is what a `|` in a shell has been
+doing all along.
 
 !!! info "Java corner"
 

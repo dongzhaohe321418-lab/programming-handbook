@@ -2,10 +2,16 @@
 
 Recursion has a canon — a handful of problems that every programmer solves
 recursively at least once, because they teach the *design recipe* better than
-any lecture. The recipe is always the same three questions: **(1)** what is
-the base case? **(2)** how does the problem shrink? **(3)** assuming the
-smaller call *already works*, how do we build our answer from its answer? That
-third step is the leap of faith beginners resist: you must **trust the
+any lecture. The recipe is always the same three questions:
+
+1. **What is the base case?** Which input can be answered outright, with no
+   recursive call?
+2. **How does the problem shrink?** What smaller version of itself does each
+   call hand onward?
+3. **How do we combine?** Assuming the smaller call *already works*, how do
+   we build our answer out of its answer?
+
+That third step is the leap of faith beginners resist: you must **trust the
 smaller call** and not try to mentally trace every frame. Trace once or twice
 to build confidence (you did, in the last section) — then design by recipe.
 
@@ -85,11 +91,12 @@ print("fast calls:", fast_calls)
 
 Both compute $2^{100}$ correctly, but the slow version makes 101 calls and
 the fast one just 10 — that is $O(n)$ versus $O(\log n)$, the same gap you
-measured in [Chapter 16](../ch16-complexity/01-big-o.md). One caution is
-baked into the code: on the even branch we call `power_fast` **once** and
-square the result. Writing
+measured in [Chapter 16](../ch16-complexity/01-big-o.md).
+
+One caution is baked into the code: on the even branch we call `power_fast`
+**once** and square the result. Writing
 `power_fast(x, n // 2) * power_fast(x, n // 2)` computes the same value with
-*two* calls each level — and that innocent-looking duplication brings the
+*two* calls at every level, and that innocent-looking duplication brings the
 cost right back to $O(n)$. Duplicated recursive calls are exactly the disease
 we dissect with Fibonacci below.
 
@@ -156,11 +163,12 @@ fib(25) =  75025    242785 calls
 ```
 
 Adding 5 to `n` multiplies the work by roughly 11 — the call count grows
-*exponentially*, roughly $O(1.62^n)$ (each call spawns two more, and unlike
-`power_fast`'s halves, the two subproblems overlap almost entirely).
-`fib(25)` recomputes `fib(1)` tens of thousands of times. The result set is
-tiny — only the 26 values `fib(0)` … `fib(25)` exist — yet we compute a
-quarter of a million of them.
+*exponentially*, roughly $O(1.62^n)$. Each call spawns two more, and unlike
+`power_fast`'s halves, the two subproblems overlap almost entirely.
+
+That overlap is the whole problem. `fib(25)` recomputes `fib(1)` tens of
+thousands of times, even though the result set is tiny: only the 26 values
+`fib(0)` … `fib(25)` exist, yet we compute a quarter of a million of them.
 
 **Memoization** is the fix: remember every answer in a dictionary the first
 time you compute it, and look it up ever after.
@@ -183,9 +191,11 @@ print("calls:", calls)
 ```
 
 Same function shape, same trust-the-smaller-call logic — but now **49 calls**
-instead of 242 785. That is the wow moment of this chapter: a four-line cache
-turns an exponential algorithm into a linear one, because each value is
-computed once and every repeat is a dictionary hit.
+instead of 242 785.
+
+That is the wow moment of this chapter: a four-line cache turns an exponential
+algorithm into a linear one, because each value is computed once and every
+repeat is a dictionary hit.
 
 The pattern is so useful that Python ships it ready-made:
 `functools.lru_cache` is a **decorator** — a line starting with `@` placed
@@ -214,9 +224,11 @@ transcription of the mathematics; the cache is bolted on from outside.
 Three pegs; $n$ disks stacked smallest-on-top on peg A; move the whole tower
 to peg C, one disk at a time, never placing a larger disk on a smaller one.
 Iteratively this feels impossible to plan. Recursively it is three lines of
-*trust*: to move $n$ disks from `source` to `target`, first move the top
-$n-1$ disks out of the way (to the spare peg), then move the big disk, then
-move the $n-1$ disks from the spare onto it.
+*trust* — to move $n$ disks from `source` to `target`:
+
+1. **Clear the way.** Move the top $n-1$ disks to the spare peg.
+2. **Move the big disk.** One move, `source` to `target`.
+3. **Pile them back on.** Move those $n-1$ disks from the spare onto it.
 
 ```python
 move_count = 0

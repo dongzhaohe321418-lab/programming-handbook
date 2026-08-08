@@ -18,10 +18,14 @@ spanning tree (MST)** is a spanning tree whose edge weights sum to the smallest
 possible total.
 
 Why must the cheapest connected subgraph be a *tree*? Because a cycle is always
-wasteful. Suppose your solution contains a cycle. Pick any edge $e$ on that
-cycle and delete it. Every pair of vertices that used to travel through $e$ can
-now go the other way round the cycle instead, so the graph is still connected —
-and it costs $w(e)$ less. Repeat until no cycles remain.
+wasteful, and here is the argument in three moves:
+
+1. Suppose your solution contains a cycle. Pick any edge $e$ on that cycle and
+   delete it.
+2. Every pair of vertices that used to travel through $e$ can now go the other
+   way round the cycle instead — so the graph is still connected, and it costs
+   $w(e)$ less.
+3. Repeat until no cycles remain.
 
 ```mermaid
 graph LR
@@ -105,14 +109,18 @@ edge **crosses** the cut if its two endpoints land in different groups.
     For any cut of the graph, the **cheapest edge crossing that cut** belongs
     to some minimum spanning tree.
 
-The proof is short. Let $e$ be the cheapest crossing edge, and suppose some MST
-$T$ does not contain it. Adding $e$ to $T$ creates exactly one cycle (a tree
-plus any edge always does). That cycle starts on one side of the cut and
-returns, so it must cross the cut at least twice — once via $e$ and at least
-once via some other edge $f$. Since $e$ is the cheapest crossing edge,
-$w(e) \le w(f)$. Swap them: remove $f$, add $e$. The result is still a spanning
-tree, and it costs no more than $T$. So a minimum spanning tree containing $e$
-exists.
+The proof is short, and it is a swap argument:
+
+1. Let $e$ be the cheapest crossing edge, and suppose some MST $T$ does not
+   contain it.
+2. Adding $e$ to $T$ creates exactly one cycle — a tree plus any edge always
+   does.
+3. That cycle starts on one side of the cut and returns, so it must cross the
+   cut at least twice: once via $e$, and at least once via some other edge $f$.
+4. Since $e$ is the cheapest crossing edge, $w(e) \le w(f)$. Swap them: remove
+   $f$, add $e$.
+5. The result is still a spanning tree, and it costs no more than $T$. So a
+   minimum spanning tree containing $e$ exists.
 
 ```mermaid
 graph LR
@@ -131,9 +139,10 @@ graph LR
 ```
 
 Cut this graph into $\{A, B\}$ and $\{C, D\}$. Two edges cross it: B–C at
-weight 4 and A–D at weight 9. The cut property says B–C is safe to take, and
-you can see why — any spanning tree must join the two groups somehow, and 4 is
-the cheapest way to do it.
+weight 4 and A–D at weight 9.
+
+The cut property says B–C is safe to take, and you can see why: any spanning
+tree must join the two groups somehow, and 4 is the cheapest way to do it.
 
 The two algorithms are simply two different ways of choosing which cut to look
 at next:
@@ -225,15 +234,17 @@ total weight: 39
 ```
 
 Watch the tree grow. It starts at A and only ever adds vertices adjacent to
-what it already has — the connected blob expands outward like ink. Step 5 is
-worth noticing: it adds an edge of weight 5, *cheaper* than the weight-7 edges
-added at steps 3 and 4. Prim's edges do not come out in sorted order, because
-the C–E edge only became available once E joined the tree. Prim takes the
-cheapest edge **crossing the current cut**, not the cheapest edge overall.
+what it already has — the connected blob expands outward like ink.
 
-The same `if v in in_tree: continue` staleness check from Dijkstra appears
-here, for the same reason: a vertex can sit in the heap several times at
-different weights, and lazy deletion is cheaper than decrease-key.
+Step 5 is worth noticing: it adds an edge of weight 5, *cheaper* than the
+weight-7 edges added at steps 3 and 4. Prim's edges do not come out in sorted
+order, because the C–E edge only became available once E joined the tree. **Prim
+takes the cheapest edge crossing the current cut, not the cheapest edge
+overall.**
+
+The same `if v in in_tree: continue` staleness check from Dijkstra appears here,
+for the same reason: a vertex can sit in the heap several times at different
+weights, and lazy deletion is cheaper than decrease-key.
 
 ## Kruskal's algorithm — and the structure it needs
 
@@ -244,9 +255,10 @@ step is where most of the time goes, and after that the algorithm is a single
 pass.
 
 The hard part is the cycle test. "Does adding edge $u$–$v$ create a cycle?" is
-the same question as "are $u$ and $v$ already connected?" — and asking that
-with a BFS every time would cost $O(V + E)$ per edge, making the whole
-algorithm $O(E^2)$. We need something far faster.
+the same question as "are $u$ and $v$ already connected?"
+
+Asking that with a BFS every time would cost $O(V + E)$ per edge, making the
+whole algorithm $O(E^2)$. We need something far faster.
 
 ### Union-find (disjoint sets)
 
@@ -274,15 +286,14 @@ graph BT
 Two groups here: everything under A, and everything under E. `find(F)` walks
 F → D → A and answers "A".
 
-Two optimisations turn this from mediocre to spectacular.
+Two optimisations turn this from mediocre to spectacular:
 
-**Union by rank** always hangs the shorter tree under the taller one, so trees
-stay shallow instead of degenerating into a chain (the same failure mode as an
-unbalanced [BST](../ch35-balanced-trees/index.md)).
-
-**Path compression** re-points every node visited during a `find` directly at
-the root, so the next `find` on that chain is instant. One traversal pays for
-all future ones.
+- **Union by rank.** Always hang the shorter tree under the taller one, so
+  trees stay shallow instead of degenerating into a chain — the same failure
+  mode as an unbalanced [BST](../ch35-balanced-trees/index.md).
+- **Path compression.** During a `find`, re-point every node visited directly
+  at the root, so the next `find` on that chain is instant. One traversal pays
+  for all future ones.
 
 ```python
 class UnionFind:
@@ -416,16 +427,18 @@ total weight: 39
 ```
 
 Kruskal's story is completely different from Prim's. It happily accepts the two
-weight-5 edges first even though they are in *opposite corners* of the graph —
-for most of the run it is growing several disconnected fragments at once, and
-only at the end do they merge into one tree. Where Prim keeps a single blob,
-Kruskal keeps a forest.
+weight-5 edges first even though they are in *opposite corners* of the graph.
+For most of the run it is growing several disconnected fragments at once, and
+only at the end do they merge into one tree. **Where Prim keeps a single blob,
+Kruskal keeps a forest.**
 
 The three rejections are the interesting lines. B–C at weight 8 is rejected
 because B and C were both already pulled into the same component by A–B, B–E,
-and C–E. Adding it would close the cycle B–C–E–B. Note also the early exit: as
-soon as $V-1$ edges are accepted, the remaining edges cannot possibly help, so
-the loop stops before even looking at F–G and D–E.
+and C–E; adding it would close the cycle B–C–E–B.
+
+Note also the early exit. As soon as $V-1$ edges are accepted, the remaining
+edges cannot possibly help, so the loop stops before even looking at F–G and
+D–E.
 
 ## Both algorithms, one graph, one check
 
@@ -568,10 +581,12 @@ square A-B-C-D-A, every edge weight 1
 
 Different trees, identical cost. The square has four spanning trees (drop any
 one of the four edges) and all four are minimum. When weights tie, "the" MST is
-a fiction — there are several, and which one an algorithm returns depends on
-tie-breaking inside the heap or the sort. **When all edge weights are distinct
-the MST is unique**, which is a useful thing to know when a test fails: if your
-weights are distinct and two implementations disagree, one of them is wrong.
+a fiction: there are several, and which one an algorithm returns depends on
+tie-breaking inside the heap or the sort.
+
+**When all edge weights are distinct the MST is unique.** That is a useful
+thing to know when a test fails — if your weights are distinct and two
+implementations disagree, one of them is wrong.
 
 ## Which algorithm, and when
 
@@ -585,25 +600,30 @@ weights are distinct and two implementations disagree, one of them is wrong.
 | Parallel-friendly | not really | the sort is, and edges can be filtered independently |
 
 Since $E \le V^2$, $\log E \le 2 \log V$, so the two are asymptotically the same
-$O(E \log V)$. The real differences are constant factors and inputs: if a graph
-arrives as an edge list (which they usually do), Kruskal needs no conversion; if
-it arrives as an adjacency structure and is dense, Prim's $O(V^2)$ array variant
-avoids heap overhead entirely.
+$O(E \log V)$. The real differences are constant factors and inputs:
+
+- **The graph arrives as an edge list** (which they usually do) — Kruskal needs
+  no conversion at all.
+- **It arrives as an adjacency structure and is dense** — Prim's $O(V^2)$ array
+  variant avoids heap overhead entirely.
 
 ## MST clustering: cut the heaviest edges
 
 Here is an application that looks nothing like laying cable. Suppose you have
-points in space and want to group them into $k$ clusters. Build the MST of the
-points (treating every pair as an edge with weight equal to the distance), then
-**delete the $k-1$ heaviest edges**. The tree falls into $k$ pieces, and those
-pieces are your clusters.
+points in space and want to group them into $k$ clusters. Two steps:
+
+1. **Build the MST of the points**, treating every pair as an edge whose weight
+   is the distance between them.
+2. **Delete the $k-1$ heaviest edges.** The tree falls into $k$ pieces, and
+   those pieces are your clusters.
 
 The intuition is exactly the cut property read backwards. The MST connects each
 group to its nearest neighbouring group using the single shortest link between
-them — so the longest edges in the tree are precisely the links *between*
-natural clusters, not within them. This is called **single-linkage clustering**,
-and unlike $k$-means it needs no coordinates, only distances, and finds
-non-spherical clusters happily.
+them, so the longest edges in the tree are precisely the links *between* natural
+clusters, not within them.
+
+This is called **single-linkage clustering**. Unlike $k$-means it needs no
+coordinates, only distances, and it finds non-spherical clusters happily.
 
 ```python
 import numpy as np
@@ -692,12 +712,13 @@ every cluster contains exactly one of the three true groups: True
 
 Look at the edge lengths: 4.27 and 2.92, then a cliff down to 1.24. Those first
 two are the only links bridging the three blobs, and the gap between 2.92 and
-1.24 is the algorithm telling you that $k=3$ is the natural number of clusters
-for this data. Choosing $k$ by looking for that gap is a standard heuristic —
-and it comes free with the MST, which is not something $k$-means offers.
+1.24 is the algorithm telling you that $k = 3$ is the natural number of clusters
+for this data.
 
-The plot shows the whole tree in grey with the two cut links dashed in red, so
-you can see the bridges rather than take our word for it.
+Choosing $k$ by looking for that gap is a standard heuristic, and it comes free
+with the MST — not something $k$-means offers. The plot shows the whole tree in
+grey with the two cut links dashed in red, so you can see the bridges rather
+than take our word for it.
 
 !!! warning "Common mistakes"
 
@@ -715,9 +736,11 @@ you can see the bridges rather than take our word for it.
     - **Forgetting to check connectivity.** If the graph is disconnected there
       is no spanning tree. Both algorithms will return fewer than $V-1$ edges;
       check `len(tree) == V - 1` and report a forest rather than pretending.
-    - **Union-find without path compression.** `find` degenerates to a walk up
-      a long chain and Kruskal's inner loop becomes $O(V)$ per edge. Both
-      optimisations are three lines; write them once, keep them forever.
+    - **Union-find without path compression.** Union by rank on its own still
+      keeps every tree $O(\log V)$ deep, so `find` costs $O(\log V)$ per edge
+      instead of $O(\alpha(V))$ — survivable, but the compression is one line.
+      It is dropping *both* optimisations that lets `find` walk a chain of
+      length $O(V)$. Both are three lines; write them once, keep them forever.
     - **Union by *size* versus by *rank*.** Both work and both give the same
       guarantee. What does *not* work is `parent[find(a)] = find(b)` with no
       balancing at all — that is how you build a linked list by accident.

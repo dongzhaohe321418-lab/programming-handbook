@@ -2,12 +2,17 @@
 
 Section 31.2 ended with a bill: four models in memory, two of them carrying
 optimiser state, roughly 235 GB for a 7-billion-parameter run before you have
-generated a single token. The two methods in this section each delete one of
-those models. DPO removes the reward model *and* the sampling loop by noticing
-that the RLHF objective can be solved on paper. GRPO removes the value model by
-replacing it with something you already have: the other responses to the same
-prompt. Both are simple enough to implement from scratch in numpy, and you are
-about to implement both.
+generated a single token.
+
+The two methods in this section each delete one of those models:
+
+- **DPO** removes the reward model *and* the sampling loop, by noticing that the
+  RLHF objective can be solved on paper.
+- **GRPO** removes the value model, by replacing it with something you already
+  have: the other responses to the same prompt.
+
+Both are simple enough to implement from scratch in numpy, and you are about to
+implement both.
 
 ## DPO's insight: the answer was already written down
 
@@ -28,18 +33,28 @@ r(x, y) = \beta \log \frac{\pi^{*}(y \mid x)}{\pi_{\text{ref}}(y \mid x)}
 + \beta \log Z(x)
 $$
 
-Read that carefully, because it is the whole paper. **Any policy implicitly
-defines a reward function**, namely $\beta$ times its log-ratio against the
-reference. There is no separate reward network anywhere in that expression; the
-policy *is* the reward model, viewed sideways.
+Read that carefully, because it is the whole paper.
 
-The remaining nuisance is $Z(x)$, the normalising constant, which is a sum over
-every possible response and completely intractable. It disappears for free.
-Preference data does not contain absolute scores — it contains *comparisons*
-between two responses **to the same prompt**, and under the Bradley-Terry model
-(see [31.4](04-reward-models.md)) the probability that $y_w$ beats $y_l$ depends
-only on the *difference* $r(x, y_w) - r(x, y_l)$. Both terms carry the same
-$\beta \log Z(x)$, so it cancels exactly.
+!!! note "The one idea behind DPO"
+
+    **Any policy implicitly defines a reward function** — namely $\beta$ times
+    its log-ratio against the reference. There is no separate reward network
+    anywhere in that expression. The policy *is* the reward model, viewed
+    sideways.
+
+### Why the intractable term disappears
+
+The remaining nuisance is $Z(x)$, the normalising constant. It is a sum over
+every possible response, and completely intractable. It disappears for free, in
+two steps:
+
+1. **Preference data contains no absolute scores** — only *comparisons* between
+   two responses **to the same prompt**.
+2. **Under the Bradley-Terry model** (see [31.4](04-reward-models.md)) the
+   probability that $y_w$ beats $y_l$ depends only on the *difference*
+   $r(x, y_w) - r(x, y_l)$.
+
+Both terms carry the same $\beta \log Z(x)$, so it cancels exactly.
 
 ## The DPO loss
 
@@ -65,11 +80,14 @@ $$
 | $-\log \sigma(\cdot)$ | ordinary binary cross-entropy — this is a *classification* loss |
 | $\beta$ | how many nats of implicit reward one unit of log-ratio buys |
 
-Look at the shape of what is left: a fixed dataset, two forward passes per
-example, a sigmoid, a cross-entropy. **There is no sampling, no reward model, no
-value model, and no rollout.** DPO is a supervised training loop that happens to
-optimise an RL objective. That is why it took over: it fits in the fine-tuning
-infrastructure teams already had.
+Look at the shape of what is left — a fixed dataset, two forward passes per
+example, a sigmoid, a cross-entropy.
+
+**There is no sampling, no reward model, no value model, and no rollout.** DPO
+is a supervised training loop that happens to optimise an RL objective. That is
+why it took over: it fits in the fine-tuning infrastructure teams already had.
+
+### Reading the gradient
 
 The gradient has an interpretable form too:
 
@@ -79,17 +97,18 @@ $$
 \big(\nabla_\theta \log \pi_\theta(y_w) - \nabla_\theta \log \pi_\theta(y_l)\big)\Big]
 $$
 
-Push the winner up, push the loser down, weighted by how badly the current
-policy has the pair backwards. Pairs the model already gets right contribute
-almost nothing.
+In words: *push the winner up, push the loser down, weighted by how badly the
+current policy has the pair backwards.* Pairs the model already gets right
+contribute almost nothing.
 
 ## A complete DPO trainer
 
-Here is the real thing at a scale you can read. Two prompts, five candidate
-responses each, so the policy is ten logits; a frozen reference; eight
-hand-written preference pairs. The reference deliberately favours the two
-responses a badly-tuned SFT model would favour — jargon and corporate
-boilerplate.
+Here is the real thing at a scale you can read:
+
+- **Two prompts**, five candidate responses each — so the policy is ten logits.
+- **A frozen reference**, which deliberately favours the two responses a
+  badly-tuned SFT model would favour: jargon and corporate boilerplate.
+- **Eight hand-written preference pairs.**
 
 ```python
 import numpy as np
@@ -169,14 +188,19 @@ assert np.abs(analytic - numeric).max() < 1e-6
 print("gradient check passed")
 ```
 
-Read the numbers as well as the check. `worked example` (index 1) has the most
-negative gradient, $-0.01875$, because it wins three of prompt 0's four pairs
-and descent subtracts the gradient — so it will be raised hardest. `flatly
-wrong` (index 3) loses two pairs and gets $+0.0125$, twice the $+0.00625$ of
-`wall of jargon`, which loses one. The two zeros have *different* causes:
-`off-topic ramble` (index 4) appears in no pair at all, so DPO has nothing to
-say about it, while `one-line definition` (index 0) wins one pair and loses
-one, and its two contributions cancel exactly. Now train.
+Read the numbers as well as the check:
+
+- **`worked example` (index 1)** has the most negative gradient, $-0.01875$,
+  because it wins three of prompt 0's four pairs — and descent *subtracts* the
+  gradient, so it will be raised hardest.
+- **`flatly wrong` (index 3)** loses two pairs and gets $+0.0125$, twice the
+  $+0.00625$ of `wall of jargon`, which loses one.
+- **The two zeros have different causes.** `off-topic ramble` (index 4) appears
+  in no pair at all, so DPO has nothing to say about it. `one-line definition`
+  (index 0) wins one pair and loses one, and its two contributions cancel
+  exactly.
+
+Now train.
 
 ```python
 # continues
@@ -206,12 +230,18 @@ fig.tight_layout()
 ```
 
 The loss falls from $0.6931$ to $0.5553$ — and if you were expecting it to
-approach zero, this is the most useful surprise on the page. With $\beta = 0.1$
-the loss is $-\log \sigma(0.1 \times \text{log-ratio gap})$, so reaching a loss
-of $0.2$ would require a log-ratio gap of about 15, which means moving the
-policy astronomically far from the reference. **A DPO loss that stalls around
-0.5 is normal and often healthy.** Judge the run by the margin and by the
-ranking accuracy — all eight pairs correct — not by the loss reaching zero.
+approach zero, this is the most useful surprise on the page.
+
+With $\beta = 0.1$ the loss is $-\log \sigma(0.1 \times \text{log-ratio gap})$,
+so reaching a loss of $0.2$ would require a log-ratio gap of about 15 — which
+means moving the policy astronomically far from the reference.
+
+!!! tip "A DPO loss that stalls around 0.5 is normal and often healthy"
+
+    Judge the run by the **margin** and by the **ranking accuracy** — here all
+    eight pairs correct — not by the loss reaching zero. A loss that *does*
+    crash to zero usually means $\beta$ is too large or the pairs are trivially
+    separable.
 
 Now the before-and-after, which is what you actually wanted to know:
 
@@ -228,13 +258,16 @@ for p, prompt in enumerate(PROMPTS):
               f"{after[j] - before[j]:>+10.3f}{implicit[j]:>13.3f}")
 ```
 
-For `explain recursion`, `worked example` went from 14.3% to 76.8% and `wall of
-jargon` — the reference model's favourite at 39.0% — fell to 6.8%. For the
-apology prompt, `corporate word salad` collapsed from 39.4% to 2.5% while
-`sorry + cause + fix` rose from 17.7% to 83.6%. The `implicit r` column is the
-reward function DPO learned without ever building one: $\beta$ times the
-log-ratio, positive for responses the policy now prefers over the reference and
-negative for the rest.
+Two prompts, four numbers each:
+
+- **`explain recursion`** — `worked example` went from 14.3% to 76.8%, and
+  `wall of jargon`, the reference model's favourite at 39.0%, fell to 6.8%.
+- **`apologise for the outage`** — `corporate word salad` collapsed from 39.4%
+  to 2.5%, while `sorry + cause + fix` rose from 17.7% to 83.6%.
+
+The `implicit r` column is **the reward function DPO learned without ever
+building one**: $\beta$ times the log-ratio, positive for responses the policy
+now prefers over the reference and negative for the rest.
 
 !!! note "What is toy, what is faithful"
     Toy: five candidate responses instead of a vocabulary raised to the power of
@@ -276,30 +309,35 @@ for beta in [0.02, 0.1, 0.5, 2.0]:
           f"{softmax(th[0])[1]:>20.3f}")
 ```
 
-$\beta = 0.02$ is **too small**: the gradient is proportional to $\beta$, so
+**$\beta = 0.02$ — too small.** The gradient is proportional to $\beta$, so
 after 150 steps the loss has barely moved from $0.6931$ to $0.6866$ and the
-target response has crawled from 14.3% to 24.8%. It would get there eventually —
-and "eventually" is the problem, because by then the policy would sit an
-enormous distance from the reference, which is what the first table prices.
+target response has crawled from 14.3% to 24.8%. It would get there eventually,
+and "eventually" is the problem: by then the policy would sit an enormous
+distance from the reference, which is what the first table prices.
 
-$\beta = 2.0$ is **too large** in the opposite way: the loss hits $0.0063$
+**$\beta = 2.0$ — too large, in the opposite way.** The loss hits $0.0063$
 almost immediately, and once $\sigma(\text{margin}) \approx 1$ the gradient
 factor $(1 - \sigma)$ is essentially zero, so training simply stops. The policy
 freezes wherever the first few steps put it — 71.8% — having learned nothing
-from the last 140 steps. $\beta = 0.5$ moves furthest from the reference (KL
-1.63) and commits hardest, on the strength of eight examples. $\beta = 0.1$ is
-the value most implementations default to, and the middle of that spread is why.
+from the last 140 steps.
+
+**$\beta = 0.5$ — commits hardest.** It moves furthest from the reference (KL
+1.63), on the strength of eight examples.
+
+**$\beta = 0.1$ — the default.** Most implementations use it, and the middle of
+that spread is why.
 
 ## DPO's failure modes, honestly
 
 DPO is not strictly better than PPO, and pretending otherwise will cost you a
-training run.
+training run. Three failure modes, in the order you are likely to hit them.
 
-**It can push down the likelihood of the preferred responses too.** The
-objective only constrains the *difference* between the two log-ratios; nothing
-in it says the winner's probability must rise. In practice both frequently
-fall, with the freed-up mass going to responses that appear in no pair at all.
-It happens in our ten-parameter model as well:
+### It can push the preferred responses down too
+
+The objective only constrains the *difference* between the two log-ratios.
+Nothing in it says the winner's probability must rise. In practice both
+frequently fall, with the freed-up mass going to responses that appear in no
+pair at all. It happens in our ten-parameter model as well:
 
 ```python
 # continues
@@ -314,48 +352,70 @@ Look at the third and seventh rows. The *preferred* response in
 `one-line definition > flatly wrong` had its log-probability driven **down** by
 0.870 nats — because that same response is the loser in
 `worked example > one-line definition`, and the losing pull was the stronger of
-the two. DPO satisfied the comparison correctly (the rejected response fell
-further, by 2.621) and reduced the winner's likelihood while doing so. Both
-sides of that pair are now less likely than they were before training. On a real model
-this is how DPO runs drift towards shorter, blander, or off-distribution text:
-mass has to go somewhere, and the loss never said where.
+the two.
 
-**It is sensitive to the reference.** The implicit reward is defined *relative*
-to $\pi_{\text{ref}}$. If your preference data was written for a different model
-than the one you froze — a common accident when reusing a public preference
-dataset — the log-ratios are measuring drift from the wrong starting point, and
-the resulting reward function is not the one you meant.
+DPO satisfied the comparison correctly (the rejected response fell further, by
+2.621) and reduced the winner's likelihood while doing so. Both sides of that
+pair are now less likely than they were before training.
 
-**It needs pairs, and it inherits their flaws.** Being offline is DPO's
-strength and its ceiling: it can only learn from responses somebody already
-generated and compared. It never scores its own new attempts, so it cannot
-discover behaviour outside the pair distribution, and a mislabelled pair is
-trained on with total confidence — no sampling step exists to contradict it. It
-also does not know how *much* better the winner was: a landslide and a coin-flip
-preference produce identical labels.
+On a real model this is how DPO runs drift towards shorter, blander, or
+off-distribution text: **mass has to go somewhere, and the loss never said
+where.**
+
+### It is sensitive to the reference
+
+The implicit reward is defined *relative* to $\pi_{\text{ref}}$. If your
+preference data was written for a different model than the one you froze — a
+common accident when reusing a public preference dataset — the log-ratios are
+measuring drift from the wrong starting point, and the resulting reward function
+is not the one you meant.
+
+### It needs pairs, and it inherits their flaws
+
+Being offline is DPO's strength and its ceiling:
+
+- **It can only learn from responses somebody already generated and compared.**
+  It never scores its own new attempts, so it cannot discover behaviour outside
+  the pair distribution.
+- **A mislabelled pair is trained on with total confidence.** No sampling step
+  exists to contradict it.
+- **It does not know how *much* better the winner was.** A landslide and a
+  coin-flip preference produce identical labels.
 
 ## GRPO: the group is the baseline
 
 The other expensive model in PPO is the **value network**, whose only job is to
 predict "how good is this state, on average" so we can subtract it as a
-baseline. GRPO — **Group Relative Policy Optimization**, introduced with
-DeepSeekMath (Shao et al., 2024) — makes an observation that is obvious in
-hindsight: for a language model we can simply *generate several responses to the
-same prompt* and use their mean score as the baseline. The other responses in
-the group are the value estimate.
+baseline.
 
-Sample a group of $G$ responses $y_1 \dots y_G$ for one prompt, score them, and
-set
+GRPO — **Group Relative Policy Optimization**, introduced with DeepSeekMath
+(Shao et al., 2024) — makes an observation that is obvious in hindsight: for a
+language model we can simply *generate several responses to the same prompt* and
+use their mean score as the baseline. **The other responses in the group are the
+value estimate.**
+
+The procedure, per prompt:
+
+1. **Sample** a group of $G$ responses $y_1 \dots y_G$.
+2. **Score** each one.
+3. **Standardise** the scores into advantages:
 
 $$
 A_i = \frac{r_i - \text{mean}(r_1, \dots, r_G)}{\text{std}(r_1, \dots, r_G)}
 $$
 
-Above the group average, positive advantage; below it, negative. The division by
-the standard deviation puts every prompt on the same scale, so an easy prompt
-where all scores are near 1.0 does not drown out a hard one. Then apply the same
-clipped policy-gradient update as PPO, with a KL term to the reference. **No
-value network, no optimiser state for it, no extra 104 GB.**
+4. **Update** with the same clipped policy-gradient step as PPO, plus a KL term
+   to the reference.
+
+Read the formula as: *how far above or below its own group did this response
+score, measured in group standard deviations?* Above the average gives a
+positive advantage; below it, negative.
+
+The division by the standard deviation is doing real work: it puts every prompt
+on the same scale, so an easy prompt where all scores are near 1.0 does not
+drown out a hard one.
+
+**No value network, no optimiser state for it, no extra 104 GB.**
 
 Here it is on three arithmetic prompts, each with four candidate answers and a
 reward that is *verifiable*: 1 if the answer is right, 0 if it is wrong. The
@@ -429,53 +489,79 @@ ax.set_title("GRPO on three verifiable prompts, group size 8")
 fig.tight_layout()
 ```
 
-The first-iteration trace is the algorithm in one screen. For `12 * 7 = ?`,
-three of the eight sampled responses were right; the group mean is 0.375 and the
-standard deviation 0.484, so each correct response gets $A = +1.291$ and each
-wrong one $A = -0.775$. Note that the *same* reward of 1 would have earned a
-different advantage on a different prompt: for `17 - 9 = ?` only two of eight
-were right, so being right there was more surprising and earned $+1.732$. That
-re-scaling is what "group relative" means, and it is free.
+The first-iteration trace is the algorithm in one screen.
+
+For `12 * 7 = ?`, three of the eight sampled responses were right. The group
+mean is 0.375 and the standard deviation 0.484, so each correct response gets
+$A = +1.291$ and each wrong one $A = -0.775$.
+
+Now note what the *same* reward of 1 earns on a different prompt. For
+`17 - 9 = ?` only two of eight were right, so being right there was more
+surprising and earned $+1.732$. **That re-scaling is what "group relative"
+means, and it is free.**
 
 Across 40 iterations the probability of a correct answer climbs from 0.324 to
 0.978. Nothing supervised the model; a four-line `verify` function did all the
 work.
 
+!!! note "What is toy, what is faithful"
+    Faithful: the group-relative advantage exactly as written above, the
+    generate–score–update cycle, and the zero-variance failure below.
+    Simplified: this update is plain policy gradient with the group baseline —
+    the PPO-style ratio clipping and the KL term to the reference are left out,
+    because with one gradient step per rollout no sample is ever stale enough
+    for a clip to matter and a rule-based verifier cannot be hacked. A
+    production GRPO step keeps both.
+
+### The dead-group problem
+
 The `zero-variance groups` line is the algorithm's real cost, and it is worth
-sitting with. When all $G$ responses to a prompt receive the same score, the
-standard deviation is zero, every advantage is zero, and the entire group
-produces **no gradient at all** — you generated eight responses for nothing. In
-our run that happened 57 times out of 120, and look at the trend: 0 dead groups
-in the first iterations, 3 out of 3 in the last, because the policy has learned
-the prompts and now answers them all correctly. Real GRPO pipelines fight this
-by filtering the prompt set to problems the model solves *sometimes* — neither
-never nor always. Difficulty curation stops being a nicety and becomes a
-throughput requirement.
+sitting with.
+
+When all $G$ responses to a prompt receive the same score, the standard
+deviation is zero, every advantage is zero, and the entire group produces **no
+gradient at all**. You generated eight responses for nothing.
+
+In our run that happened 57 times out of 120, and the trend is the interesting
+part: 0 dead groups in the first iterations, 3 out of 3 in the last — because
+the policy has learned the prompts and now answers them all correctly.
+
+Real GRPO pipelines fight this by filtering the prompt set to problems the model
+solves *sometimes*: neither never nor always. **Difficulty curation stops being
+a nicety and becomes a throughput requirement.**
 
 ## Why GRPO suits verifiable rewards
 
 Notice what `verify` is: four lines, deterministic, and impossible to fool. A
 math answer either matches or it does not. A unit test either passes or it does
-not. There is no learned reward model, so there is nothing to hack — the failure
-mode that dominates [31.4](04-reward-models.md) simply cannot occur, and the
-KL penalty is no longer load-bearing.
+not.
+
+There is no learned reward model, so **there is nothing to hack** — the failure
+mode that dominates [31.4](04-reward-models.md) simply cannot occur, and the KL
+penalty is no longer load-bearing.
 
 That is why GRPO and **verifiable rewards** (often written RLVR) fit together so
 naturally, and why the pairing became the standard recipe for training reasoning
-models on mathematics and competitive programming: DeepSeek's R1 work is the
+models on mathematics and competitive programming. DeepSeek's R1 work is the
 best-known public example, and several open-source stacks — TRL, verl, OpenRLHF
-— ship GRPO implementations. The honest version of the claim is that on tasks
-with a checkable answer, group-relative advantages plus a rule-based verifier
-remove two whole models from the loop and work at least as well as PPO. What it
-does *not* do is solve open-ended generation: there is no `verify` for "write a
-good condolence message", and for those tasks you are back to a learned reward
-model with all its holes.
+— ship GRPO implementations.
 
-The technique is current practice, not settled science. Its details are moving
-quickly — group size, whether to normalise by the standard deviation at all,
-how to weight tokens within a response — and papers proposing adjustments appear
-constantly. The *idea* — use a group of samples as the baseline instead of a
-learned critic — is the part worth memorising.
+The honest version of the claim, in two halves:
+
+- **What it does.** On tasks with a checkable answer, group-relative advantages
+  plus a rule-based verifier remove two whole models from the loop and work at
+  least as well as PPO.
+- **What it does not.** There is no `verify` for "write a good condolence
+  message". For open-ended generation you are back to a learned reward model
+  with all its holes.
+
+!!! warning "Current practice, not settled science"
+
+    The details are moving quickly — group size, whether to normalise by the
+    standard deviation at all, how to weight tokens within a response — and
+    papers proposing adjustments appear constantly. The *idea* — **use a group
+    of samples as the baseline instead of a learned critic** — is the part worth
+    memorising.
 
 ## Choosing between them
 
@@ -492,11 +578,14 @@ learned critic — is the part worth memorising.
 | **Main risk** | ceiling: only what the model already produces | reward hacking + cost | over-fitting pairs; both likelihoods can fall | wasted zero-variance groups |
 | **Reach for it when** | you want 80% of the gain this afternoon | you have a good reward model and a cluster | you have preference pairs and one GPU budget | the task has a checkable answer |
 
-The honest summary is that these are not ranked. Many production pipelines run
-several: SFT, then DPO on preference pairs, then GRPO on the verifiable subset,
-with rejection sampling used throughout to build the data for the next stage.
-"Which algorithm" is usually a smaller question than "what is the reward, and is
-it measuring what you meant" — which is [31.4](04-reward-models.md).
+The honest summary is that **these are not ranked**. Many production pipelines
+run several: SFT, then DPO on preference pairs, then GRPO on the verifiable
+subset, with rejection sampling used throughout to build the data for the next
+stage.
+
+And "which algorithm" is usually a smaller question than "what is the reward,
+and is it measuring what you meant" — which is
+[31.4](04-reward-models.md).
 
 !!! warning "Common mistakes"
     - **Expecting the DPO loss to reach zero.** With $\beta = 0.1$ a loss near

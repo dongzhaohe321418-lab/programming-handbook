@@ -51,16 +51,20 @@ team who can answer "why is it slow / expensive / truncating".
 | Working TypeScript | see below | the language of the product surface and much of the tool ecosystem |
 | Using AI coding tools well | this section | the largest single multiplier on everything after it |
 
-**Fluency is a specific, testable thing.** In Python it means: reading a
-traceback without flinching ([Chapter 10](../ch10-exceptions/index.md)),
-generators and iterators, `dataclass`, type hints, virtual environments and
-packaging, `pytest` ([24.2](../ch24-practice/02-testing.md)), and enough
-`asyncio` to know what blocks an event loop. In TypeScript it means: interfaces
-and unions, `Promise` and `async`/`await`, npm and the difference between Node
-and browser runtimes, and enough of the type system to read a library's `.d.ts`
-without giving up. You do not need to be equally good at both. You do need to be
-able to *ship* in both, because the model server is usually Python and the thing
-users touch usually is not.
+**Fluency is a specific, testable thing.**
+
+- **In Python** it means reading a traceback without flinching
+  ([Chapter 10](../ch10-exceptions/index.md)), generators and iterators,
+  `dataclass`, type hints, virtual environments and packaging, `pytest`
+  ([24.2](../ch24-practice/02-testing.md)), and enough `asyncio` to know what
+  blocks an event loop.
+- **In TypeScript** it means interfaces and unions, `Promise` and
+  `async`/`await`, npm and the difference between Node and browser runtimes, and
+  enough of the type system to read a library's `.d.ts` without giving up.
+
+You do not need to be equally good at both. You do need to be able to *ship* in
+both, because the model server is usually Python and the thing users touch
+usually is not.
 
 **Serve a model yourself.** Not through a hosted API — locally, where you can
 see the memory and the tokens per second. This cannot run in a browser tab, so
@@ -129,11 +133,14 @@ cannot yet check.**
 a quantized model locally and record tokens per second and peak memory at two
 quantization levels.
 
-**You are ready to move on when you can …** explain what a KV cache stores and
-compute its size in gigabytes for a given model and context length; say exactly
-what breaks if you remove the causal mask; predict the effect of raising
-temperature or lowering top-p on a specific output; and read a serving log and
-say whether you are compute-bound or memory-bound.
+**You are ready to move on when you can …**
+
+- explain what a KV cache stores, and compute its size in gigabytes for a given
+  model and context length;
+- say exactly what breaks if you remove the causal mask;
+- predict the effect of raising temperature or lowering top-p on a specific
+  output;
+- read a serving log and say whether you are compute-bound or memory-bound.
 
 ## Phase 2 — Agents
 
@@ -158,12 +165,14 @@ public API, a database you own — plus a hand-written agent that uses it to
 answer questions a single model call cannot. Then port the loop to a framework
 and write down what the port bought and cost.
 
-**You are ready to move on when you can …** write a tool schema that a model
-uses correctly on the first try; explain why retrieval quality, not model
-quality, is usually the bottleneck in a RAG system
-([29.2](../ch29-memory-rag/02-rag-pipeline.md)); state three structural defences
-against prompt injection and why prompt-level ones do not work; and debug an
-agent from its trace rather than by re-running it and hoping.
+**You are ready to move on when you can …**
+
+- write a tool schema that a model uses correctly on the first try;
+- explain why retrieval quality, not model quality, is usually the bottleneck in
+  a RAG system ([29.2](../ch29-memory-rag/02-rag-pipeline.md));
+- state three structural defences against prompt injection, and why prompt-level
+  ones do not work;
+- debug an agent from its trace rather than by re-running it and hoping.
 
 ## Phase 3 — RL and data
 
@@ -188,12 +197,14 @@ the result against the base model with a held-out set you made *before* training
 The evaluation is not optional — without it you cannot tell an improvement from
 a plausible-sounding regression.
 
-**You are ready to move on when you can …** explain what DPO removes from PPO
-and what that costs; look at a reward curve and say why it is not evidence of
-improvement; name the failure mode where both chosen and rejected likelihoods
-fall; and describe how you would build a trajectory dataset from your agent's
-own logs, including what you would filter out
-([32.3](../ch32-data/03-trajectories.md)).
+**You are ready to move on when you can …**
+
+- explain what DPO removes from PPO, and what that costs;
+- look at a reward curve and say why it is not evidence of improvement;
+- name the failure mode where both chosen and rejected likelihoods fall;
+- describe how you would build a trajectory dataset from your agent's own logs,
+  including what you would filter out
+  ([32.3](../ch32-data/03-trajectories.md)).
 
 ## Phase 4 — Shipping
 
@@ -209,9 +220,10 @@ about this phase, so it gets one paragraph here rather than a section.
 with a measured before-and-after number attached to at least one change you made
 to it.
 
-**You are ready to move on when you can …** state a number for your own system
-with a confidence interval attached, and defend the measurement when someone
-asks how the scorer normalizes.
+**You are ready to move on when you can …**
+
+- state a number for your own system with a confidence interval attached;
+- defend that measurement when someone asks how the scorer normalizes.
 
 ## Keeping the algorithm muscle alive
 
@@ -223,13 +235,17 @@ structure in your head and reason about its cost, which is exactly what
 
 The efficient maintenance strategy is spaced repetition on a small set of
 structures, not a marathon before an interview. The highest-yield set:
-[graphs](../ch37-graphs/index.md) (traversal, shortest paths, topological
-order), [balanced trees](../ch35-balanced-trees/index.md) (rotations and the
-invariant, not the full red-black case analysis),
-[hashing and tries](../ch36-hashing-tries/index.md),
-[linear-time sorting](../ch38-linear-sorting/index.md) for the "can you beat
-$n \log n$" question, and [regular expressions](../ch41-regex/index.md), which
-are the one Part VI topic you will also use every week at work.
+
+- **[Graphs](../ch37-graphs/index.md)** — traversal, shortest paths,
+  topological order.
+- **[Balanced trees](../ch35-balanced-trees/index.md)** — rotations and the
+  invariant, not the full red-black case analysis.
+- **[Hashing and tries](../ch36-hashing-tries/index.md)** — the structures
+  behind most "make this faster" follow-ups.
+- **[Linear-time sorting](../ch38-linear-sorting/index.md)** — for the "can you
+  beat $n \log n$" question.
+- **[Regular expressions](../ch41-regex/index.md)** — the one Part VI topic you
+  will also use every week at work.
 
 Here is a scheduler for that, small enough to adapt:
 
@@ -308,12 +324,16 @@ been training you to do: a DPO update on eight pairs, an attention head on a
 five-token sequence, a bootstrap on fifty tasks.
 
 **Reproducing a result** is pass 3 with a number attached, and it is the single
-most instructive exercise available. The method: pick a paper with released
-code, pick the *smallest* experiment it reports, reproduce that one number, and
-write down every place your result differed and why. Expect differences — data
-version, tokenizer, decoding settings, evaluation normalizer
-([33.1](../ch33-eval/01-benchmarks.md)) — and expect the write-up of those
-differences to be more valuable than the number itself. It is also, as
+most instructive exercise available. The method is four steps:
+
+1. pick a paper with released code;
+2. pick the *smallest* experiment it reports;
+3. reproduce that one number;
+4. write down every place your result differed, and why.
+
+Expect differences — data version, tokenizer, decoding settings, evaluation
+normalizer ([33.1](../ch33-eval/01-benchmarks.md)) — and expect the write-up of
+those differences to be more valuable than the number itself. It is also, as
 [34.2](02-portfolio.md) argues, one of the four portfolio pieces that reliably
 impresses people who know the field.
 

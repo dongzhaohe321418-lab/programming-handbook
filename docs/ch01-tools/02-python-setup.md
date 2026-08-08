@@ -62,6 +62,13 @@ Take the one-line program `print("Hello, world!")`. There are four standard
 places to run it, and knowing which to reach for is a small professional
 skill of its own.
 
+| Way | Reach for it when | Is your work saved? |
+| --- | --- | --- |
+| **REPL** (`python`) | you have a one-line question and want the answer now | no |
+| **Script file** (`python hello.py`) | the program should be kept, shared, or re-run | yes — a `.py` file |
+| **Notebook** | code, output, and prose belong in one document | yes — an `.ipynb` file |
+| **This site's Run button** | you are reading and want to experiment immediately | no — a refresh resets it |
+
 ### 1 · The REPL: a conversation
 
 Typing `python` with no arguments starts the **REPL**
@@ -136,7 +143,15 @@ another.
 A **virtual environment** (*venv*) is the fix: a private, per-project copy
 of the Python setup. Packages installed while a venv is *active* go into
 that project's own folder and are invisible everywhere else. One project,
-one toolbox. The ritual, run inside your project folder:
+one toolbox.
+
+The ritual has four steps, run inside your project folder:
+
+1. **Create** the environment — once per project.
+2. **Activate** it — once per terminal window.
+3. **Install** whatever the project needs; the packages land inside the
+   environment.
+4. **Deactivate** when you are done, or just close the window.
 
 === "macOS / Linux"
 
@@ -171,9 +186,11 @@ print("Inside a virtual environment?", in_venv)
 
 Here in the browser this prints `False` — the page's Python is not in a
 venv. On your machine, run it before and after `activate` and watch the
-answer flip. Nothing in this handbook requires a venv (the browser is its
-own sandbox), but essentially every real Python project starts with one, so
-file the ritual away now.
+answer flip.
+
+Nothing in this handbook requires a venv (the browser is its own sandbox),
+but essentially every real Python project starts with one, so file the
+ritual away now.
 
 ## The Java parallel: a compile stop on the way
 
@@ -214,10 +231,11 @@ your `hello.py` looks rather different:
     Hello, world!
     ```
 
-The extra ceremony is real but shallow: `javac` translates your source into
-`Hello.class`, a file of **bytecode**, and `java` starts the **JVM** (Java
+The extra ceremony is real but shallow. `javac` translates your source into
+`Hello.class`, a file of **bytecode**; `java` then starts the **JVM** (Java
 Virtual Machine) to execute it — the compile/interpret story from
 [Chapter 0.3](../ch00-machine/03-programs.md), with the seams showing.
+
 Python performs a similar translation to bytecode too; it just does it
 invisibly, every time you run. We return to virtual machines properly in
 [Chapter 23](../ch23-os/03-interpreters-vms.md).

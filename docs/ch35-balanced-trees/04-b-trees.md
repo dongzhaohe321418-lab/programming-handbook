@@ -11,22 +11,28 @@ essentially every database index and file system on your machine.
 
 ## Change the cost model, change the answer
 
+### What a disk actually charges for
+
 A disk — spinning or solid-state — cannot hand you a single byte. The
 smallest unit it transfers is a **block** (4 KB is the usual size, matching
 the page size discussed in
-[section 23.2](../ch23-os/02-memory-layout.md)). Reading one byte and
-reading four thousand cost the same. A memory access takes on the order of
-100 nanoseconds; a random SSD read takes tens of *micro*seconds, and a
-spinning disk seek takes milliseconds. The gap is four to five orders of
-magnitude, so the only cost worth counting is **how many blocks a search
-touches**.
+[section 23.2](../ch23-os/02-memory-layout.md)). Reading one byte and reading
+four thousand cost the same.
 
-A binary tree touches one block per level, and it has $\log_2 n$ levels. But
-a 4 KB block has room for hundreds of keys, and a node that holds $k$ keys
-can have $k+1$ children — so a tree built out of *fat* nodes has
-$\log_{k+1} n$ levels instead. Changing the base of a logarithm is
-ordinarily a constant factor nobody cares about; when the constant multiplies
-a millisecond, it is the whole game.
+The times are wildly different from RAM's. A memory access takes on the order
+of 100 nanoseconds; a random SSD read takes tens of *micro*seconds; a spinning
+disk seek takes milliseconds. That gap is four to five orders of magnitude, so
+the only cost worth counting is **how many blocks a search touches**.
+
+### Fat nodes change the base of the logarithm
+
+A binary tree touches one block per level, and it has $\log_2 n$ levels. But a
+4 KB block has room for hundreds of keys, and a node that holds $k$ keys can
+have $k+1$ children — so a tree built out of *fat* nodes has $\log_{k+1} n$
+levels instead.
+
+Changing the base of a logarithm is ordinarily a constant factor nobody cares
+about. When the constant multiplies a millisecond, it is the whole game.
 
 ```python
 import math
@@ -58,11 +64,19 @@ one block holds about 256 key+pointer pairs
        255       256       4           4         40 us
 ```
 
-Thirty reads versus four. The first row is an ordinary balanced binary tree
-— AVL, red-black, it does not matter, they all have about $\log_2 n$ levels.
-The last row is a B-tree whose nodes fill a 4 KB block. Same billion keys,
-same guarantees, but one costs 300 microseconds of I/O and the other 40. On
-a spinning disk that is 30 milliseconds versus 4.
+Thirty reads versus four. The first row is an ordinary balanced binary tree —
+AVL, red-black, it does not matter, they all have about $\log_2 n$ levels. The
+last row is a B-tree whose nodes fill a 4 KB block.
+
+Same billion keys, same guarantees, but one costs 300 microseconds of I/O and
+the other 40. On a spinning disk that is 30 milliseconds versus 4.
+
+!!! tip "The cost model chooses the data structure"
+
+    Nothing about the *keys* changed between those two rows — only what we
+    agreed to count. Count comparisons and a binary tree is optimal; count
+    block transfers and it is thirty times worse than a wide one. **Change
+    the cost model and you change the answer.**
 
 !!! note "Why not just make one giant node?"
 
@@ -83,12 +97,15 @@ A **B-tree of order $m$** is a search tree in which:
    parent — the BST rule, generalised from one separator to many;
 5. **all leaves are at the same depth.**
 
-Rule 5 is the balance condition, and it is remarkably blunt: rather than
-allowing subtrees to differ by a level and rotating to repair it, a B-tree
-simply forbids the difference. It can afford to, because it grows in a
-strange direction — a B-tree never gets taller by adding a level at the
-bottom; it gets taller only when the *root* splits, which lifts every leaf
-by one at once.
+!!! note "Rule 5 is the balance condition"
+
+    A B-tree does not let subtrees differ by a level and then rotate to
+    repair it, the way AVL and red-black trees do. It simply **forbids the
+    difference**: every leaf sits at the same depth, always.
+
+It can afford that bluntness because it grows in a strange direction. A
+B-tree never gets taller by adding a level at the bottom. It gets taller only
+when the *root* splits, and a root split lifts every leaf by one at once.
 
 Here is an order-4 tree (so 1 to 3 keys per node, 2 to 4 children) over the
 keys we will build in a moment:
@@ -126,16 +143,21 @@ inside-the-node work is free in disk terms: the block is already in memory.
 
 ## Insertion: split a full node and push its median up
 
-Insertion always lands in a leaf. If the leaf has room, done. If it is full,
-it **splits**: the middle key moves *up* into the parent, and the remaining
-keys become two nodes on either side of it. If that makes the parent full,
-the parent splits too, and so on. Should the split reach the root, a brand
-new root is created holding a single key — and *that* is the only way a
-B-tree grows taller, which is exactly why all leaves stay at the same depth.
+Insertion always lands in a leaf, and then one of two things happens.
+
+1. **The leaf has room.** Insert the key in sorted position. Done.
+2. **The leaf is full.** It **splits**. The middle key moves *up* into the
+   parent, and the remaining keys become two nodes sitting on either side of
+   it.
+3. **The parent is now full too.** Then the parent splits the same way, and
+   so on up the tree.
+4. **The split reaches the root.** A brand new root is created holding a
+   single key. *That* is the only way a B-tree grows taller — which is
+   exactly why all leaves stay at the same depth.
 
 The implementation below splits **pre-emptively**: on the way down, any full
-node is split before we descend into it. That guarantees there is always
-room in the parent when a child splits, so no work has to be undone.
+node is split before we descend into it. That guarantees there is always room
+in the parent when a child splits, so no work has to be undone.
 
 ```python
 from bisect import bisect_left
@@ -262,13 +284,17 @@ insert 17  <-- SPLIT
     depth 1: [5, 6, 7]   [12, 17]   [30]
 ```
 
-Two splits, both worth studying. Inserting 6 found the root `[5, 10, 20]`
-full, so the median **10 rose to become a new root** and the tree gained its
-only extra level — every leaf moved down together. Inserting 17 had to
-descend through `[12, 20, 30]`, which was full, so its median **20 rose into
-the root** and the node became `[12, 17]` and `[30]`. Notice what never
-happened: no node was ever re-linked to a different depth, and no rotation
-was needed. Splitting *is* the balancing mechanism.
+Two splits, both worth studying.
+
+- **`insert 6` split the root.** The root `[5, 10, 20]` was full, so the
+  median **10 rose to become a new root** and the tree gained its only extra
+  level — every leaf moved down together.
+- **`insert 17` split a child.** The descent hit `[12, 20, 30]`, which was
+  full, so its median **20 rose into the root** and the node became
+  `[12, 17]` and `[30]`.
+
+Notice what never happened: no node was re-linked to a different depth, and no
+rotation was needed. Splitting *is* the balancing mechanism.
 
 ## The invariants, checked
 
@@ -345,10 +371,12 @@ search(99) -> (False, 2)
 
 The last line is the point of the whole section: two hundred thousand keys
 inserted in the worst possible order for a binary tree, and every lookup is
-**three block reads**. *Any* binary tree over 200 000 nodes must be at least
-17 edges deep — $2^{17} - 1 = 131\,071$ is not enough room — so even a
-perfectly balanced AVL or red-black tree would touch at least 18 nodes, and
-on disk that is 18 block reads against the B-tree's 3.
+**three block reads**.
+
+Compare that with the best a binary tree could manage. *Any* binary tree over
+200 000 nodes must be at least 17 edges deep — $2^{17} - 1 = 131\,071$ is not
+enough room — so even a perfectly balanced AVL or red-black tree would touch
+at least 18 nodes. On disk that is 18 block reads against the B-tree's 3.
 
 ## Deletion: borrow from a sibling, or merge with one
 
@@ -368,11 +396,15 @@ under-full:
   inverse of growth by root split.
 
 Deleting a key from an *internal* node is handled first by swapping it with
-its in-order predecessor or successor (which always lives in a leaf),
-exactly as in [Chapter 20](../ch20-bst/02-bst-ops.md), and then deleting from
-the leaf. The implementation below is complete, and the stress test at the
-end deletes every key of every tree while re-validating all five invariants
-after each removal.
+its in-order predecessor or successor (which always lives in a leaf), exactly
+as in [Chapter 20](../ch20-bst/02-bst-ops.md), and then deleting from the
+leaf.
+
+### Three deletions, three mechanisms
+
+The implementation below is complete, and the stress test at the end deletes
+every key of every tree while re-validating all five invariants after each
+removal.
 
 ```python
 # continues
@@ -489,7 +521,7 @@ Three deletions, three different mechanisms:
 - **`delete(10)` was an internal key.** Its predecessor 7 (the largest key
   in the left child) took its place, and 7 was then deleted from the leaf.
 
-And the general case, verified exhaustively:
+### The general case, verified exhaustively
 
 ```python
 # continues
@@ -529,11 +561,13 @@ Real databases use a variant, the **B+ tree**, with two changes:
    raises the branching factor, which lowers the height.
 2. **The leaves are linked** left-to-right in a list.
 
-Change 2 is the one that pays. A range query — `WHERE id BETWEEN 104 AND
-108`, or "every log entry from Tuesday" — descends *once* to the first
-matching leaf and then walks the leaf chain, one sequential block read per
-leaf, with no re-descent through the tree. Sequential reads are also the
-access pattern disks are fastest at.
+Change 2 is the one that pays. A range query — `WHERE id BETWEEN 104 AND 108`,
+or "every log entry from Tuesday" — descends *once* to the first matching leaf
+and then walks the leaf chain: one sequential block read per leaf, with no
+re-descent through the tree. Sequential reads are also the access pattern
+disks are fastest at.
+
+### A B+ tree index, built and queried
 
 ```mermaid
 flowchart TD
@@ -691,14 +725,18 @@ range query  104 <= id <= 108 -> ['dee', 'eli', 'fay', 'gus', 'hal'], 6 blocks
 
 The range query cost three blocks to descend to the leaf holding 104, then
 three more leaves along the `next` chain — the last of them only to discover
-that 109 is past the end. Six blocks for five rows. On a plain B-tree the
-same query would have to walk back up and down the tree between consecutive
-matches; on a B+ tree it is a straight line. **That is why the default index
-of a relational database is a B+ tree** — PostgreSQL's default index type is
-literally spelled `btree` and is a B+ tree, and MySQL's InnoDB engine stores
-every table and every secondary index as one. File systems make the same
-choice for directories: NTFS indexes them with B+ trees, and Btrfs is named
-for the B-trees it is built out of.
+that 109 is past the end. Six blocks for five rows. On a plain B-tree the same
+query would have to walk back up and down the tree between consecutive
+matches; on a B+ tree it is a straight line.
+
+**That is why the default index of a relational database is a B+ tree.** The
+receipts:
+
+- **PostgreSQL** — the default index type is literally spelled `btree`, and
+  it is a B+ tree.
+- **MySQL / InnoDB** — stores every table and every secondary index as one.
+- **File systems** — NTFS indexes directories with B+ trees, and Btrfs is
+  named for the B-trees it is built out of.
 
 ## The whole family, priced
 
@@ -730,12 +768,13 @@ B-tree, order 256                       4.3  block reads             disk
 B+ tree, order 256                      4.3  block reads + leaf scan disk, range queries
 ```
 
-Every row after the first is $O(\log n)$, and Big-O cannot tell them apart —
+Every row after the first is $O(\log n)$, and Big-O cannot tell them apart:
 $\log_2 n$ and $\log_{128} n$ differ by the constant $\log_2 128 = 7$. The
-lesson of this section is that the constant is the entire engineering
-decision once it multiplies a disk seek. Chapter 16 taught you to ignore
-constants when comparing *growth rates*; here you have the exception that
-proves the rule, and the reason
+lesson of this section is that the constant is the entire engineering decision
+once it multiplies a disk seek.
+
+Chapter 16 taught you to ignore constants when comparing *growth rates*. Here
+is the exception that proves the rule — and the reason
 [section 23.2](../ch23-os/02-memory-layout.md)'s memory hierarchy is worth
 memorising: **the right data structure depends on which layer of that
 hierarchy your data lives in.**

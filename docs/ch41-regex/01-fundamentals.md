@@ -42,8 +42,10 @@ for s in samples:
 'not a date'     False
 ```
 
-Fifteen lines, four `if` statements, and a bug waiting to happen every time
-the format changes. Now the same function as a pattern:
+Twelve lines, four `if` statements, and a bug waiting to happen every time
+the format changes.
+
+Now the same function as a pattern:
 
 ```python
 import re
@@ -64,8 +66,15 @@ for s in samples:
 'not a date'     False
 ```
 
-Identical results. Read the pattern aloud and it is the specification:
-`\d{4}` four digits, `-` a hyphen, `\d{2}` two digits, `-`, `\d{2}`.
+Identical results. Read the pattern aloud and it *is* the specification:
+
+| Piece | Says |
+|---|---|
+| `\d{4}` | exactly four digits |
+| `-` | a literal hyphen |
+| `\d{2}` | exactly two digits |
+| `-` | another hyphen |
+| `\d{2}` | two more digits |
 
 !!! warning "Shape is not validity"
 
@@ -147,8 +156,8 @@ used         : ['$5.99']
 ```
 
 The first two lines happen to agree here, which is exactly why unescaped dots
-survive testing: `5.99` also matches `5x99`, `5-99`, and `5 99`. When you
-mean a literal dot, escape it.
+survive testing: `5.99` also matches `5x99`, `5-99`, and `5 99`. **When you
+mean a literal dot, escape it.**
 
 `re.escape` is the right tool whenever the "pattern" comes from data — a user
 search box, a filename, a configuration value. Interpolating raw user input
@@ -185,11 +194,13 @@ gr[ae]y          on 'grey and gray'                -> ['grey', 'gray']
 [.$*]            on 'a.b$c*d'                      -> ['.', '$', '*']
 ```
 
-Two rules worth memorising from that last line: **inside a class, most
-metacharacters lose their powers**, so `[.$*]` needs no backslashes. The
-exceptions are `]`, `\`, `^` (only first), and `-` (only between two
-characters) — put a hyphen first or last when you want it literally, as in
-`[-+]` or `[a-z-]`.
+Two rules worth memorising from that last line:
+
+- **Inside a class, most metacharacters lose their powers**, so `[.$*]` needs
+  no backslashes at all.
+- **Four characters are still special inside a class**: `]`, `\`, `^` (only
+  when first), and `-` (only between two characters). Put a hyphen first or
+  last when you want it literally, as in `[-+]` or `[a-z-]`.
 
 ## The shorthand classes
 
@@ -241,8 +252,8 @@ non-space : ['Order', '#A-42', 'shipped', '2024-03-01']
 ```
 
 Look at the last line: with `re.ASCII`, `café` matches as `caf` and the `é`
-is silently dropped. That is a real bug in a real system — the fix is to
-leave Unicode mode on unless you have a specific reason not to.
+is silently dropped. That is a real bug in a real system, and the fix is
+simple: **leave Unicode mode on unless you have a specific reason not to.**
 
 ## The dot, and what it does not match
 
@@ -273,12 +284,16 @@ print(re.findall(r".", "hi\nyo"))
 
 Anchors match a **position**, not a character. They consume nothing.
 
-- `^` — the start of the string (or of a line, with `re.M`)
-- `$` — the end of the string, or just before a trailing newline
-- `\b` — a **word boundary**: the edge between a `\w` and a non-`\w`
-- `\B` — not a word boundary
+| Anchor | Matches at |
+|---|---|
+| `^` | the start of the string — or of a line, with `re.M` |
+| `$` | the end of the string, or just before a trailing newline |
+| `\b` | a **word boundary**: the edge between a `\w` and a non-`\w` |
+| `\B` | anywhere that is *not* a word boundary |
 
-`\b` is the one that turns a false-positive machine into a working search:
+### `\b`, the fix for substring false positives
+
+`\b` is the anchor that turns a false-positive machine into a working search:
 
 ```python
 import re
@@ -306,8 +321,10 @@ ends      : True
 ```
 
 Five hits without anchors — including the `cat` hiding inside
-"con**cat**enate" — and exactly two real ones with `\b` on each side. Any
-time a search returns matches inside longer words, `\b` is the answer.
+"con**cat**enate" — and exactly two real ones with `\b` on each side. **Any
+time a search returns matches inside longer words, `\b` is the answer.**
+
+### `re.MULTILINE`: anchors per line
 
 With the `re.MULTILINE` flag, `^` and `$` match at every line break instead
 of only at the ends of the string:
@@ -367,13 +384,19 @@ colou?r        on 'color colour colouur'     -> ['color', 'colour']
 [a-z]+\d*      on 'ab12 cd x9'               -> ['ab12', 'cd', 'x9']
 ```
 
-Two lines deserve a second look. `\d{4}` on `55555` matched `5555` and left a
-lone `5` behind — a quantifier takes what it can and does not care about what
-remains, which is why you so often need anchors or `\b` around it. And
-`\d{2,3}` split `55555` into `555` + `55`, while it took `444` out of `4444`
-and then discarded the leftover single `4` (one digit is fewer than the two
-the pattern demands). Quantifiers are **greedy**: at each attempt they take
-the most they can, then move on and never look back at the debris.
+### Quantifiers are greedy, and leave debris
+
+Two lines above deserve a second look:
+
+- **`\d{4}` on `55555` matched `5555` and left a lone `5` behind.** A
+  quantifier takes what it can and does not care what remains — which is why
+  you so often need anchors or `\b` around one.
+- **`\d{2,3}` split `55555` into `555` + `55`**, and took `444` out of `4444`
+  before discarding the leftover single `4` (one digit is fewer than the two
+  the pattern demands).
+
+That behaviour has a name. Quantifiers are **greedy**: at each attempt they
+take the most they can, then move on and never look back at the debris.
 
 Greediness has a lazy counterpart (`*?`, `+?`, `??`) that takes the least it
 can. It matters most when a quantifier is followed by something else, so
@@ -419,13 +442,17 @@ Jan
 January
 ```
 
-Three lessons in one block. The `^cat|dog$` line matches `catdog` because it
-means "starts with cat, or ends with dog" — bracket your alternatives. The
-`(?:...)` spelling is a **non-capturing group**: it groups without
-remembering, which matters for `findall` (a capturing group would make it
-return group contents instead of whole matches) and is explained fully in
-[41.2](02-groups-parsing.md). And alternation is ordered: put the longer
-alternative first, or `Jan|January` will happily stop at `Jan`.
+Three lessons in one block:
+
+- **`|` has the lowest precedence there is.** `^cat|dog$` matches `catdog`
+  because it means "starts with cat, *or* ends with dog". Bracket your
+  alternatives.
+- **`(?:...)` is a non-capturing group**: it groups without remembering, which
+  matters for `findall` — a capturing group would make it return group
+  contents instead of whole matches. [41.2](02-groups-parsing.md) explains it
+  fully.
+- **Alternation is ordered, first match wins.** Put the longer alternative
+  first, or `Jan|January` will happily stop at `Jan`.
 
 ## The `re` API
 
@@ -463,10 +490,15 @@ Read the `'42abc'` row carefully, because it is where the bugs live:
 `re.match` says yes. `match` is *not* "does this string match" — it is "does
 the pattern fit at position zero", and it does not care what follows. A
 validator built on `re.match(r"\d+", user_input)` happily accepts
-`42; DROP TABLE`. **For validation, use `fullmatch`.** For finding
-something inside text, use `search`. `match` is rarely the one you want;
-`re.match(p, s)` does the same job as `re.search(r"\A" + p, s)` — `\A` means
-"the very start of the string" and, unlike `^`, is unaffected by `re.M`.
+`42; DROP TABLE`.
+
+So the choice reduces to two rules and a footnote:
+
+- **For validation, use `fullmatch`.**
+- **For finding something inside text, use `search`.**
+- `match` is rarely the one you want. `re.match(p, s)` does the same job as
+  `re.search(r"\A" + p, s)`, where `\A` means "the very start of the string"
+  and, unlike `^`, is unaffected by `re.M`.
 
 ### `findall` and `finditer`
 
@@ -510,13 +542,14 @@ two group: [('09', '15'), ('10', '40'), ('11', '05')]
 shapes   : ['20:80', '10:40']
 ```
 
-Two traps in one output. `findall` with one capturing group returns *only
-that group*, and with several returns *tuples* — surprising the first time,
-and the reason `(?:...)` exists. And look at the last line: the "time"
-pattern happily reports `20:80`, which is not a time, and misses `16:9`,
-which was not meant to be one. A pattern describes the *shape* of text and
-knows nothing about what it means; when the meaning matters, validate after
-matching.
+Two traps in one output:
+
+- **`findall` changes its return type when the pattern captures.** One
+  capturing group and it returns *only that group*; several, and it returns
+  *tuples*. Surprising the first time, and the reason `(?:...)` exists.
+- **A pattern matches shape, not meaning.** The "time" pattern happily reports
+  `20:80`, which is not a time, and misses `16:9`, which was never meant to be
+  one. When the meaning matters, validate the values after matching.
 
 `finditer` is also the memory-friendly one: it is lazy, exactly like the
 generators of [section 39.3](../ch39-streams/03-pipelines.md), so it can walk
@@ -632,8 +665,10 @@ combined flags: ['Error: a', 'error: b']
 
 Verbose mode is how a long pattern stays maintainable: whitespace and
 anything after a `#` are ignored, so you can lay the pattern out like code
-and explain each piece. The price is that a literal space must be written
-`\ ` or `[ ]`, as the `GAP` pattern shows. Flags combine with `|`.
+and explain each piece.
+
+The price is that a literal space must be written `\ ` or `[ ]`, as the `GAP`
+pattern shows. Flags combine with `|`.
 
 ## Raw strings and the backslash plague
 
@@ -673,10 +708,11 @@ raw pattern : ['\\', '\\']
 plain patt. : ['\\', '\\']
 ```
 
-The middle two lines are the plague in miniature: `"\bcat\b"` is a
+The middle two lines are the plague in miniature. `"\bcat\b"` is a
 *backspace*, `c`, `a`, `t`, *backspace* — a pattern that will never match
-normal text, with no error message to tell you so. The rule is absolute and
-costs nothing:
+normal text, with no error message to tell you so.
+
+The rule is absolute and costs nothing:
 
 !!! tip "Always write patterns as raw strings"
 
@@ -749,11 +785,13 @@ cat|dog         alternation                 ['dog', 'cat']
 \$\d+\.\d{2}    escaped metacharacters      ['$12.50']
 ```
 
-Check two rows against your own reading before moving on. `\d{3}` on
-`"12 345 6789"` finds `345` and `678` — it takes the first three digits of
-`6789` and abandons the `9`, exactly as the quantifier section warned. And
-`a.c` never matches the bare `ac`, because the dot demands one character and
-will not accept none.
+Check two rows against your own reading before moving on:
+
+- **`\d{3}` on `"12 345 6789"` finds `345` and `678`.** It takes the first
+  three digits of `6789` and abandons the `9`, exactly as the quantifier
+  section warned.
+- **`a.c` never matches the bare `ac`**, because the dot demands one character
+  and will not accept none.
 
 !!! warning "Common mistakes"
 
@@ -767,8 +805,9 @@ will not accept none.
       or ends with dog". Write `r"^(cat|dog)$"`.
     - **Expecting `findall` to return whole matches when the pattern has
       groups.** It returns the groups instead. Use `(?:...)` or `finditer`.
-    - **Matching across the wrong boundary.** `\d{2}:\d{2}` found `12:10` in
-      "12 at 10:40". Anchor with `\b` or match more context.
+    - **Mistaking a shape for a meaning.** `\d{2}:\d{2}` happily reports
+      `20:80`, which is not a time, and misses `16:9`, which is not the shape.
+      Validate the values after matching, or match more context.
 
 ## Check your understanding
 

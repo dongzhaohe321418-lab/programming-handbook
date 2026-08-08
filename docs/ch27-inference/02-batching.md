@@ -15,10 +15,11 @@ ideas you can simulate.
 
 The weights are read once per step *regardless of how many sequences are in
 the step*. Sixteen users' token vectors can be stacked into one matrix and
-multiplied by the same weight matrix in one pass. So the memory cost of a
-step is flat in the batch size while the arithmetic cost is linear in it —
-and since the memory cost dominates at batch 1, the first few dozen users
-are, near enough, free.
+multiplied by the same weight matrix in one pass.
+
+So the memory cost of a step is **flat** in the batch size while the
+arithmetic cost is **linear** in it. Since the memory cost dominates at batch
+1, the first few dozen users are, near enough, free.
 
 ```python
 PARAMS, W_BYTES = 7e9, 2         # 7B model, fp16 weights
@@ -47,19 +48,23 @@ print(f"batch 64 serves 64 users at {1000 / step_ms(64):.1f} tok/s each — "
       f"exactly the speed one user gets alone ({1000 / step_ms(1):.1f})")
 ```
 
-Read the `per-user tok/s` column downwards. It is *constant at 142.9* from
-batch 1 through batch 64: those 64 users each get exactly the speed a lone
-user would get, and total throughput has gone from 143 to 9,143 tokens per
-second — a 64× improvement for free. Past 64 the step becomes compute-bound
-(the crossover computed in Section 27.1 was 75 tokens per step), total
-throughput flattens near 10,700 tok/s, and each additional user now
-*slows everybody down*: at batch 256 a user gets 41.9 tok/s instead of 142.9.
+Read the `per-user tok/s` column downwards. It has two regimes:
 
-Now read the last column. Batch 256 at a 2048-token context needs **68.7 GB**
-of KV cache, and the model's fp16 weights already claimed 14 GB of the same
-card — 82.7 GB in total, which does not fit in 80 GB. Long before compute
-becomes the limit, *memory* is. That is the whole reason PagedAttention
-exists, and we come back to it below.
+- **Batch 1 to 64: constant at 142.9.** Those 64 users each get exactly the
+  speed a lone user would get, while total throughput climbs from 143 to
+  9,143 tokens per second — a 64× improvement for free.
+- **Past 64: the step becomes compute-bound** (Section 27.1's crossover was 75
+  tokens per step). Total throughput flattens near 10,700 tok/s, and each
+  additional user now *slows everybody down* — at batch 256 a user gets
+  41.9 tok/s instead of 142.9.
+
+Now read the last column, because it moves the ceiling before compute ever
+does. Batch 256 at a 2048-token context needs **68.7 GB** of KV cache, and the
+model's fp16 weights already claimed 14 GB of the same card: 82.7 GB in total,
+which does not fit in 80 GB.
+
+**Long before compute becomes the limit, *memory* is.** That is the whole
+reason PagedAttention exists, and we come back to it below.
 
 !!! note "What is illustrative here"
     `BANDWIDTH` and `COMPUTE` are round stand-ins in the range of a 2020s
@@ -70,16 +75,22 @@ exists, and we come back to it below.
 
 ## Static batching and the head-of-line problem
 
-The obvious way to batch is the way you would batch anything: collect $B$
-requests, run them together, return all $B$ results, collect the next $B$.
-This is **static batching**, and it has a fatal interaction with the fact
-that different requests generate wildly different numbers of tokens. "What is
-2+2?" needs three tokens. "Write me a design document" needs eight hundred.
-In a static batch, the short request's slot is *held* until the longest
-member of its batch finishes — the GPU keeps computing a padded, meaningless
-position for it — and the user does not get their answer until then either.
-That is **head-of-line blocking**, the same pathology a single-server queue
-has when a big job arrives first.
+The obvious way to batch is the way you would batch anything:
+
+1. Collect $B$ requests.
+2. Run them together.
+3. Return all $B$ results.
+4. Collect the next $B$.
+
+This is **static batching**, and it has a fatal interaction with the fact that
+different requests generate wildly different numbers of tokens. "What is 2+2?"
+needs three tokens. "Write me a design document" needs eight hundred.
+
+In a static batch the short request's slot is *held* until the longest member
+of its batch finishes. The GPU keeps computing a padded, meaningless position
+for it, and the user does not get their answer until then either. That is
+**head-of-line blocking**, the same pathology a single-server queue has when a
+big job arrives first.
 
 Here is a discrete-event simulation. Eight requests all arrive at once, the
 batch capacity is four, and one decode step takes the same time for everyone.
@@ -119,22 +130,30 @@ s, g, d, mk = static_batching(OUTPUT_LENS, CAPACITY)
 timeline("STATIC BATCHING", OUTPUT_LENS, s, g, d, mk)
 ```
 
-Look at row `R1`: it finishes generating after 3 steps and then holds a slot
-for 22 more, contributing nothing. Look at `R4`, `R5`, `R6`, `R7`: they wait
-25 steps in the queue before they are even *started*, because their batch
-cannot form until the previous one drains. Slot utilisation is **42.3%** —
-more than half the GPU's batch slots are computing padding — and mean latency
-is **1125 ms** when the average request only needs 14 steps of real work.
+Two rows in that timeline tell the whole story:
+
+- **`R1`** finishes generating after 3 steps, then holds a slot for 22 more,
+  contributing nothing.
+- **`R4` through `R7`** wait 25 steps in the queue before they are even
+  *started*, because their batch cannot form until the previous one drains.
+
+The totals follow: slot utilisation is **42.3%** — more than half the GPU's
+batch slots are computing padding — and mean latency is **1125 ms** when the
+average request only needs 14 steps of real work.
 
 ## Continuous batching: schedule per iteration, not per batch
 
 The fix is to stop thinking in batches and start thinking in *steps*. Before
-every single decode iteration, the scheduler asks: which sequences are alive?
-Any slot freed by a sequence that just emitted its end-of-sequence token is
-refilled *immediately* from the waiting queue. Sequences join and leave a
-running batch continuously — hence **continuous batching**, also called
-**iteration-level scheduling** (Yu et al., Orca, 2022; it is what vLLM,
-TGI, TensorRT-LLM, and SGLang all do).
+every single decode iteration, the scheduler:
+
+1. Asks which sequences are still alive.
+2. Refills any slot freed by a sequence that just emitted its end-of-sequence
+   token, *immediately*, from the waiting queue.
+3. Runs exactly one step for whatever is now in the batch.
+
+Sequences join and leave a running batch continuously — hence **continuous
+batching**, also called **iteration-level scheduling** (Yu et al., Orca, 2022;
+it is what vLLM, TGI, TensorRT-LLM, and SGLang all do).
 
 The change to the simulation is small, which is exactly the point:
 
@@ -173,16 +192,26 @@ for name, a, b, unit in [
     print(f"{name:<24}{a:>10.1f}{b:>13.1f}{b / a:>11.2f}x")
 ```
 
-Same eight requests, same GPU, same batch capacity of four — and the whole
-workload finishes in **43 steps instead of 65**, slot utilisation rises from
-42.3% to **64.0%**, and mean latency drops from 1125 ms to **441 ms**, a
-2.55× improvement. Nothing was made faster. Work was simply not wasted.
+Same eight requests, same GPU, same batch capacity of four:
 
-Two details in the timeline repay a close look. `R1`, the three-token
-request, now completes at step 3 instead of step 25 — an eight-fold latency
-win for the short request that static batching punished hardest. And `R4`,
-the 40-token request, now starts at step 3 instead of step 25, so the long
-tail begins earlier and the whole thing ends sooner.
+| | Static | Continuous |
+| --- | --- | --- |
+| Scheduling decision | once per batch | once per **iteration** |
+| A finished sequence | holds its slot until the batch drains | leaves immediately |
+| A waiting request | waits for a whole batch to form | is admitted the step a slot frees |
+| Makespan (8 requests) | 65 steps | **43 steps** |
+| Slot utilisation | 42.3% | **64.0%** |
+| Mean latency | 1125 ms | **441 ms** (2.55× better) |
+
+Nothing was made faster. Work was simply not wasted.
+
+Two details in the timeline repay a close look:
+
+- **`R1`, the three-token request**, now completes at step 3 instead of step
+  25 — an eight-fold latency win for the request static batching punished
+  hardest.
+- **`R4`, the 40-token request**, now starts at step 3 instead of step 25, so
+  the long tail begins earlier and the whole workload ends sooner.
 
 !!! note "What is simulated"
     Every number above comes from this simulator, not from a benchmark: a
@@ -199,19 +228,25 @@ step, and each one needs a KV cache that grows unpredictably, how do you lay
 that cache out?
 
 The naive answer is to give every sequence one contiguous slab big enough for
-the worst case — `max_model_len` tokens. A request that ends up using 300 of
-its 2048 reserved tokens has wasted 85% of its allocation, and that waste is
-memory no other request can touch. This is **internal fragmentation**. Worse,
-as requests of different sizes come and go, the free memory left behind ends
-up scattered in holes that are individually too small to host a new request
-even when their total is plenty. That is **external fragmentation**.
+the worst case — `max_model_len` tokens. That produces both classic
+fragmentation problems at once:
 
-If this sounds familiar, it should: it is exactly the problem operating
-systems solved decades ago. [Section 23.2](../ch23-os/02-memory-layout.md)
-described how each process sees its own private, apparently contiguous
-address space. The trick that makes that possible is **paging**: physical
-memory is cut into fixed-size **pages**, the process's contiguous view is cut
-into equally sized virtual pages, and a **page table** maps one to the other.
+- **Internal fragmentation.** A request that uses 300 of its 2048 reserved
+  tokens has wasted 85% of its allocation, and that waste is memory no other
+  request can touch.
+- **External fragmentation.** As requests of different sizes come and go, the
+  free memory left behind ends up scattered in holes that are individually too
+  small to host a new request even when their total is plenty.
+
+If this sounds familiar, it should: it is exactly the problem operating systems
+solved decades ago. [Section 23.2](../ch23-os/02-memory-layout.md) described
+how each process sees its own private, apparently contiguous address space.
+The trick that makes that possible is **paging**:
+
+1. Cut physical memory into fixed-size **pages**.
+2. Cut the process's contiguous view into equally sized virtual pages.
+3. Keep a **page table** mapping one to the other.
+
 The process's memory looks like one unbroken run; physically it is scattered
 wherever pages happened to be free. External fragmentation disappears
 entirely, and internal fragmentation is capped at less than one page per
@@ -249,13 +284,15 @@ flowchart LR
     classDef free fill:#eee,stroke:#999,color:#666
 ```
 
-Two payoffs fall straight out of the diagram. First, waste per sequence drops
-from "whatever you reserved minus what you used" to "at most 15 unused token
-slots in the last block". Second — and this is what makes the prefix caching
-of Section 27.1 possible at all — two sequences whose token prefixes are
-identical can simply *point their block tables at the same physical block*,
-the way two processes share a read-only page of a library. Copy-on-write does
-the rest when they diverge.
+Two payoffs fall straight out of the diagram:
+
+- **Waste per sequence collapses** from "whatever you reserved minus what you
+  used" to "at most 15 unused token slots in the last block".
+- **Prefixes can be shared.** Two sequences whose token prefixes are identical
+  simply *point their block tables at the same physical block*, the way two
+  processes share a read-only page of a library, with copy-on-write handling
+  the moment they diverge. This is what makes the prefix caching of Section
+  27.1 possible at all.
 
 Let us measure both kinds of fragmentation. Twelve requests with realistic,
 seeded sequence lengths, a `max_model_len` of 2048, and a 16-token block:
@@ -337,13 +374,14 @@ problem into simple counting — the same reason your OS uses pages.
 
 ## Chunked prefill: stop letting long prompts freeze everyone
 
-One problem survives all of the above. Prefill and decode compete for the
-same GPU, and they have wildly different sizes: a 4000-token prefill is a
-single step that takes *hundreds* of milliseconds, while a decode step takes
-about 7. If the scheduler runs that prefill as one indivisible step, every
-user currently streaming tokens sees their stream freeze for the duration.
-Their time-to-first-token was fine; their *inter-token latency* just spiked
-by half a second, which readers notice immediately.
+One problem survives all of the above. Prefill and decode compete for the same
+GPU, and they have wildly different sizes: a 4000-token prefill is a single
+step that takes *hundreds* of milliseconds, while a decode step takes about 7.
+
+If the scheduler runs that prefill as one indivisible step, every user
+currently streaming tokens sees their stream freeze for the duration. Their
+time-to-first-token was fine; their *inter-token latency* just spiked by half a
+second, which readers notice immediately.
 
 **Chunked prefill** splits the prompt into fixed-size pieces and processes one
 piece per step, alongside the decode tokens of everyone else. The prompt takes
@@ -375,13 +413,19 @@ print(f"\nmemory-bound floor for any step: {t_mem:.1f} ms")
 ```
 
 The tradeoff is laid out in two columns. Going from no chunking to 256-token
-chunks costs the long prompt **5.4%** more time-to-first-token (374 ms →
-394 ms) and cuts the worst stall every other user suffers by **15.2×**
-(374 ms → 24.6 ms). That is an outstanding trade, and it is why chunked
-prefill is on by default in current serving stacks. Push the chunk down to 64
-and the step time hits the 7.0 ms memory-bandwidth floor — below that, chunks
-are too small to use the GPU at all and TTFT rises 18% for no further gain.
-The sweet spot is the smallest chunk that still keeps the step compute-bound.
+chunks:
+
+- **costs the long prompt 5.4% more time-to-first-token** (374 ms → 394 ms);
+- **cuts the worst stall every other user suffers by 15.2×** (374 ms →
+  24.6 ms).
+
+That is an outstanding trade, and it is why chunked prefill is on by default in
+current serving stacks. Push the chunk down to 64 and the step time hits the
+7.0 ms memory-bandwidth floor — below that, chunks are too small to use the GPU
+at all and TTFT rises 18% for no further gain.
+
+**The sweet spot is the smallest chunk that still keeps the step
+compute-bound.**
 
 ## What this looks like on a real server
 
@@ -404,14 +448,17 @@ INFO  KV cache: 53.0 GiB -> 27,136 blocks of 16 tokens (434,176 tokens)
 (The log lines are paraphrased and the sizes are for an 80 GB card; your
 version will word them differently.)
 
-Three flags map onto three things you have now computed by hand.
-`--max-model-len` is the largest prompt-plus-output a request may have; it
-caps the per-request term $n_{tokens}$ in the KV formula.
-`--gpu-memory-utilization` is the fraction of the card vLLM may claim;
-whatever is left after the weights becomes the paged KV block pool, and the
-startup log reports how many blocks that bought. `--max-num-seqs` is the
-batch capacity `CAPACITY` in the simulation above. Sending a request is
-ordinary HTTP:
+Three flags map onto three things you have now computed by hand:
+
+- **`--max-model-len`** — the largest prompt-plus-output a request may have.
+  It caps the per-request term $n_{tokens}$ in the KV formula.
+- **`--gpu-memory-utilization`** — the fraction of the card vLLM may claim.
+  Whatever is left after the weights becomes the paged KV block pool, and the
+  startup log reports how many blocks that bought.
+- **`--max-num-seqs`** — the batch capacity, exactly `CAPACITY` in the
+  simulation above.
+
+Sending a request is ordinary HTTP:
 
 ```console
 $ curl http://localhost:8000/v1/chat/completions \

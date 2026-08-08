@@ -1,5 +1,63 @@
 # Chapter 26 · Exercises
 
+## The chapter in brief
+
+- A model never sees text: a **tokenizer** turns your characters into
+  integers and back, and it decides what the model can perceive
+  ([26.1](01-tokenization.md)).
+- **Byte-pair encoding** learns its vocabulary by repeatedly merging the most
+  frequent adjacent pair, which is why `unhappiness` splits into reusable
+  pieces instead of becoming `<unk>`.
+- Letter-counting and arithmetic failures are tokenization artefacts, not
+  evidence about reasoning — the model sees opaque IDs, never the letters or
+  the aligned digits.
+- An **embedding** turns each ID into a vector, so "related" becomes "points
+  the same way", measurable with a dot product
+  ([26.2](02-attention.md)).
+- **Attention** is five steps of arithmetic: project into $Q$, $K$, $V$;
+  score with $QK^\top$; scale by $\sqrt{d_k}$; softmax; blend the values.
+- The **causal mask** is one line that makes the model predict rather than
+  copy — and, because past keys and values then never change, it is what
+  makes the KV cache possible.
+- A **block** is attention plus a feed-forward network, each wrapped in a
+  residual connection and a normalization; stacking blocks is the whole
+  architecture ([26.3](03-decoder-stack.md)).
+- Attention is order-blind on its own, so position is a separate ingredient —
+  and **RoPE** extrapolates best because its scores depend only on *relative*
+  distance.
+- A model's parameter count and its **KV-cache** size are arithmetic you can
+  do from a config file; **GQA** shrinks the cache by cutting KV heads only.
+- The **sampler** is ordinary code with no learned parameters: greedy,
+  temperature, top-k, top-p, and repetition penalties all live there
+  ([26.4](04-sampling.md)).
+- Temperature 0 buys you *greedy* decoding, not *reproducible* decoding,
+  because GPU floating-point reductions are not deterministic.
+
+### Key terms
+
+| Term | One-clause reminder |
+| --- | --- |
+| [Token](../appendix/E-ai-glossary.md) | The unit a model actually reads — a piece of text, not a word |
+| [BPE](../appendix/E-ai-glossary.md) | Byte-pair encoding: build a vocabulary by merging frequent adjacent pairs |
+| [Embedding](../appendix/E-ai-glossary.md) | The row of a lookup table that turns a token ID into a vector |
+| [Attention](../appendix/E-ai-glossary.md) | $\operatorname{softmax}(QK^\top/\sqrt{d_k})V$ — every token blends the others |
+| Causal mask | Setting future scores to $-\infty$ so a token can only look backwards |
+| [Multi-head attention](../appendix/E-ai-glossary.md) | Several small attention computations in parallel, then concatenated |
+| Residual connection | `x = x + f(x)`, the highway that lets gradients reach layer 1 |
+| [LayerNorm / RMSNorm](../appendix/E-ai-glossary.md) | Rescaling one token's vector so activations stay in range |
+| Feed-forward network | The per-token expand–activate–project block holding most of the weights |
+| [RoPE](../appendix/E-ai-glossary.md) | Rotary position embedding: rotate $Q$ and $K$ so scores depend on relative distance |
+| [KV cache](../appendix/E-ai-glossary.md) | Stored keys and values per token, per layer, per KV head |
+| [GQA](../appendix/E-ai-glossary.md) | Grouped-query attention: several query heads share one KV head |
+| [Logits](../appendix/E-ai-glossary.md) | The unbounded scores before softmax, one per vocabulary entry |
+| [Temperature](../appendix/E-ai-glossary.md) | Divide the logits by $T$: below 1 sharpens, above 1 flattens |
+| [Top-p](../appendix/E-ai-glossary.md) | Nucleus sampling: keep the smallest set of tokens whose mass reaches $p$ |
+
+Every term above is also in the [concept index](../concept-index.md), which
+points at the section where it is built rather than merely defined.
+
+Now the problems.
+
 Eight problems, easiest first. Attempt each one before opening the solution
 — especially Exercise 26.2, which asks you to *predict* an output, and
 Exercise 26.8, which asks you to extend working code rather than read it.

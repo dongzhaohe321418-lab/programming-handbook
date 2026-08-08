@@ -1,6 +1,51 @@
 # Exercises
 
-Drills first — the index math and paper traces build the muscle memory that
+## The chapter in brief
+
+- Some collections must repeatedly answer *"what is the smallest item right
+  now?"* while new items keep arriving — and lists do one half of that job
+  badly ([21.1](01-heap-property.md)).
+- The **min-heap property** is one rule: every parent $\le$ each of its
+  children. Nothing is promised about siblings, so a heap is *not*
+  "sorted-ish".
+- Consequently the minimum is always at the root, which makes peek-min
+  $O(1)$.
+- The second invariant is **shape**: a heap is a *complete* binary tree, so
+  its height is exactly $\lfloor \log_2 n \rfloor$ and imbalance is
+  impossible.
+- Completeness lets the tree live in a plain list, navigated by arithmetic:
+  $\mathtt{parent}(i) = \lfloor (i-1)/2 \rfloor$,
+  $\mathtt{left}(i) = 2i+1$, $\mathtt{right}(i) = 2i+2$.
+- **Insert = append, then sift up**; **extract-min = move the last element
+  to the root, then sift down**, always swapping with the *smaller* child
+  ([21.2](02-priority-queues.md)).
+- Both repairs walk one vertical path, so both are $O(\log n)$ — guaranteed,
+  not merely typical.
+- Python's `heapq` is this machinery on a bare list: `heappush`, `heappop`,
+  `heap[0]`, and `heapify` (which builds a heap in $O(n)$).
+- Priorities ride along with data as `(priority, item)` tuples, and a
+  max-heap comes from pushing negated values.
+- **Heapsort** — heapify, then pop everything — is $O(n \log n)$ on every
+  input, with no pivot luck involved.
+- The **top-k pattern** keeps a size-$k$ heap and costs $O(n \log k)$ time
+  in $O(k)$ memory, instead of sorting all $n$ items.
+- Priority queues power schedulers, Dijkstra's algorithm, and
+  discrete-event simulation — the same shape of problem every time.
+
+### Key terms
+
+| Term | What it means |
+| --- | --- |
+| [priority queue](../concept-index.md#p) | ADT that always serves the most important item next |
+| [heap property](../concept-index.md#h) | every parent $\le$ (min-heap) or $\ge$ (max-heap) its children |
+| complete binary tree | every level full except the last, which fills left to right |
+| [sift up / sift down](../concept-index.md#s) | the two repair walks that restore the heap property |
+| `heapify` | turn an arbitrary list into a heap in $O(n)$ |
+| [heapsort](../concept-index.md#h) | sort by heapifying, then popping the minimum $n$ times |
+| top-k pattern | keep only the best $k$ seen so far in a size-$k$ heap |
+| [heap (memory region)](../concept-index.md#h) | the unrelated namesake from [5.3](../ch05-under-the-hood/03-stack-heap.md) — different thing entirely |
+
+Now the drills. The index math and paper traces build the muscle memory that
 makes the harder heap problems routine. Do the traces with pencil and paper
 *before* running the verification code; the point of a trace is to catch
 your mental model in the act.

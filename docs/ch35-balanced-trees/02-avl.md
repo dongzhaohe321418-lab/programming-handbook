@@ -13,14 +13,18 @@ reach for when lookups vastly outnumber updates.
 
 Write $h(v)$ for the height of the subtree rooted at $v$, counted in edges,
 with $h(\text{empty}) = -1$ as in [Chapter 20](../ch20-bst/01-tree-vocab.md).
-A binary search tree is an **AVL tree** when, for *every* node $v$:
 
-$$ \bigl| h(v.\mathit{left}) - h(v.\mathit{right}) \bigr| \le 1 $$
+!!! note "The AVL invariant"
+
+    A binary search tree is an **AVL tree** when, for *every* node $v$,
+
+    $$ \bigl| h(v.\mathit{left}) - h(v.\mathit{right}) \bigr| \le 1 $$
 
 The quantity $h(v.\mathit{left}) - h(v.\mathit{right})$ is $v$'s **balance
 factor**, so the rule reads: every balance factor is $-1$, $0$, or $+1$.
-Note the two words that do the work — *every node*, not just the root. A
-tree can be perfectly balanced at the root and still fail deep inside.
+
+Note the two words that do the work — *every node*, not just the root. A tree
+can be perfectly balanced at the root and still fail deep inside.
 
 Here is the invariant as an executable predicate. It computes real heights
 bottom-up and stops at the first offender, naming it:
@@ -400,14 +404,16 @@ Deletion reuses Chapter 20's three cases (leaf, one child, two children via
 the in-order successor) and then rebalances every node on the way back up.
 The code change is small; the cost story is not.
 
-An insert can raise a subtree's height by at most one, and a single
-rebalance at the lowest offending node restores the *original* height —
-so after the first rotation, nothing above it is out of balance. **Insert
-therefore needs at most one rotation site: $O(1)$ rotations.** A delete
-*shortens* a subtree, and shortening can propagate: fixing one node can
-leave its parent one short, and so on all the way to the root. **Delete may
-need $O(\log n)$ rotations.** Both are still $O(\log n)$ overall, but the
-constant differs, and the difference is why the next section exists.
+- **Insert needs at most one rotation site — $O(1)$ rotations.** An insert
+  can raise a subtree's height by at most one, and a single rebalance at the
+  lowest offending node restores the *original* height. After that first
+  rotation, nothing above it is out of balance.
+- **Delete may need $O(\log n)$ rotations.** A delete *shortens* a subtree,
+  and shortening propagates: fixing one node can leave its parent one short,
+  and so on all the way to the root.
+
+Both operations are still $O(\log n)$ overall. But the constant differs, and
+that difference is why the next section exists.
 
 ```python
 # continues
@@ -504,12 +510,15 @@ delete rotation counts: [(0, 9148), (1, 1592), (2, 1067), (3, 129), (4, 61), (5,
 ```
 
 Sixteen hundred deletions with the invariant re-checked after every one, and
-then the cost measurement. **No insert ever exceeded two rotations** — that
-is one site performing at most a double rotation, and it is a theorem, not
-luck. Deletes mostly cost nothing, but one of them in this run needed six
-rotations: the repair genuinely climbed the tree. Both operations stay
-$O(\log n)$; only one of them is $O(1)$ *rotations*. Exercise 35.8 pushes
-on that distinction.
+then the cost measurement. Two things to read off it:
+
+- **No insert ever exceeded two rotations.** That is one site performing at
+  most a double rotation, and it is a theorem, not luck.
+- **One delete in this run needed six.** Most cost nothing at all, but the
+  repair genuinely climbed the tree when it had to.
+
+Both operations stay $O(\log n)$; only one of them is $O(1)$ *rotations*.
+Exercise 35.8 pushes on that distinction.
 
 ## How tall can an AVL tree actually get?
 
@@ -520,14 +529,22 @@ as sparse as possible one should have height $h-1$ and the other $h-2$:
 $$ N(h) = 1 + N(h-1) + N(h-2), \qquad N(-1) = 0,\; N(0) = 1 $$
 
 That is the Fibonacci recurrence, so $N(h) = F_{h+3} - 1$ and $N$ grows like
-$\varphi^{h}$ with $\varphi = (1+\sqrt 5)/2$. Inverting gives the classic
-bound, with height in edges:
+$\varphi^{h}$ with $\varphi = (1+\sqrt 5)/2$. Substituting the approximation
+$F_k \approx \varphi^{k}/\sqrt 5$ and inverting gives the classic bound, with
+height in edges:
 
-$$ h \;\le\; \log_\varphi\!\bigl(\sqrt 5\,(n+1)\bigr) - 3 \;\approx\; 1.4405 \log_2(n+1) - 1.3277 $$
+$$ h \;\approx\; \log_\varphi\!\bigl(\sqrt 5\,(n+1)\bigr) - 3 \;\approx\; 1.4405 \log_2(n+1) - 1.3277 $$
 
-An AVL tree is never worse than about **44% taller than a perfect tree** —
-and, unlike a plain BST, that is a guarantee against every input order, not
-an average over lucky ones.
+That line is an approximation, not an inequality you can lean on at tiny $n$.
+The exact Fibonacci formula carries an alternating
+$\bigl((1-\sqrt 5)/2\bigr)^{k}$ term, and on the very sparsest trees the true
+height sits a fraction of a level *above* it (at $h = 3$ the sparsest tree has
+7 nodes, and the line says 2.99). The strict version, safe for every $n$, is
+$h < 1.4405\log_2(n+2) - 0.3277$.
+
+Both say the same thing about shape: an AVL tree is never worse than about
+**44% taller than a perfect tree**. And, unlike a plain BST, that is a
+guarantee against every input order, not an average over lucky ones.
 
 ```python
 # continues

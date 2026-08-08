@@ -2,19 +2,26 @@
 
 A program that can only run each line once is like a recipe that can only
 stir the pot a single time. The `while` loop removes that limit: it runs a
-block of code *repeatedly, for as long as a condition stays true*. Mastering
-one small discipline — initialize, test, update — is the difference between
-loops that work and loops that spin forever, so this section drills that
-discipline into three patterns you will reuse for the rest of the book:
+block of code *repeatedly, for as long as a condition stays true*.
+
+Mastering one small discipline — initialize, test, update — is the difference
+between loops that work and loops that spin forever. So this section drills
+that discipline into three patterns you will reuse for the rest of the book:
 counters, accumulators, and sentinels.
 
 ## The anatomy of a while loop
 
 A `while` loop has two parts: a **condition** (any boolean expression, exactly
 like the ones you wrote in [Chapter 4](../ch04-branching/01-booleans-logic.md))
-and an indented **body**. Python checks the condition *before every pass*: if
-it is `True`, the body runs once and control jumps back up to the check; if it
-is `False`, the loop is skipped or exited and the program continues below.
+and an indented **body**.
+
+Python checks the condition *before every pass*, and there are only two
+outcomes:
+
+- **`True`** — the body runs once, then control jumps straight back up to the
+  check.
+- **`False`** — the loop is skipped or exited, and the program continues
+  below it.
 
 ```mermaid
 flowchart TD
@@ -85,8 +92,9 @@ last value that ran the body.
 ## Accumulator loops
 
 An **accumulator loop** carries a running result in a second variable and
-folds one value into it per pass. Three classics, one idea. First, a running
-**sum**:
+folds one value into it per pass. Three classics share that single idea.
+
+### Running sum
 
 ```python
 total = 0          # the accumulator starts empty
@@ -101,8 +109,10 @@ The result is 5050 — the sum a young Gauss famously computed in his head, and
 your loop verified it in a few microseconds. The accumulator `total` starts
 at 0 because 0 is the identity for addition: adding it changes nothing.
 
-For a running **product**, the starting value must be 1 instead — starting a
-product at 0 would keep it 0 forever:
+### Running product
+
+Here the starting value must be 1 instead: starting a product at 0 would keep
+it 0 forever.
 
 ```python
 product = 1        # 1 is the identity for multiplication
@@ -114,9 +124,12 @@ print("5! =", product)
 ```
 
 This prints `5! = 120`, the factorial $5! = 1 \times 2 \times 3 \times 4
-\times 5$. Finally, a **count** — accumulating how many times something
-happened. Here we count digits by repeatedly chopping the last one off with
-integer division:
+\times 5$.
+
+### Running count
+
+A count accumulates how many times something happened. Here we count digits by
+repeatedly chopping the last one off with integer division:
 
 ```python
 n = 90210
@@ -158,10 +171,12 @@ print(f"read {count} scores, average {total / count:.1f}")
 ```
 
 The loop reads 83, 91, and 78, then the test sees `-1` and stops — printing
-`read 3 scores, average 84.0`. Two details deserve a hard look. The sentinel
-itself is **tested but never processed**: `-1` is not added to `total`. And
-the `99` after the sentinel is never even looked at — a sentinel means "stop
-reading", not "skip this one".
+`read 3 scores, average 84.0`. Two details deserve a hard look:
+
+- **The sentinel is tested but never processed.** `-1` is never added to
+  `total`.
+- **Nothing after the sentinel is even looked at.** The `99` is never seen,
+  because a sentinel means "stop reading", not "skip this one".
 
 ## do-while: run first, ask later
 
@@ -250,9 +265,13 @@ condition that must eventually fail: that is the whole recipe.
 ## A debugging ritual: print the loop variable
 
 When a loop misbehaves — wrong count, wrong total, never stops — resist the
-urge to stare at the code. Instead, make the loop *show you* what it is
-doing: print the loop variable (and any accumulator) at the top of every
-pass, run it, and compare against the trace table you expected.
+urge to stare at the code. Make the loop *show you* what it is doing instead:
+
+1. **Print the loop variable** (and any accumulator) at the top of every pass.
+2. **Run it** and read the printed story of the loop.
+3. **Compare** that story against the trace table you expected.
+4. **Look at the first line where the two disagree** — the bug is there.
+5. **Delete the print** once the loop is fixed; it has done its job.
 
 ```python
 n = 3
@@ -264,10 +283,9 @@ while n > 0:
 print(f"loop over:   n = {n}, total = {total}")
 ```
 
-Each line is one row of a live trace table: `n` marches 3, 2, 1 while `total`
-grows 0, 3, 5, and the final line confirms `n = 0, total = 6`. If the printed
-story disagrees with the story in your head, the bug is at the first line
-where they differ. When the loop is fixed, delete the print — it did its job.
+Each printed line is one row of a live trace table: `n` marches 3, 2, 1 while
+`total` grows 0, 3, 5, and the final line confirms `n = 0, total = 6`. Compare
+that against the story in your head, and the bug has nowhere left to hide.
 
 !!! warning "Common mistakes"
 

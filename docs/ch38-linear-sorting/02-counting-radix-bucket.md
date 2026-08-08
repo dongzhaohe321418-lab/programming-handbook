@@ -10,10 +10,12 @@ behind hash tables: **treat the key as an address**. The algorithms differ only
 in what they do when the key is too big to be an address directly.
 
 Nothing here contradicts the previous section. These sorts are simply outside
-the model the theorem describes, and the price of leaving that model is that
-they stop working on arbitrary data. You cannot counting-sort a list of
-arbitrary Python objects, or a list of 64-bit integers, or a list of floats
-without preprocessing. What you gain, when the keys cooperate, is $O(n)$.
+the model the theorem describes.
+
+The price of leaving that model is that they stop working on arbitrary data:
+you cannot counting-sort a list of arbitrary Python objects, or a list of
+64-bit integers, or a list of floats without preprocessing. What you gain, when
+the keys cooperate, is $O(n)$.
 
 ## Counting sort
 
@@ -99,12 +101,12 @@ department, and a stable sort leaves each department's names still
 alphabetical. An unstable sort scrambles them.
 
 Counting sort is stable *only because of the direction of the third loop*. The
-counter for a key points at the **last** free slot for that key, and walking
-the input backwards means the last item with a given key claims the last slot,
-the second-to-last claims the one before, and so on — the original order
-survives. Flip the loop to run forwards and every group comes out reversed.
+counter for a key points at the **last** free slot for that key. So walking the
+input backwards means the last item with a given key claims the last slot, the
+second-to-last claims the one before, and so on — the original order survives.
 
-Rather than take that on trust, run both:
+Flip the loop to run forwards and every group comes out reversed. Rather than
+take that on trust, run both:
 
 ```python
 records = [("Ana", 2), ("Bo", 1), ("Cy", 2), ("Di", 0), ("Eve", 1), ("Fay", 2)]
@@ -156,10 +158,11 @@ both are correctly sorted by key: True
 ```
 
 Both outputs are perfectly sorted by key — `0, 1, 1, 2, 2, 2` in each case — so
-a test that only checks the keys will pass on the broken version. The bug shows
-up only in the *names*: `Ana, Cy, Fay` came in in that order and came out as
-`Fay, Cy, Ana`. Hold on to this; the next algorithm's correctness depends
-entirely on it.
+a test that only checks the keys will pass on the broken version.
+
+The bug shows up only in the *names*: `Ana, Cy, Fay` came in in that order and
+came out as `Fay, Cy, Ana`. Hold on to that; the next algorithm's correctness
+depends entirely on it.
 
 ### The cost, honestly
 
@@ -171,9 +174,13 @@ O(n + k)
 $$
 
 in both time and space, where **$k$ is the size of the key range, not the number
-of distinct keys present**. That distinction is the whole story. If you sort a
-million records by a score from 0 to 100, $k = 101$ and the algorithm is a
-dream. If you sort a million arbitrary 32-bit integers, $k = 2^{32}$:
+of distinct keys present**. That distinction is the whole story:
+
+- **A million records keyed by a score from 0 to 100** — $k = 101$, and the
+  algorithm is a dream.
+- **A million arbitrary 32-bit integers** — $k = 2^{32}$, and it is a disaster.
+
+The arithmetic:
 
 ```python
 n = 1_000_000
@@ -227,11 +234,12 @@ passes over a 256-entry table.
 
 **LSD radix sort** ("least significant digit") sorts by the ones digit first,
 then the tens, then the hundreds. That ordering feels backwards the first time
-you see it — surely the most significant digit matters most? — and the reason
-it works is the stability we just demonstrated. When the tens-digit pass runs,
-the array is already sorted by ones; a *stable* sort by tens preserves that
-order within each group of equal tens digits, so after the pass the array is
-sorted by the last two digits. Induction does the rest.
+you see it — surely the most significant digit matters most?
+
+The reason it works is the stability we just demonstrated. When the tens-digit
+pass runs, the array is already sorted by ones; a *stable* sort by tens
+preserves that order within each group of equal tens digits, so after the pass
+the array is sorted by the last two digits. Induction does the rest.
 
 ```python
 def radix_sort(values, base=10, show=False):
@@ -272,16 +280,22 @@ input : [170, 45, 75, 90, 802, 24, 2, 66]
   pass 1 (digit worth   1): [170, 90, 802, 2, 24, 45, 75, 66]
   pass 2 (digit worth  10): [802, 2, 24, 45, 66, 170, 75, 90]
   pass 3 (digit worth 100): [2, 24, 45, 66, 75, 90, 170, 802]
+output: [2, 24, 45, 66, 75, 90, 170, 802]
+matches sorted(): True
 ```
 
 This is the moment the algorithm earns its reputation. After pass 1 the list
 looks like noise. After pass 2 it looks *worse* — 802 is at the front, 170 is
 in the middle. After pass 3 it is perfectly sorted, and no comparison was ever
-made. Look carefully at pass 2 to see stability doing its job: `2` and `802`
-both have tens digit 0, and `2` came after `802` in the pass-1 output, so it
-stays after `802`. The hundreds pass then separates them correctly.
+made.
 
-The cost is $d$ counting sorts, each $O(n + b)$ where $b$ is the base and $d$
+Look carefully at pass 2 to see stability doing its job: `2` and `802` both
+have tens digit 0, and `2` came after `802` in the pass-1 output, so it stays
+after `802`. The hundreds pass then separates them correctly.
+
+### The cost, and choosing the base
+
+The cost is $d$ counting sorts, each $O(n + b)$, where $b$ is the base and $d$
 is the number of digits:
 
 $$
@@ -339,15 +353,24 @@ expected        : [2, 24, 45, 66, 75, 90, 170, 802]
 The unstable version is not slightly wrong; it is nonsense. Its output is not
 even close to sorted. Every earlier pass's work is destroyed by the next one,
 because the whole algorithm rests on "the previous passes' order survives".
-Stability is not a nicety in radix sort — it is the load-bearing wall.
+
+!!! note "Stability is load-bearing"
+
+    In counting sort, stability is a useful property. In radix sort it is a
+    **correctness requirement**: break it in any single pass and the algorithm
+    stops sorting at all.
 
 ## Bucket sort
 
 Radix sort handles integers. **Bucket sort** handles values spread over a
-continuous range: scatter them into $n$ buckets by value, sort each bucket with
-any convenient algorithm, then concatenate. If the values are spread evenly,
-each bucket holds about one item, the little sorts cost almost nothing, and the
-total is $O(n)$.
+continuous range, in three steps:
+
+1. **Scatter** the values into $n$ buckets, by value.
+2. **Sort each bucket** with any convenient algorithm.
+3. **Concatenate** the buckets in order.
+
+If the values are spread evenly, each bucket holds about one item, the little
+sorts cost almost nothing, and the total is $O(n)$.
 
 "If the values are spread evenly" is the entire catch.
 
@@ -401,14 +424,16 @@ for reference, insertion sort on all 2000 would cost about 1,000,000 comparisons
 On uniform data, 2,000 values cost 920 comparisons — under half a comparison
 per element, and the biggest bucket held 7 items. On the skewed data the same
 code cost 150,299 comparisons, because one bucket swallowed 766 values and had
-to be insertion-sorted at $O(m^2)$. That is a 163-fold difference from changing
-nothing but the input distribution.
+to be insertion-sorted at $O(m^2)$. **That is a 163-fold difference from
+changing nothing but the input distribution.**
 
 In the true worst case — every value in one bucket — bucket sort degrades to
 whatever you used inside the buckets: $O(n^2)$ with insertion sort, or
 $O(n \log n)$ if you use `sorted()` there instead, which is what a careful
-implementation does. Bucket sort is the only algorithm on this page whose
-performance depends on the *distribution* of the data rather than its type.
+implementation does.
+
+Bucket sort is the only algorithm on this page whose performance depends on the
+*distribution* of the data rather than its type.
 
 ## Which sort, when
 
@@ -420,10 +445,12 @@ performance depends on the *distribution* of the data rather than its type.
 | Merge sort | $O(n \log n)$ | $O(n)$ | yes | any orderable type | you need a guaranteed bound and stability |
 | Timsort (`sorted()`) | $O(n \log n)$, often much better | $O(n)$ | yes | any orderable type | almost always — see below |
 
-The honest decision procedure has three questions. *Are the keys small
-non-negative integers?* If not, none of these apply. *Is the key range within a
-small multiple of $n$?* If yes, counting sort; if no, radix. *Is this actually
-the bottleneck?* Usually not.
+The honest decision procedure is three questions, in this order:
+
+1. **Are the keys small non-negative integers?** If not, none of these apply.
+2. **Is the key range within a small multiple of $n$?** If yes, counting sort;
+   if no, radix.
+3. **Is this actually the bottleneck?** Usually not.
 
 ## Head to head: radix versus `sorted()`
 
@@ -490,10 +517,11 @@ trust a number in the text. The pattern, however, is reliable, and it is not
 the one the asymptotics predict.
 
 **The $O(n)$ radix sort usually loses to the $O(n \log n)$ `sorted()`.** That
-looks impossible until you count what each one actually executes.
-`sorted()` is CPython's Timsort, written in C and tuned for two decades; the
-radix sort above is a Python `for` loop, and every iteration of a Python loop
-costs tens of nanoseconds of interpreter overhead before it does any real work.
+looks impossible until you count what each one actually executes. `sorted()` is
+CPython's Timsort, written in C and tuned for two decades; the radix sort above
+is a Python `for` loop, and every iteration of a Python loop costs tens of
+nanoseconds of interpreter overhead before it does any real work.
+
 A constant factor of 50–100× between interpreted and compiled inner loops is
 completely normal, and $\log_2(100{,}000) \approx 17$ is a far smaller factor
 than that. Asymptotically radix wins; at $n = 100{,}000$, in this language, the
@@ -507,17 +535,19 @@ the cost *grows*, not how big it is.
 **The counting-sort row is the interesting one.** It usually places well, often
 ahead of `sorted()`, because it touches each element in Python exactly once
 (the tally loop) and then builds the whole output with `extend`, which runs at
-C speed. But read its code again: it reconstructs the values from the counts,
-which only works because the elements *are* their own keys. Give the records
-any satellite data — names, rows, objects — and it needs the full
-placement loop from earlier on this page, which is another $n$ Python
-iterations, and the advantage largely evaporates.
+C speed.
 
-None of this makes the asymptotic analysis wrong — it makes it
-*incomplete*, exactly as [section 16.2](../ch16-complexity/02-timing.md) warned.
-Big-O tells you which algorithm wins *eventually*; only a stopwatch tells you
-whether "eventually" has arrived at your value of $n$, in your language, on
-your machine.
+But read its code again: it reconstructs the values from the counts, which only
+works because the elements *are* their own keys. Give the records any satellite
+data — names, rows, objects — and it needs the full placement loop from earlier
+on this page, which is another $n$ Python iterations, and the advantage largely
+evaporates.
+
+None of this makes the asymptotic analysis wrong. It makes it *incomplete*,
+exactly as [section 16.2](../ch16-complexity/02-timing.md) warned. Big-O tells
+you which algorithm wins *eventually*; only a stopwatch tells you whether
+"eventually" has arrived at your value of $n$, in your language, on your
+machine.
 
 !!! tip "When the linear sorts genuinely win"
 

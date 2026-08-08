@@ -2,13 +2,17 @@
 
 The first four chapters taught you to *write* programs. This chapter teaches you
 to *distrust* them — in the best possible way. Every language you will ever use
-sits on top of real hardware, and the hardware leaks through: integers that
-silently wrap around to negative numbers, decimal fractions that cannot be
-stored exactly, `and`/`or` expressions that skip half their work, and variables
-that turn out to be arrows pointing into memory rather than boxes holding
-values. These are the traps that a first programming course usually hides until
-they bite. We would rather show them to you now, in slow motion, with the
-machine's excuses attached.
+sits on top of real hardware, and the hardware leaks through:
+
+- integers that silently wrap around to negative numbers;
+- decimal fractions that cannot be stored exactly;
+- `and`/`or` expressions that skip half their work;
+- variables that turn out to be arrows pointing into memory rather than boxes
+  holding values.
+
+These are the traps that a first programming course usually hides until they
+bite. We would rather show them to you now, in slow motion, with the machine's
+excuses attached.
 
 The good news is that none of this is arbitrary. Once you see *why* a 32-bit
 integer must wrap at $2^{31}-1$, why $0.1 + 0.2$ misses $0.3$ by a whisker, and

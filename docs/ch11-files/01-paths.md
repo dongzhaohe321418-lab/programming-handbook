@@ -10,11 +10,14 @@ Ten minutes spent understanding paths now will save you hours of
 
 ## A tree of files and folders
 
-An operating system organizes storage as a **tree**. The leaves are **files**
-— named chunks of data such as `essay.txt` or `cat.jpg`. The branches are
-**directories** (also called **folders**), which contain files and other
-directories. At the very top sits the **root**: `/` on macOS and Linux, or a
-drive like `C:\` on Windows.
+An operating system organizes storage as a **tree**:
+
+- **Files** are the leaves — named chunks of data such as `essay.txt` or
+  `cat.jpg`.
+- **Directories** (also called **folders**) are the branches; each one holds
+  files and other directories.
+- The **root** sits at the very top: `/` on macOS and Linux, or a drive like
+  `C:\` on Windows.
 
 ```mermaid
 graph TD
@@ -96,12 +99,16 @@ ew_folder
 otes.txt
 ```
 
-Both `\n`s were silently turned into newlines and the path was mangled. You
-*can* fix this by doubling the backslashes (`"C:\\new_folder\\notes.txt"`) or
-by using a raw string (`r"C:\new_folder\notes.txt"`), but there is a simpler
-habit: **always write forward slashes**. Python — and Windows itself, under
-the hood — accepts `/` in paths on every operating system, so
-`"C:/new_folder/notes.txt"` and `"data/notes.txt"` just work everywhere.
+Both `\n`s were silently turned into newlines and the path was mangled. There
+are three ways out:
+
+- **Double every backslash** — `"C:\\new_folder\\notes.txt"`.
+- **Use a raw string** — `r"C:\new_folder\notes.txt"`.
+- **Always write forward slashes** — `"C:/new_folder/notes.txt"`. This is the
+  habit to build: Python, and Windows itself under the hood, accepts `/` in
+  paths on every operating system, so `"data/notes.txt"` just works
+  everywhere.
+
 Write `/`, and the whole class of backslash bugs disappears.
 
 ## Building paths with `pathlib`
@@ -185,11 +192,15 @@ print(Path.cwd())
 
 The output depends on where Python was started: in a terminal it is whatever
 directory you were in when you typed `python`; in these browser pages it is a
-directory inside the sandbox. That dependence is exactly why relative paths
-sometimes surprise beginners — a program that works when launched from one
-directory fails when launched from another, because "here" moved. When a file
-mysteriously "does not exist", printing `Path.cwd()` is the first
-diagnostic to reach for.
+directory inside the sandbox.
+
+That dependence is exactly why relative paths sometimes surprise beginners. A
+program that works when launched from one directory fails when launched from
+another, because "here" moved.
+
+!!! tip "First diagnostic for a missing file"
+    When a file mysteriously "does not exist", print `Path.cwd()` before
+    changing anything else. Most "file bugs" are really *path* bugs.
 
 ## Asking questions about a path
 

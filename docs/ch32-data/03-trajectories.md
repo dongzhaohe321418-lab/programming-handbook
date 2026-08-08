@@ -668,11 +668,18 @@ reward models; it enters through your data-construction rules just as easily.
 ### Step-level labels without an annotator
 
 Here is the trick that makes process supervision affordable. The environment is
-deterministic and resettable, so for any prefix of a trajectory you can **reset,
-replay the prefix, and roll out the rest many times**. The fraction of those
-completions that succeed is an estimate of how good that prefix was — a
-Monte-Carlo value estimate, and exactly the labelling scheme used to build
-process-supervision datasets without humans.
+deterministic and resettable, so the value of any prefix can be *measured* in
+four steps:
+
+1. **Reset** the environment from the trajectory's recorded `env_seed` and
+   difficulty, rebuilding the identical world.
+2. **Replay** the first $k$ steps exactly as recorded.
+3. **Roll out** the remainder many times, with whatever completion policy you
+   choose.
+4. **Score** the prefix as the fraction of those completions that succeeded.
+
+That fraction is a Monte-Carlo value estimate, and it is exactly the labelling
+scheme used to build process-supervision datasets without humans.
 
 ```python
 # continues
@@ -728,32 +735,40 @@ boxes — and climbs to 1.00 the moment the last box is open, because from there
 good, which is correct: it is an optimal path on a difficulty-3 task.
 
 Run the same procedure on a `greedy` trajectory and the value **drops** at the
-step where it stops early, and that drop is the label a PRM learns to predict.
-Two honest caveats. The estimate is noisy: 12 rollouts give a resolution of
-about $\pm 0.15$, and a real pipeline uses more. And it costs
-$(\text{steps}) \times (\text{rollouts})$ episodes per trajectory, which is why
-process supervision is expensive even when nobody is annotating.
+step where it stops early. That drop is the label a PRM learns to predict.
+
+Two honest caveats come with the method.
+
+- **The estimate is noisy.** Twelve rollouts give a standard error of up to
+  about $0.14$ — a 95% interval nearer $\pm 0.28$ — and a real pipeline uses
+  many more.
+- **It is expensive.** The cost is
+  $(\text{steps}) \times (\text{rollouts})$ episodes per trajectory, which is
+  why process supervision costs real money even when nobody is annotating.
 
 ## Cleaning trajectories
 
 Raw trajectories are messy in four specific ways, and all four have mechanical
-fixes. The block builds a deliberately awful episode and cleans it, printing the
-step count at every stage.
+fixes. Run them **in this order** — the last one is the only stage that can
+destroy meaning, so it goes last.
 
-- **Truncate loops.** A step repeating an `(action, input)` pair already taken
-  returns information the transcript already has. Teaching a model to repeat
-  itself is teaching it the failure mode of
-  [30.1](../ch30-agents/01-agent-loop-react.md).
-- **Strip detours.** A failed call that was later retried successfully with the
-  same action is a typo, not a lesson — unless you are deliberately keeping
-  recovery examples, in which case keep the pair together and say so.
-- **Redact secrets.** Tool output is the single most likely place for a token or
-  an internal address to enter your corpus. Scrub it here, with the same regex
-  discipline as [Section 41.1](../ch41-regex/01-fundamentals.md), and remember
-  that [32.1](01-why-data.md) already showed why a regex is a floor and not a
-  guarantee.
-- **Cap the length.** Keep the head and the tail; a marker in the middle is
-  more honest than a silent truncation.
+1. **Truncate loops.** A step repeating an `(action, input)` pair already taken
+   returns information the transcript already has. Teaching a model to repeat
+   itself is teaching it the failure mode of
+   [30.1](../ch30-agents/01-agent-loop-react.md).
+2. **Strip detours.** A failed call that was later retried successfully with the
+   same action is a typo, not a lesson — unless you are deliberately keeping
+   recovery examples, in which case keep the pair together and say so.
+3. **Redact secrets.** Tool output is the single most likely place for a token or
+   an internal address to enter your corpus. Scrub it here, with the same regex
+   discipline as [Section 41.1](../ch41-regex/01-fundamentals.md), and remember
+   that [32.1](01-why-data.md) already showed why a regex is a floor and not a
+   guarantee.
+4. **Cap the length.** Keep the head and the tail; a marker in the middle is
+   more honest than a silent truncation.
+
+The block below builds a deliberately awful episode and runs all four stages on
+it, printing the step count after each.
 
 ```python
 # continues
@@ -856,21 +871,23 @@ secrets remaining: False
 Eleven steps became six, and the token is gone. Three notes on what just
 happened, because each is a decision you are making on the reader's behalf.
 
-`drop_loops` removed three steps: two repeats of `open blue` and one repeat of
-`list_boxes`. Note the guard for `final_answer` — without it, an agent that
+**`drop_loops` removed three steps** — two repeats of `open blue` and one repeat
+of `list_boxes`. Note the guard for `final_answer`: without it, an agent that
 answers twice would lose its real answer.
 
-`drop_detours` removed the `open 'gren'` typo. That is a *policy choice*: the
-error-and-recovery pair is exactly the behaviour you might most want to teach.
-Keep a fraction of them on purpose, and record which fraction in the dataset
-card.
+**`drop_detours` removed the `open 'gren'` typo**, and that is a *policy
+choice*. The error-and-recovery pair is exactly the behaviour you might most
+want to teach. Keep a fraction of them on purpose, and record which fraction in
+the dataset card.
 
-`cap` is the one to be careful with, because it is the only stage that can
+**`cap` is the one to be careful with**, because it is the only stage that can
 remove a step the answer depended on. Here it elided two steps, one of them
 `open blue` — and `blue` held four of the nine bolts, so the cleaned transcript
 ends by asserting 9 while showing only the 5 that came from `red`. That is a
-real corruption, silently introduced by a length budget. Cap *last*, cap
-generously, and check that the survivors still support their conclusions.
+real corruption, silently introduced by a length budget.
+
+So: cap *last*, cap generously, and check that the survivors still support their
+conclusions.
 
 !!! warning "Common mistakes"
 

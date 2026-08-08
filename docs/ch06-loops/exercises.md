@@ -1,5 +1,60 @@
 # Exercises
 
+## The chapter in brief
+
+- A `while` loop tests its condition *before* every pass, so the body may run
+  zero times, and every correct loop answers three questions in order —
+  initialize, test, update ([6.1](01-while.md)).
+- A trace table with one row per check of the condition is the best tool for
+  reading any loop; it also shows why the condition is tested one more time
+  than the body runs.
+- Counter, accumulator, and sentinel are the three classic `while` patterns —
+  an accumulator starts at the identity for its operation (0 for sums, 1 for
+  products), and a sentinel is tested *before* it is ever processed.
+- Python has no `do-while`, so `while True:` with a reachable `break` is the
+  idiom that guarantees at least one pass.
+- Infinite loops have three causes — a missing update, an update moving the
+  wrong way, or a condition the loop steps straight past — and printing the
+  loop variable on every pass exposes all three.
+- A `for` loop hands the bookkeeping to `range`, whose three forms are all
+  half-open: `range(a, b)` holds exactly `b - a` values, so "1 to $n$
+  inclusive" is `range(1, n + 1)` ([6.2](02-for.md)).
+- Loop over a sequence directly when you want its elements, and over
+  `enumerate(...)` when you want the position as well.
+- Choose `for` when the number of passes is known before the loop starts, and
+  `while` when only the stopping moment is recognisable; the loop-and-a-half
+  puts that exit test in the middle of the body.
+- Nesting multiplies: an inner loop of $n$ passes inside an outer loop of $m$
+  runs its body $m \times n$ times
+  ([6.3](03-nested-break-continue.md)).
+- `break` leaves the whole loop while `continue` leaves only the current pass,
+  and `break` escapes exactly one level — for a nested search, use a
+  found-flag or move the loops into a function and `return`.
+- Bitwise operators work one bit position at a time, and three mask moves
+  cover most real uses: `&` tests a bit, `|` sets it, `& ~` clears it
+  ([6.4](04-bitwise-enums.md)).
+- An `enum` gives a fixed set of options real names, so a typo fails loudly at
+  the guilty line instead of travelling silently through your data.
+
+### Key terms
+
+| Term | One-line reminder |
+| --- | --- |
+| initialize–test–update | the three questions every correct `while` loop must answer |
+| trace table | one row per pass, recording the loop variable and any accumulator |
+| accumulator | a variable carrying a running result, folded once per pass |
+| [sentinel](../concept-index.md#s) | an impossible data value that means "stop reading now" |
+| [`range`](../concept-index.md#r) | the lazy source of the integers a `for` loop walks through |
+| half-open interval | `start` included, `stop` excluded — why `range(a, b)` holds `b - a` values |
+| `enumerate` | pairs each element with its index, in one loop |
+| [nested loop](../concept-index.md#n) | a loop inside a loop; the inner one runs fully on every outer pass |
+| [`break`](../concept-index.md#b) and [`continue`](../concept-index.md#c) | leave the loop entirely / skip the rest of this pass only |
+| [bitwise operators](../concept-index.md#b) | AND, OR, XOR, NOT and the two shifts, applied one bit position at a time |
+| mask | an integer whose bit pattern selects the positions you want to test, set, or clear |
+| [enum](../concept-index.md#e) | a type whose named members are the only legal values of a fixed set |
+
+## The exercises
+
 Eight workouts for Chapter 6, easiest first. Write your own version before
 opening any solution — loops are learned through the fingers, not the eyes.
 Difficulty: ● warm-up, ●● standard, ●●● stretch.

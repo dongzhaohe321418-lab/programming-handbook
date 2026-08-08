@@ -23,11 +23,13 @@ Three everyday features are all the same query in disguise:
   end that lets you abandon this branch now?
 
 A balanced tree ([Chapter 35](../ch35-balanced-trees/index.md)) can do the
-first one, in a fashion: sorted order groups the `pro` words together, so
-you binary-search to `"pro"` and walk forward. But every comparison costs a
-full string comparison, the tree stores the whole of every key, and
-longest-prefix matching over *bit* prefixes fits it badly. There is a
-structure built for exactly this job.
+first one, in a fashion: sorted order groups the `pro` words together, so you
+binary-search to `"pro"` and walk forward.
+
+But it pays for that three times over. Every comparison is a full string
+comparison, the tree stores the whole of every key, and longest-prefix matching
+over *bit* prefixes fits it badly. There is a structure built for exactly this
+job.
 
 ## The idea: the key is the path
 
@@ -55,14 +57,19 @@ flowchart TD
     classDef word fill:#cfe8cf,stroke:#2e7d32,stroke-width:2px
 ```
 
-Six words — `car`, `card`, `care`, `cat`, `do`, `dog` — in ten nodes
-counting the root, because they share prefixes. Spelled out separately the
-six words are 19 characters; the trie stores 9. The green ✔ nodes end a word; the white ones
-are merely waypoints. Note carefully that `"ca"` is a node but **not** a
-word, while `"do"` is a node **and** a word with a child hanging below it.
-Those two cases are what the end-of-word marker exists to distinguish, and
-forgetting it is the classic first-trie bug: without it, `"ca"` and `"dog"`
-become indistinguishable from `"cat"` and `"do"`.
+Six words — `car`, `card`, `care`, `cat`, `do`, `dog` — in ten nodes counting
+the root, because they share prefixes. Spelled out separately the six words are
+19 characters; the trie stores 9. The green ✔ nodes end a word; the white ones
+are merely waypoints.
+
+Note carefully the two awkward cases in that picture:
+
+- `"ca"` is a node but **not** a word.
+- `"do"` is a node **and** a word, with a child hanging below it.
+
+Those two are exactly what the end-of-word marker exists to distinguish, and
+forgetting it is the classic first-trie bug: without the flag, `"ca"` and
+`"dog"` become indistinguishable from `"cat"` and `"do"`.
 
 Three consequences fall straight out of the picture:
 
@@ -202,13 +209,14 @@ prefix ''   -> ['car', 'card', 'care', 'cat', 'do', 'dog']
 nodes named : ['', 'c', 'ca', 'car*', 'card*', 'care*', 'cat*', 'd', 'do*', 'dog*']
 ```
 
-`paths()` prints the diagram: ten nodes, named by the string that reaches
-each one (the root is the empty string), with a `*` on the six that end a
-word. `"ca"` appears with no star.
-`collect_all_with_prefix("")` returns the whole dictionary in sorted order
-for free, because a depth-first walk that visits children in alphabetical
-order emits words in alphabetical order. A trie is a sorted container that
-never sorts anything.
+`paths()` prints the diagram: ten nodes, named by the string that reaches each
+one (the root is the empty string), with a `*` on the six that end a word.
+`"ca"` appears with no star.
+
+Notice the last line of output too. `collect_all_with_prefix("")` returns the
+whole dictionary in sorted order for free, because a depth-first walk that
+visits children in alphabetical order emits words in alphabetical order. **A
+trie is a sorted container that never sorts anything.**
 
 The collection is [recursion](../ch17-recursion/index.md) at its most
 natural: *emit this node if it ends a word, then recurse into each child.*
@@ -217,15 +225,16 @@ The `path` list is the accumulator, pushed before the call and popped after
 
 ## Deletion, and the rule that makes it subtle
 
-Insertion only ever adds. Deletion has to decide whether to *remove* nodes,
-and that decision is where every buggy trie goes wrong. Deleting `"card"`
-from our trie must not disturb `"car"` or `"care"`. Deleting `"car"` must
-not remove a single node, because `"car"` is still the path to two other
-words.
+Insertion only ever adds. Deletion has to decide whether to *remove* nodes, and
+that decision is where every buggy trie goes wrong. Deleting `"card"` from our
+trie must not disturb `"car"` or `"care"`; deleting `"car"` must not remove a
+single node, because `"car"` is still the path to two other words.
 
-> **Prune rule.** After clearing a word marker, walk back up. Delete a node
-> only if it has **no children** and is **not itself a word**. Stop climbing
-> at the first node that fails the test.
+!!! note "The prune rule"
+
+    After clearing a word marker, walk back up. Delete a node **only if** it
+    has no children **and** is not itself a word. Stop climbing at the first
+    node that fails the test.
 
 ```python
 # continues
@@ -401,17 +410,18 @@ for n in (1_000, 4_000, 16_000, 32_000):
          32000       0.189      0.036                0.127       174251
 ```
 
-Thirty-two times more words, and the trie column does not move: 0.19, 0.21,
-0.21, 0.19 microseconds. Eight characters, eight dictionary lookups, every
-time. The `bisect` column drifts upward, as $O(L \log n)$ must.
+Thirty-two times more words, and the trie column does not move — around 0.2
+microseconds at every size, whatever your machine reports in absolute terms.
+Eight characters, eight dictionary lookups, every time. The `bisect` column
+drifts upward, as $O(L \log n)$ must.
 
-Be honest about the third fact in that table, though: **the hash set is
-five to six times faster than our trie**, and it is also $O(L)$ — hashing a
-string reads all $L$ characters too. A trie is not the way to make exact
-lookups faster. Every one of its steps is a small dictionary lookup and a
-pointer chase into cold memory, where the hash set does one pass and one
-jump. The trie earns its place on the operations a hash set cannot perform
-*at all*:
+Be honest about the third fact in that table, though: **the hash set is five to
+six times faster than our trie**, and it is also $O(L)$ — hashing a string
+reads all $L$ characters too. A trie is not the way to make exact lookups
+faster. Every one of its steps is a small dictionary lookup and a pointer chase
+into cold memory, where the hash set does one pass and one jump.
+
+The trie earns its place on the operations a hash set cannot perform *at all*:
 
 | Operation | Trie | Hash set | Balanced BST |
 |---|---|---|---|
@@ -423,23 +433,29 @@ jump. The trie earns its place on the operations a hash set cannot perform
 
 ## The honest cost: space
 
-Look at the node counts again. 32 000 eight-letter words, 256 000
-characters — and 174 251 nodes. Shared prefixes saved a third of them, and
-that is with *random* strings, which share almost nothing. Real vocabularies
-share far more.
+Look at the node counts again. 32 000 eight-letter words, 256 000 characters —
+and 174 251 nodes. Shared prefixes saved a third of them, and that is with
+*random* strings, which share almost nothing. Real vocabularies share far more.
 
-But each node is a Python object holding a dictionary, so a node costs far
-more than the one character it represents. That is the trie's real price:
-**a lot of small objects and a lot of pointer chasing.** A production trie
-fights back by replacing the per-node dictionary with a fixed array of 26
-slots (fast, wasteful), a sorted array of pairs (compact, slower), or a
-bitmap plus a packed array (both, complicated).
+But each node is a Python object holding a dictionary, so a node costs far more
+than the one character it represents. That is the trie's real price: **a lot of
+small objects and a lot of pointer chasing.**
 
-The deeper fix attacks the structure. In the random-word trie above, almost
-every node below depth 3 has exactly one child: once you are past the shared
-prefixes, each word runs off alone in a private chain of nodes. A **radix
-tree** (also *compressed trie*, or **PATRICIA** trie) collapses each of
-those chains into a single edge labelled with a whole string.
+A production trie fights back on the node representation, replacing the
+per-node dictionary with one of:
+
+- a **fixed array of 26 slots** — fast, wasteful;
+- a **sorted array of pairs** — compact, slower;
+- a **bitmap plus a packed array** — both, complicated.
+
+### Radix trees: collapse the single-child chains
+
+The deeper fix attacks the structure instead. In the random-word trie above,
+almost every node below depth 3 has exactly one child: once you are past the
+shared prefixes, each word runs off alone in a private chain of nodes.
+
+A **radix tree** (also *compressed trie*, or **PATRICIA** trie) collapses each
+of those chains into a single edge labelled with a whole string.
 
 ```mermaid
 flowchart TD
@@ -585,22 +601,29 @@ plain trie 13 nodes, radix tree 9 nodes
 all still found: True
 ```
 
-A quarter of the nodes, for words that barely share anything — because most
-of those 32 words branch apart at their very first letter, and each then
-becomes a single edge instead of four more nodes. The
-`is_word` marker still matters — `"do"` is a word sitting on an internal
-node — and lookups still cost $O(L)$ character comparisons, just spread over
-fewer objects. This is the shape used in practice: Git stores object
-directories this way, Ethereum's state is a *Merkle Patricia trie*, and
-every serious IP routing table is a compressed bit trie.
+A quarter of the nodes, for words that barely share anything — because most of
+those 32 words branch apart at their very first letter, and each then becomes a
+single edge instead of four more nodes.
+
+Two things carry over unchanged. The `is_word` marker still matters (`"do"` is
+a word sitting on an internal node), and lookups still cost $O(L)$ character
+comparisons — just spread over fewer objects.
+
+This is the shape used in practice: Git stores object directories this way,
+Ethereum's state is a *Merkle Patricia trie*, and every serious IP routing
+table is a compressed bit trie.
 
 ## A working autocomplete engine
 
-Now the payoff. An autocomplete box needs three things: find the subtree for
-what has been typed, collect the words in it, and rank them — because
-offering `promiscuity` above `program` is useless no matter how fast it
-arrives. Ranking means storing a frequency alongside each word, on the
-end-of-word node.
+Now the payoff. An autocomplete box needs three things:
+
+1. **Find the subtree** for what has been typed — one walk of $L$ edges.
+2. **Collect the words in it** — a depth-first sweep of that subtree.
+3. **Rank them** — because offering `promiscuity` above `program` is useless
+   no matter how fast it arrives.
+
+Step 3 is the only new machinery: it means storing a frequency alongside each
+word, on the end-of-word node.
 
 ```python
 class ACNode:
@@ -702,10 +725,11 @@ after boosting 'prompt':
 
 Every one of those responses cost a walk of at most seven nodes plus a
 depth-first sweep of one small subtree — and the subtree shrinks with every
-keystroke, so autocomplete gets *faster* as the user types. The lookup for
-`"px"` fails on the second character and returns instantly; a hash set would
-have had to examine all 44 keys to establish that nothing starts with `px`,
-and all 400 000 of them in a real dictionary.
+keystroke, so autocomplete gets *faster* as the user types.
+
+The lookup for `"px"` fails on the second character and returns instantly. A
+hash set would have had to examine all 44 keys to establish that nothing starts
+with `px`, and all 400 000 of them in a real dictionary.
 
 Two upgrades a production engine adds, both worth knowing:
 
@@ -718,10 +742,11 @@ Two upgrades a production engine adds, both worth knowing:
 
 ## Where tries actually live
 
-**IP routing — longest-prefix match.** A routing table stores network
-prefixes of different lengths, and a packet must be sent by the *most
-specific* match. That is a trie over the bits of the address: walk down,
-remember the deepest labelled node you passed.
+### IP routing — longest-prefix match
+
+A routing table stores network prefixes of different lengths, and a packet must
+be sent by the *most specific* match. That is a trie over the bits of the
+address: walk down, and remember the deepest labelled node you passed.
 
 ```python
 class BitNode:
@@ -781,28 +806,28 @@ for ip in ["10.1.2.7", "10.1.5.9", "10.9.9.9", "192.168.4.4", "8.8.8.8"]:
 8.8.8.8        -> default-gateway  (matched /0)
 ```
 
-Thirty-two steps, worst case, whatever the size of the table — which is why
-a router can forward millions of packets a second while holding a million
-routes. Real hardware uses compressed multi-bit tries for exactly this.
+Thirty-two steps, worst case, whatever the size of the table — which is why a
+router can forward millions of packets a second while holding a million routes.
+Real hardware uses compressed multi-bit tries for exactly this.
 
-**Spell-checkers and word games.** Checking a word is $O(L)$; suggesting
-corrections is a bounded search around the query path. Every Boggle or
-Scrabble solver walks a trie of the dictionary alongside the board, and
-abandons a branch the instant the letters so far are not a prefix of any
-word — which is the `starts_with` query, and the reason the search finishes
-at all.
+### Three more places, briefly
 
-**Tokenizer vocabularies.** The BPE tokenizers of
-[Section 26.1](../ch26-llm-internals/01-tokenization.md) must repeatedly ask
-"what is the longest entry in my 50 000-token vocabulary that matches the
-text starting here?" — the *longest prefix* question again, over strings
-instead of bits. A trie answers it in one pass over the characters, instead
-of testing every possible cut against a hash set.
-
-**Filesystems, URL routers, and IDE symbol search.** Paths are strings with
-shared prefixes; so are package names, so are URLs. Any time you have seen
-`/api/users/:id` matched against a route table, or an editor narrow its
-symbol list as you type, some flavour of trie was underneath.
+- **Spell-checkers and word games.** Checking a word is $O(L)$; suggesting
+  corrections is a bounded search around the query path. Every Boggle or
+  Scrabble solver walks a trie of the dictionary alongside the board and
+  abandons a branch the instant the letters so far are not a prefix of any
+  word — that is the `starts_with` query, and the reason the search finishes
+  at all.
+- **Tokenizer vocabularies.** The BPE tokenizers of
+  [Section 26.1](../ch26-llm-internals/01-tokenization.md) repeatedly ask
+  "what is the longest entry in my 50 000-token vocabulary that matches the
+  text starting here?" — the longest-prefix question again, over strings
+  instead of bits. A trie answers it in one pass over the characters, instead
+  of testing every possible cut against a hash set.
+- **Filesystems, URL routers, and IDE symbol search.** Paths are strings with
+  shared prefixes; so are package names, so are URLs. Any time you have seen
+  `/api/users/:id` matched against a route table, or an editor narrow its
+  symbol list as you type, some flavour of trie was underneath.
 
 ## Check your understanding
 

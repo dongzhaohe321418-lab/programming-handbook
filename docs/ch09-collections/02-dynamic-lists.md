@@ -4,8 +4,9 @@ Chapter 7 introduced arrays the way Java teaches them: you declare a length,
 and that length is final — need an eleventh slot in a ten-slot array and you
 must build a bigger array and copy everything across. Real programs rarely
 know their sizes in advance (how many tasks on a to-do list? how many lines
-in a file?), which is why every language offers a *growable* sequence. In
-Java that is `ArrayList`, the star of this module of your Java course. In
+in a file?), which is why every language offers a *growable* sequence.
+
+In Java that is `ArrayList`, the star of this module of your Java course. In
 Python it is the `list` you have been using all along — Python simply never
 made you suffer the fixed-size version first. This page lines the two up
 method-by-method so you can translate fluently in both directions.
@@ -74,12 +75,15 @@ bookmarking:
 | is it empty?                 | `a.isEmpty()`                    | `len(a) == 0`                |
 | remove everything            | `a.clear()`                      | `a.clear()`                  |
 
-Two style notes. First, where Java uses a method call for everything, Python
-uses square brackets for reading and writing by index and keywords (`in`,
-`len`) for the most common questions. Second, spot the one honest behavioural
-difference: a failed `indexOf` *returns* `-1`, while a failed `index()`
-*raises an error* — a `ValueError`, exactly the kind of event
-[Chapter 10](../ch10-exceptions/index.md) teaches you to handle.
+Two notes on reading that table:
+
+- **Style.** Where Java uses a method call for everything, Python uses square
+  brackets for reading and writing by index, and keywords (`in`, `len`) for
+  the most common questions.
+- **One honest behavioural difference.** A failed `indexOf` *returns* `-1`,
+  while a failed `index()` *raises an error* — a `ValueError`, exactly the
+  kind of event [Chapter 10](../ch10-exceptions/index.md) teaches you to
+  handle.
 
 Now let's run each row of the table.
 
@@ -195,9 +199,13 @@ there are data structures built for exactly that — the linked lists of
 
 ## Worked example: a to-do-list manager
 
-Time to put the whole API to work. A to-do manager needs to add tasks
-(no duplicates), mark them done, jump the queue for urgent ones, and report
-what is left — one table row per feature:
+Time to put the whole API to work. A to-do manager needs four features, and
+each one is a row of the translation table:
+
+- **Add a task, refusing duplicates** — `in` to check, then `append`.
+- **Jump the queue for something urgent** — `insert(0, task)`.
+- **Mark a task done** — `remove` by value, wherever it has drifted to.
+- **Report what is left** — `len` for the count, `todo[0]` for what is next.
 
 ```python
 def add_task(todo, task):

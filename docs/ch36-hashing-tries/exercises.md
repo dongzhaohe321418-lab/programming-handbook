@@ -1,11 +1,65 @@
 # Chapter 36 · Exercises
 
-Hashing rewards arithmetic on paper: work out the bucket, then check the
-machine. Tries and skip lists reward drawing the structure before touching
-the keyboard. The first three exercises are pencil-first on purpose, the
-middle four are repairs and measurements, and the last one is a small
-engineering project that combines two chapters' worth of structures into the
-cache that sits in front of half the software you use.
+## The chapter in brief
+
+- A hash table does not search for a key, it **computes the key's address** —
+  which is why its cost never learns how many keys are stored
+  ([36.1](01-hash-tables.md)).
+- A good hash function is **deterministic, uniform, fast, and avalanching**,
+  and a plain sum of character codes fails three of those four.
+- Uniformity is measurable: chi-squared should land near $m$, and about
+  $m e^{-n/m}$ buckets should come out empty.
+- The **table size** is half the design — a power of two keeps only the low
+  bits, so either use a prime or stir the bits first.
+- A key's hash must never change while it is stored, which is why only
+  immutable objects are hashable and why `__eq__` and `__hash__` must be
+  written together.
+- **Collisions are certain and they arrive early**: a million-bucket table
+  collides after about 1178 keys, at 0.1% full
+  ([36.2](02-collisions-resizing.md)).
+- Cost depends on the **load factor** $\alpha = n/m$ and on nothing else, so
+  resizing — grow, then rehash every key — is what turns "depends on $\alpha$"
+  into $O(1)$.
+- Open addressing must delete with a **tombstone**; clearing the slot strands
+  every key whose probe sequence ran through it.
+- Doubling makes insertion **amortized $O(1)$**, because the total pairs moved
+  stays under $2n$ — though one insert in a few thousand is expensive.
+- Adversarial keys turn $O(1)$ into $O(n)$ — **hash flooding** — which is why
+  CPython randomizes string hashing and Java tree-ifies long chains.
+- A **trie** stores the key as a *path*, making every operation $O(L)$ in the
+  query length, independent of $n$, and prefix queries nearly free
+  ([36.3](03-tries.md)).
+- Deleting from a trie prunes only nodes that are **childless and unmarked**,
+  and the climb stops at the first node that fails that test.
+- A **skip list** reaches $O(\log n)$ *expected* with coin flips instead of
+  rotations, trusting its own randomness rather than the input's
+  ([36.4](04-skip-lists.md)).
+
+### Key terms
+
+| Term | What it means |
+| --- | --- |
+| [hash function](../concept-index.md#h) | turns any key into an integer; a modulo turns that into a slot |
+| [hash table](../concept-index.md#h) | a direct-address table with a hash function in front |
+| [collision](../concept-index.md#c) | two keys landing in one bucket — legal, unavoidable, handled |
+| [load factor](../concept-index.md#l) | $\alpha = n/m$, the only number a hash table's cost depends on |
+| [separate chaining](../concept-index.md#s) | one list per bucket; degrades gently, costs pointers |
+| [open addressing](../concept-index.md#o) | every entry inside the table, collisions resolved by probing |
+| primary clustering | linear probing's runs of occupied slots, which grow at both ends |
+| [tombstone](../concept-index.md#t) | a "deleted, keep probing" marker that keeps a probe sequence intact |
+| [amortized cost](../appendix/B-big-o.md) | the average per operation over a long run, even when one is expensive |
+| hash flooding | an attack that feeds a server deliberately colliding keys |
+| [trie](../concept-index.md#t) | tree where the key is spelled by the path, one character per edge |
+| radix tree (PATRICIA) | trie with single-child chains collapsed into one labelled edge |
+| [skip list](../concept-index.md#s) | stacked sorted linked lists with coin-flipped express lanes |
+| update array | the per-level predecessors a skip-list splice needs |
+
+Now put it to work. Hashing rewards arithmetic on paper: work out the bucket,
+then check the machine. Tries and skip lists reward drawing the structure
+before touching the keyboard. The first three exercises are pencil-first on
+purpose, the middle four are repairs and measurements, and the last one is a
+small engineering project that combines two chapters' worth of structures into
+the cache that sits in front of half the software you use.
 
 ### Exercise 36.1 — Bucket arithmetic by hand ●
 

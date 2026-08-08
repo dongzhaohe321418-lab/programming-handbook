@@ -3,18 +3,24 @@
 An `elif` chain that compares one variable against a series of specific
 values — menu choices, status codes, command names — is so common that many
 languages grew a dedicated statement for it. Java has had `switch` since day
-one; Python added `match` in version 3.10. This section shows both, shows
-when a plain dictionary beats either, and then turns practical: how to
-*debug* a branch that takes the wrong path, and the style habits that stop
-branch bugs from being written in the first place.
+one; Python added `match` in version 3.10.
+
+This section shows both, shows when a plain dictionary beats either, and then
+turns practical: how to *debug* a branch that takes the wrong path, and the
+style habits that stop branch bugs from being written at all.
 
 ## Python's match statement
 
 `match` takes one subject expression and compares it against a series of
-`case` patterns, top to bottom. The first pattern that matches wins, its
-block runs, and the whole statement ends — there is **no fallthrough** and
-no `break`. The wildcard pattern `_` matches anything and plays the role of
-`else`/`default`; several literals can share one case with `|` ("or").
+`case` patterns, top to bottom. Four rules cover everything we need here:
+
+- **First match wins.** That pattern's block runs, and the whole statement
+  ends.
+- **There is no fallthrough**, so there is no `break` — a `case` never leaks
+  into the one below it.
+- **`_` is the wildcard.** It matches anything, playing the role of `else` or
+  Java's `default`.
+- **`|` lets several literals share one case**, as in `case 301 | 302:`.
 
 ```python
 def describe_status(code):
@@ -99,9 +105,18 @@ exactly why Python's `match` refused to inherit it.
     ```
 
 Modern Java (the arrow `->` form, standard since Java 14) fixed the trap,
-and your Java course will likely show both forms. The deliberate *use* of
-fallthrough — stacking `case 6: case 7:` to share a body — is what Python's
-`case 6 | 7:` expresses safely.
+and your Java course will likely show both forms. The three shapes side by
+side:
+
+| | Python `match` | Java `switch` (classic) | Java `switch` (arrow) |
+| --- | --- | --- | --- |
+| Falls through? | never | yes, unless you `break` | never |
+| `break` needed? | no | yes, on every case | no |
+| Share one body | one `case`, several literals | stack `case 6: case 7:` | `case 6, 7 ->` |
+| Catch-all | `case _:` | `default:` | `default ->` |
+
+The deliberate *use* of fallthrough — stacking `case 6: case 7:` to share a
+body — is what Python's `case 6 | 7:` expresses safely.
 
 ## When a dictionary beats both
 
@@ -142,9 +157,13 @@ else:
     print("unknown operator:", op)
 ```
 
-Rule of thumb: **data-shaped decisions** (key → result) want a dict;
-**range or condition-shaped decisions** (`score >= 90`) want `if`/`elif`;
-`match` shines when you later need its structural patterns.
+Rule of thumb — match the tool to the *shape* of the decision:
+
+| The decision looks like | Reach for |
+| --- | --- |
+| **Data-shaped**: key → result, e.g. `"FR"` → `"France"` | a dictionary, with `.get(key, default)` |
+| **Range- or condition-shaped**: `score >= 90` | an `if`/`elif` chain |
+| **Structural**: take a list or object apart | `match`, for its real patterns |
 
 ## Debugging branches
 
@@ -192,11 +211,12 @@ else:
 ```
 
 The printout shows at a glance *which* requirement failed (`stable_job` is
-`False`). Now, the three classic branch bugs:
+`False`). Now for the three classic branch bugs.
 
-**Bug 1: `=` where `==` belongs.** Python turns this ancient bug into an
-immediate, loud error instead of a silent wrong answer — and recent versions
-even guess what you meant:
+### Bug 1 — `=` where `==` belongs
+
+Python turns this ancient bug into an immediate, loud error instead of a
+silent wrong answer — and recent versions even guess what you meant:
 
 ```python
 # raises SyntaxError
@@ -206,8 +226,10 @@ if x = 5:
     print("five")
 ```
 
-**Bug 2: elif tests in the wrong order.** In a chain, the first `True` test
-wins — so a *general* test placed before a *specific* one starves it:
+### Bug 2 — elif tests in the wrong order
+
+In a chain, the first `True` test wins — so a *general* test placed before a
+*specific* one starves it:
 
 ```python
 score = 95
@@ -222,8 +244,10 @@ This prints `D` for a 95. With `>=`-style tests, order from the **highest
 boundary down** (as the grade assigner in [4.2](02-if-else.md) does), so
 each test only sees what the previous ones rejected.
 
-**Bug 3: overlapping or gappy ranges.** When you write both ends of every
-range by hand, it is easy to cover a boundary twice — or not at all:
+### Bug 3 — overlapping or gappy ranges
+
+When you write both ends of every range by hand, it is easy to cover a
+boundary twice — or not at all:
 
 ```python
 bmi = 25.0

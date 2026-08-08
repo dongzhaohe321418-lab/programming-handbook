@@ -331,22 +331,36 @@ methods.
 
 Step back from the two builds and the method behind them shows through.
 
-**Nouns become classes; verbs become methods.** Re-read the problem
-statements. "A *station* collects *readings*" — noun `WeatherStation`,
-holding `readings`, with verb `add_reading`. "A *dog house* holds *dogs* up
-to a capacity; dogs can be *added* and *removed*" — nouns `DogHouse` and
-`Dog`, verbs `add` and `remove`. This noun/verb reading is genuinely how
-designers get their first draft, and it is how you should start every
-exercise on the next page.
+### Nouns become classes; verbs become methods
 
-**Design is tested by change.** Suppose the requirement shifts: *puppies
-under one year count only half toward capacity.* Which code changes? Only
-the test inside `DogHouse.add` — one method, one class. Every program that
-creates houses, adds dogs, or removes them keeps working untouched, because
-none of them ever counted residents themselves; they always asked the house
-to do it. That is the payoff of routing every interaction through methods:
-the rule lived in exactly one place, so the change lands in exactly one
-place.
+Re-read the problem statement and mark it up in two passes:
+
+1. **Underline the nouns.** They are your candidate classes — and the data
+   those classes hold.
+2. **Underline the verbs.** They are your candidate methods, each one living
+   on the class whose data it touches.
+
+Both builds came straight out of that reading:
+
+| The problem statement said … | Nouns → | Verbs → |
+| --- | --- | --- |
+| "a *station* collects *readings*" | `WeatherStation`, holding `readings` | `add_reading` |
+| "a *dog house* holds *dogs* up to a capacity; dogs can be *added* and *removed*" | `DogHouse`, `Dog` | `add`, `remove` |
+
+This noun/verb reading is genuinely how designers get their first draft, and
+it is how you should start every exercise on the next page.
+
+### Design is tested by change
+
+Suppose the requirement shifts: *puppies under one year count only half
+toward capacity.* Which code changes? Only the test inside `DogHouse.add` —
+one method, one class.
+
+Every program that creates houses, adds dogs, or removes them keeps working
+untouched, because none of them ever counted residents themselves; they
+always asked the house to do it. That is the payoff of routing every
+interaction through methods: the rule lived in exactly one place, so the
+change lands in exactly one place.
 
 There is a catch, though. Nothing yet *stops* an impatient caller from
 writing `house.dogs.append(...)` and smuggling a third dog past the capacity

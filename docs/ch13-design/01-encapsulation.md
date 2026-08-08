@@ -4,11 +4,12 @@ Every object carries data, and some of that data has rules: a bank balance
 must never go negative, a temperature can never drop below absolute zero, a
 seat cannot hold two passengers. A rule that must stay true for an object's
 entire lifetime is called an **invariant**, and the central question of
-class design is: *who is responsible for keeping the invariant true?* If
-the answer is "everyone who ever touches the object", the invariant is
-doomed. **Encapsulation** is the discipline of hiding an object's data
-behind a small set of methods so that the class — and only the class —
-enforces its own rules.
+class design is: *who is responsible for keeping the invariant true?*
+
+If the answer is "everyone who ever touches the object", the invariant is
+doomed. **Encapsulation** is the discipline of hiding an object's data behind
+a small set of methods, so that the class — and only the class — enforces its
+own rules.
 
 ## An invariant under attack
 
@@ -77,9 +78,13 @@ True
 
 The over-withdrawal is refused and the balance survives. Notice the shape
 of the design: *one* class contains *all* the code that can change
-`_balance`, so there is exactly one place to check the invariant — and
-exactly one place to look when something goes wrong. That locality is the
-real prize of encapsulation, and it matters more as programs grow.
+`_balance`.
+
+!!! note "The real prize is locality"
+    When one class holds every line that can change a piece of state, there
+    is exactly one place to check the invariant — and exactly one place to
+    look when something goes wrong. That matters more with every class the
+    program grows.
 
 ## How Java locks the door
 
@@ -272,6 +277,8 @@ acct = BankAccount(100.0)
 acct.balance = 1_000_000      # no setter — refused
 ```
 
+### Why idiomatic Python skips getters and setters
+
 Java has no properties, so Java code needs `getX()` / `setX()` methods
 from day one — if a field starts public and later needs validation,
 switching it to a method changes every caller. Python code can start with
@@ -328,13 +335,15 @@ to calling code. That is why idiomatic Python does **not** write
 | Philosophy | make misuse impossible | "we are all consenting adults" |
 
 Neither system is *security* — a determined programmer defeats both, and
-real security lives elsewhere (operating systems, cryptography). Both are
-**communication**: they tell the next programmer which parts of a class
-are a stable public promise and which are internals that may change
+real security lives elsewhere (operating systems, cryptography).
+
+Both are **communication**: they tell the next programmer which parts of a
+class are a stable public promise, and which are internals that may change
 without warning. Java writes that message in a form the compiler checks;
-Python writes it in a form humans check. The design skill — deciding what
-to expose and what to hide — is identical in both languages, and it is the
-skill this chapter is really about.
+Python writes it in a form humans check.
+
+The design skill — deciding what to expose and what to hide — is identical in
+both languages, and it is the skill this chapter is really about.
 
 !!! warning "Common mistakes"
 

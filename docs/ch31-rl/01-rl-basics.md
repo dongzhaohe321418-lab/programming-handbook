@@ -3,11 +3,12 @@
 Every model you have met so far in Part V was trained by being shown the right
 answer. Reinforcement learning is what you do when nobody has the right answer
 but somebody can tell you how good yours was — and that turns out to describe
-almost everything we want from a chat model. This section builds the whole
-vocabulary from zero: what a policy is, what a reward is, what a *gradient* is
-(we will measure one with a ruler before we ever write a derivative), and a
-baseline algorithm so simple that it is genuinely the right answer surprisingly
-often.
+almost everything we want from a chat model.
+
+This section builds the whole vocabulary from zero: what a policy is, what a
+reward is, what a *gradient* is (we will measure one with a ruler before we ever
+write a derivative), and a baseline algorithm so simple that it is genuinely the
+right answer surprisingly often.
 
 ## Two kinds of learning signal
 
@@ -34,11 +35,13 @@ The gap between those two is the entire reason RL matters for language models:
     can be pushed towards behaviour that *nobody demonstrated*, because the
     only thing anyone had to supply was a score.
 
-Two consequences follow immediately, and they shape everything in this chapter.
-First, the signal is much thinner: one number for a whole 500-token response,
-instead of a correct token at every position. Second, the model has to *produce
-its own training data* — you cannot score a response that was never generated.
-That is why RL training loops sample, then score, then update, forever.
+Two consequences follow immediately, and they shape everything in this chapter:
+
+1. **The signal is much thinner.** One number for a whole 500-token response,
+   instead of a correct token at every position.
+2. **The model has to produce its own training data.** You cannot score a
+   response that was never generated — which is why RL training loops sample,
+   then score, then update, forever.
 
 | | Supervised fine-tuning | Reinforcement learning |
 | --- | --- | --- |
@@ -64,12 +67,17 @@ than in a language model, so here is each defined against both.
 | **return** $G$ | total reward collected on that path | the response's score |
 | **discount** $\gamma$ | how much you care about later reward | usually $1.0$ for a single response |
 
-Notice what the LLM column implies. The model you have been calling a "next
-token predictor" *is a policy* — no modification required. Sampling from it
-(Chapter 26.4's [sampler](../ch26-llm-internals/04-sampling.md)) *is* running a
-policy for one episode. Generating a response *is* rolling out a trajectory.
-RL for LLMs is not bolting a new machine onto the model; it is noticing that the
-model was already an RL agent and we had simply never scored it.
+Notice what the LLM column implies:
+
+- The model you have been calling a "next token predictor" **is a policy** — no
+  modification required.
+- Sampling from it (Chapter 26.4's
+  [sampler](../ch26-llm-internals/04-sampling.md)) **is** running a policy for
+  one episode.
+- Generating a response **is** rolling out a trajectory.
+
+RL for LLMs is not bolting a new machine onto the model. It is noticing that
+**the model was already an RL agent and we had simply never scored it.**
 
 Here is a trajectory in the grid, with its return computed both undiscounted
 and discounted.
@@ -115,12 +123,26 @@ $$
 G = \sum_{t=0}^{T-1} \gamma^{t} r_t
 $$
 
-Read the three lines of output together. At $\gamma = 1.0$ every reward counts
-fully. At $\gamma = 0.5$ the $+10$ at the end has been multiplied by
-$0.5^5 = 0.03125$, so it barely registers and the return goes *negative* — a
-$\gamma$ that small describes an agent too impatient to walk to the goal at all.
-For LLM training we almost always use $\gamma = 1$: a response is short, it ends,
-and we do not want the model to prefer earlier tokens over later ones.
+In words: *add up every reward you collected, after multiplying the reward at
+step $t$ by $\gamma$ to the power $t$.*
+
+| Symbol | Meaning |
+| --- | --- |
+| $G$ | the return — one number for the whole trajectory |
+| $r_t$ | the reward received at step $t$ |
+| $T$ | how many steps the trajectory lasted |
+| $\gamma$ | the discount, between 0 and 1: how much later rewards still count |
+
+Read the three lines of output together:
+
+- **$\gamma = 1.0$** — every reward counts fully.
+- **$\gamma = 0.5$** — the $+10$ at the end has been multiplied by
+  $0.5^5 = 0.03125$, so it barely registers and the return goes *negative*. A
+  $\gamma$ that small describes an agent too impatient to walk to the goal at
+  all.
+
+For LLM training we almost always use $\gamma = 1$: a response is short, it
+ends, and we do not want the model to prefer earlier tokens over later ones.
 
 ## The simplest RL problem: three slot machines
 
@@ -129,12 +151,15 @@ levers, each paying out from an unknown distribution, and you want to maximise
 total payout. There is only one state, so a policy is just "which lever". Every
 hard idea in RL is already visible here.
 
-The tension is **exploration versus exploitation**. Pull the lever that looks
-best so far and you might be stuck on a mediocre one you got lucky with. Pull
-random levers and you knowingly waste money. **Epsilon-greedy** splits the
-difference: with probability $\varepsilon$ pull a random lever, otherwise pull
-the best-looking one. The estimate $Q(a)$ of a lever's value is just the running
-average of what it has paid.
+The tension is **exploration versus exploitation**:
+
+- **Exploit** — pull the lever that looks best so far, and risk being stuck on a
+  mediocre one you got lucky with.
+- **Explore** — pull random levers, and knowingly waste money.
+
+**Epsilon-greedy** splits the difference: with probability $\varepsilon$ pull a
+random lever, otherwise pull the best-looking one. The estimate $Q(a)$ of a
+lever's value is just the running average of what it has paid.
 
 ```python
 import numpy as np
@@ -181,37 +206,43 @@ fig.tight_layout()
 ```
 
 **Regret** is the gap between what you earned and what a perfect player would
-have earned. Read the curves as slopes, not heights: a flat curve means you are
-currently playing optimally, and a straight line means you are losing at a
-constant rate and learning nothing.
+have earned. Read the curves as *slopes*, not heights:
 
-The $\varepsilon = 0$ curve is the lesson. It is a perfectly straight line
-ending at 500 regret, because a purely greedy agent that starts with
-$Q = [0, 0, 0]$ picks arm 0 (the first maximum), and — since arm 0's estimate
-can only stay at or below zero while the others remain exactly zero — never has
-a reason to try anything else. Look at the printed estimates: `Q1` and `Q2` are
-still exactly `0.000`, because those arms were never pulled at all. The agent
-locked onto the worst arm and paid for it 2000 times. **A policy that never
-explores can only ever confirm what it already believes.**
+- **A flat curve** means you are currently playing optimally.
+- **A straight line** means you are losing at a constant rate and learning
+  nothing.
 
-$\varepsilon = 0.02$ shows the subtler failure. It escapes arm 0 — but it
-settles on arm 2, whose true mean of 0.50 is barely below arm 1's 0.55. With
-only 19 pulls of arm 1 in 2000 it never gathers enough evidence to tell the two
-apart, so its curve keeps climbing at a shallow constant slope, ending near 292.
-Too little exploration does not merely slow you down; it leaves you confidently
-committed to a near-miss.
+### Reading the four settings
 
-$\varepsilon = 0.10$ is the one that works: 1682 of 2000 pulls on the best arm
-and a curve that bends over almost flat, final regret about 32. And
-$\varepsilon = 0.50$ shows the opposite excess — its $Q$ estimates are the most
-accurate of the four (0.308 / 0.559 / 0.518, close to the true means, because
-every arm gets pulled hundreds of times) and yet it accumulates four times the
-regret of $\varepsilon = 0.10$, because it spends half of every session throwing
-away what it knows. Knowing the right answer earns nothing if you do not use it.
+**$\varepsilon = 0$ — no exploration at all.** A perfectly straight line ending
+at 500 regret. A purely greedy agent that starts with $Q = [0, 0, 0]$ picks arm
+0 (the first maximum), and since arm 0's estimate can only stay at or below zero
+while the others remain exactly zero, it never has a reason to try anything
+else. Look at the printed estimates: `Q1` and `Q2` are still exactly `0.000`,
+because those arms were never pulled. **A policy that never explores can only
+ever confirm what it already believes.**
 
-This trade-off never goes away. In an LLM run, temperature and top-p are your
-$\varepsilon$: too low and the model only ever regenerates what it already does,
-so RL has nothing new to score; too high and you are scoring nonsense.
+**$\varepsilon = 0.02$ — too little.** It escapes arm 0, but settles on arm 2,
+whose true mean of 0.50 is barely below arm 1's 0.55. With only 19 pulls of arm
+1 in 2000 it never gathers enough evidence to tell the two apart, so its curve
+keeps climbing at a shallow constant slope, ending near 292. Too little
+exploration does not merely slow you down; it leaves you confidently committed
+to a near-miss.
+
+**$\varepsilon = 0.10$ — the one that works.** 1682 of 2000 pulls on the best
+arm, and a curve that bends over almost flat. Final regret about 32.
+
+**$\varepsilon = 0.50$ — too much.** Its $Q$ estimates are the *most accurate*
+of the four (0.308 / 0.559 / 0.518, close to the true means, because every arm
+gets pulled hundreds of times) and yet it accumulates four times the regret of
+$\varepsilon = 0.10$, because it spends half of every session throwing away what
+it knows. Knowing the right answer earns nothing if you do not use it.
+
+!!! note "The same dial, in an LLM run"
+
+    Temperature and top-p are your $\varepsilon$. Too low and the model only
+    ever regenerates what it already does, so RL has nothing new to score. Too
+    high and you are scoring nonsense.
 
 ## What a gradient is, measured with a ruler
 
@@ -245,17 +276,35 @@ for w in [0.0, 2.0, 3.0, 5.0]:
     print(f"{w:>6.1f}{loss(w):>10.4f}{s:>10.4f}   {direction}")
 ```
 
-The sign is the whole message. A **positive** slope means "moving right
-increases the loss", so to *decrease* the loss you move left. A **negative**
-slope means the opposite. In both cases the rule is the same, and it is the rule
-every optimiser in this chapter uses:
+The sign is the whole message:
+
+| Slope at $w$ | What it says | What you do |
+| --- | --- | --- |
+| **positive** | moving right increases the loss | move left |
+| **negative** | moving right decreases the loss | move right |
+| **zero** | flat here | you are at the bottom (or a plateau) |
+
+### Gradient descent: subtract the slope
+
+In both cases the rule is the same, and it is the rule every optimiser in this
+chapter uses:
 
 $$
 w \leftarrow w - \eta \cdot \frac{dL}{dw}
 $$
 
-Subtract the slope, scaled by a **learning rate** $\eta$. That is **gradient
-descent** — "the gradient points uphill, so walk the other way". Let us walk.
+In words: *replace $w$ with $w$ minus the slope, scaled down by a learning
+rate.*
+
+| Symbol | Meaning |
+| --- | --- |
+| $w$ | the parameter being tuned |
+| $L$ | the loss — the thing we want small |
+| $\dfrac{dL}{dw}$ | the slope of $L$ at the current $w$ |
+| $\eta$ | the **learning rate**: how big a step to take |
+
+That is **gradient descent** — "the gradient points uphill, so walk the other
+way". Let us walk.
 
 ```python
 # continues
@@ -290,6 +339,8 @@ The steps are large where the hill is steep and shrink automatically as it
 flattens, because the step size *is* the slope. That self-braking behaviour is
 why the same learning rate works far from and near the optimum.
 
+### The gradient check
+
 Now the analytic form. For $L(w) = (w-3)^2 + 2$ the derivative is
 
 $$
@@ -298,10 +349,15 @@ $$
 
 You can take that on faith — but you should never take it on faith in your own
 code, and researchers do not. The **gradient check** is a real, everyday
-practice: compute the gradient your formula claims, compute it again by finite
-differences, and assert they agree. If your hand-derived gradient has a sign
-error or a missing factor, this catches it in one second instead of after a
-six-hour training run that silently learns nothing.
+practice, and it is three steps:
+
+1. Compute the gradient your formula claims.
+2. Compute it again by finite differences.
+3. `assert` that they agree.
+
+If your hand-derived gradient has a sign error or a missing factor, this catches
+it in one second instead of after a six-hour training run that silently learns
+nothing.
 
 ```python
 # continues
@@ -319,9 +375,10 @@ print(f"\nworst disagreement {worst:.2e} — gradient check passed")
 ```
 
 They agree to nine or ten decimal places, and the leftover difference is
-floating-point noise in the subtraction, not an error in the formula. The
-`assert` is the point: this is a *test*, in exactly the sense of
-[Section 24.2](../ch24-practice/02-testing.md), and it belongs in your suite.
+floating-point noise in the subtraction, not an error in the formula.
+
+The `assert` is the point. **This is a *test*, in exactly the sense of
+[Section 24.2](../ch24-practice/02-testing.md), and it belongs in your suite.**
 Every analytic gradient in this chapter — REINFORCE, DPO, the reward model —
 will be checked against finite differences exactly like this before we trust it.
 
@@ -342,11 +399,19 @@ $$
 \pi_\theta(a) = \frac{e^{\theta_a}}{\sum_{a'} e^{\theta_{a'}}}
 $$
 
+In words: *exponentiate each action's logit, then divide by the total so the
+numbers sum to one.* Here $\theta_a$ is the logit for action $a$, and $a'$ ranges
+over every action.
+
 RL formulas are written in terms of $\log \pi_\theta(a)$, the **log-probability**
-of the action actually taken, for three reasons: probabilities of long sequences
-underflow to zero while their logs add up harmlessly; a product of per-token
-probabilities becomes a sum of per-token log-probs; and the gradient of the log
-is unusually clean, which is what makes the next section work.
+of the action actually taken, for three reasons:
+
+1. **No underflow.** Probabilities of long sequences underflow to zero; their
+   logs add up harmlessly.
+2. **Products become sums.** A product of per-token probabilities becomes a sum
+   of per-token log-probs.
+3. **The gradient of the log is unusually clean** — which is exactly what makes
+   the next section work.
 
 ```python
 import numpy as np
@@ -376,19 +441,26 @@ print(f"after theta[explain] += 1: pi = {np.round(bumped, 4)}"
       f"  (the other two shrank without being touched)")
 ```
 
-That last line is the property to carry forward. Softmax is **competitive**:
-pushing one action up automatically pushes every other one down, because the
-probabilities must sum to one. Every RL update in this chapter exploits that —
-you never have to say "and make the bad action less likely"; raising the good one
-does it for free.
+That last line is the property to carry forward. **Softmax is competitive:
+pushing one action up automatically pushes every other one down**, because the
+probabilities must sum to one.
+
+Every RL update in this chapter exploits that. You never have to say "and make
+the bad action less likely" — raising the good one does it for free.
 
 ## The baseline everyone should try first
 
 Before any gradient, there is a technique so simple it barely deserves a name:
-**sample several responses, keep the best one**. It is called **best-of-$n$** at
-inference time and **rejection sampling fine-tuning** when you then train on the
-winners. It needs no new algorithm, no new model in memory, and no stability
-tricks — and on many tasks it captures a large share of what full RL delivers.
+**sample several responses, keep the best one**.
+
+It goes by two names, depending on where you use it:
+
+- **Best-of-$n$** — at inference time: generate $n$, return the best.
+- **Rejection sampling fine-tuning** — at training time: generate $n$, keep the
+  best, and fine-tune on the winners.
+
+It needs no new algorithm, no new model in memory, and no stability tricks — and
+on many tasks it captures a large share of what full RL delivers.
 
 ```python
 import numpy as np
@@ -418,29 +490,39 @@ for n in [1, 2, 4, 16, 64]:
     print(f"{n:>5}{score:>26.4f}{score - base:>9.4f}{kl:>17.4f}")
 ```
 
-Two things to take from the table. Best-of-$n$ *works*: going from 1 sample to
-64 moves the average score by about 2.36 — over two standard deviations of the
-model's own output distribution — with no training whatsoever. And it has
-**diminishing returns**: the first doubling buys $0.58$, the jump from 16 to 64
-buys $0.58$ as well while costing four times as much compute. The gain grows
-roughly like $\sqrt{\log n}$, so every doubling is worth less than the last.
+Two things to take from the table:
+
+- **Best-of-$n$ works.** Going from 1 sample to 64 moves the average score by
+  about 2.36 — over two standard deviations of the model's own output
+  distribution — with no training whatsoever.
+- **It has diminishing returns.** The first doubling buys $0.58$; the jump from
+  16 to 64 buys $0.58$ as well, while costing four times as much compute. The
+  gain grows roughly like $\sqrt{\log n}$, so every doubling is worth less than
+  the last.
 
 The right-hand column prices that gain in the same currency the rest of this
 chapter uses. Best-of-$n$ shifts the output distribution away from the model's
 own by about $\log n - \frac{n-1}{n}$ nats of **KL divergence** — a measure of
-how far one distribution has moved from another, which we will meet again in
-[31.2](02-policy-gradient-ppo.md) as an explicit penalty term. Every method in
-this chapter is buying reward with KL; best-of-$n$ just makes the exchange rate
-unusually easy to see.
+how far one distribution has moved from another, which returns in
+[31.2](02-policy-gradient-ppo.md) as an explicit penalty term.
 
-Turning this into *training* is one more step: generate $n$ responses per prompt,
-keep the best, and fine-tune on those pairs with ordinary supervised learning.
-That is rejection sampling fine-tuning (sometimes "RAFT" or "best-of-$n$
-distillation"), it is one of the two or three most-used post-training recipes in
-practice, and it is a completely reasonable thing to ship. Everything after this
-section exists because it has two limits: it can only ever select from what the
-model already produces, and it throws away every rejected sample instead of
-learning from the fact that it *was* rejected.
+**Every method in this chapter is buying reward with KL**; best-of-$n$ just
+makes the exchange rate unusually easy to see.
+
+### Turning it into training
+
+One more step: generate $n$ responses per prompt, keep the best, and fine-tune
+on those with ordinary supervised learning. That is rejection sampling
+fine-tuning (sometimes "RAFT" or "best-of-$n$ distillation"), it is one of the
+two or three most-used post-training recipes in practice, and it is a completely
+reasonable thing to ship.
+
+Everything after this section exists because it has two limits:
+
+1. **It can only select from what the model already produces.** No new
+   behaviour, ever.
+2. **It throws away every rejected sample**, instead of learning from the fact
+   that it *was* rejected.
 
 !!! warning "Common mistakes"
     - **Confusing reward with loss.** Reward goes *up*, loss goes *down*. Every

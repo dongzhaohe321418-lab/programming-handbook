@@ -3,12 +3,13 @@
 The ReAct agent from [30.1](01-agent-loop-react.md) is *greedy*: at every step
 it looks at the last observation and picks the locally sensible next action. On
 a three-step question that is exactly right. On a twenty-step task it is a
-disaster, and the reason is arithmetic rather than vibes. This page adds the
-four techniques that buy reliability back — planning up front, decomposing into
-dependency-ordered subtasks, critiquing and revising your own output, and
-searching over several candidate actions instead of committing to the first —
-and then computes what each one costs, because sometimes the right amount of
-planning is none.
+disaster, and the reason is arithmetic rather than vibes.
+
+This page adds the four techniques that buy reliability back — planning up
+front, decomposing into dependency-ordered subtasks, critiquing and revising
+your own output, and searching over several candidate actions instead of
+committing to the first. Then it computes what each one costs, because
+sometimes the right amount of planning is none.
 
 ## Why greedy loops fall over on long tasks
 
@@ -41,14 +42,16 @@ print(f"to finish {n} steps with {target:.0%} success you need "
       f"p >= {target ** (1 / n):.4f} per step")
 ```
 
+Read $p$ as the chance one step is right and $n$ as the number of steps.
+
 A step that works 95% of the time feels *excellent* when you watch it. Twenty
 of them in a row succeed $0.95^{20} = 0.3585$ of the time — about one run in
 three. To get a 20-step task to 90% you would need every single step to be
 right 99.47% of the time, which no model reaches on open-ended work.
 
-So you do not chase per-step accuracy. You change the structure: fewer steps,
-checkable steps, and recovery when a step fails. That is what the rest of this
-page is.
+So you do not chase per-step accuracy. **You change the structure**: fewer
+steps, checkable steps, and recovery when a step fails. That is what the rest of
+this page is.
 
 !!! note "The independence assumption"
 
@@ -62,7 +65,15 @@ page is.
 **Plan-and-Solve prompting** (Wang et al., 2023) makes the model produce a
 complete plan *before* executing anything, then work the plan. The payoff is
 that the plan is an artifact you can inspect, count, cost and — crucially —
-**repair**. Three roles, three different kinds of model call:
+**repair**.
+
+Three roles, three different kinds of model call:
+
+| Role | Called | Job |
+| --- | --- | --- |
+| **Planner** | once, up front | turn the goal into a list of concrete tasks |
+| **Executor** | once per task | run one task and return `(value, error)` |
+| **Replanner** | only when a task fails | revise the remaining tasks around the failure |
 
 ```mermaid
 flowchart LR
@@ -176,7 +187,7 @@ rather than prompting:
    confident, wrong answers computed from missing data.
 
 Plan-then-execute is not free: a plan written before any observation can be
-wrong from its first line. In practice the good architectures are hybrids —
+wrong from its first line. In practice the good architectures are **hybrids** —
 plan coarsely, execute each plan step with a small ReAct loop, replan when a
 step reports failure.
 
@@ -237,23 +248,29 @@ print("\nwith a cycle -> scheduled:", [t for w in waves2 for t in w])
 print("unschedulable:", sorted(leftover2))
 ```
 
-Two things fall out of this for free. First, the **waves** tell you what could
-run at the same time — `draft` and `images` land in wave 3 together, so a
-multi-agent system could do them in parallel (that is
-[30.3](03-multi-agent.md)). Second, the leftover list is a **cycle detector**.
-Add one bad edge (`research` now waits on `publish`) and the printed output is
-`scheduled: []` with all six tasks unschedulable: nothing has in-degree zero,
-so nothing can ever start. LLM planners emit "A needs B, B needs A" more often
-than you would think, and you want that caught by a five-line check rather than
-discovered by an agent that never finishes.
+Two things fall out of this for free:
 
-## Reflexion: generate, critique, revise
+- **The waves tell you what could run at the same time.** `draft` and `images`
+  land in wave 3 together, so a multi-agent system could do them in parallel
+  (that is [30.3](03-multi-agent.md)).
+- **The leftover list is a cycle detector.** Add one bad edge — `research` now
+  waits on `publish` — and the printed output is `scheduled: []` with all six
+  tasks unschedulable: nothing has in-degree zero, so nothing can ever start.
 
-**Reflexion** (Shinn et al., 2023) adds an inner loop around a *single* output:
-produce a draft, criticise it, revise, repeat. The honest version of this needs
-a **verifier** — something that scores the draft by a rule rather than by
-opinion — because otherwise you are asking a model whether it likes its own
-work, and the answer is usually yes.
+LLM planners emit "A needs B, B needs A" more often than you would think, and
+you want that caught by a five-line check rather than discovered by an agent
+that never finishes.
+
+## Self-refinement: generate, critique, revise
+
+**Self-Refine** (Madaan et al., 2023) adds an inner loop around a *single*
+output: produce a draft, criticise it, revise, repeat. Its across-attempts
+cousin is **Reflexion** (Shinn et al., 2023), which turns a *failed trajectory*
+into a written lesson kept in memory and retries the whole task.
+
+The honest version needs a **verifier** — something that scores the draft by a
+rule rather than by opinion. Otherwise you are asking a model whether it likes
+its own work, and the answer is usually yes.
 
 So we write a real scorer: five checkable requirements for a release note. The
 improvement below is *measured by that scorer*, not asserted by a model.
@@ -323,10 +340,14 @@ fixes one *named* defect. Now the honesty:
 ## Self-consistency: sample several, take the majority
 
 **Self-consistency** (Wang et al., 2022) is the cheapest reliability trick
-there is: ask the same question $N$ times at a non-zero temperature and return
-the most common answer. It works when errors are *diverse* — many ways to be
-wrong, one way to be right — so wrong answers split the vote while correct ones
-pile up.
+there is:
+
+1. Ask the same question $N$ times at a non-zero temperature.
+2. Tally the answers.
+3. Return the most common one.
+
+It works when errors are *diverse* — many ways to be wrong, one way to be right
+— so wrong answers split the vote while correct ones pile up.
 
 ```python
 """Majority voting over N noisy samples, measured over many trials."""
@@ -363,26 +384,35 @@ across three different wrong answers. Over 2000 trials, one sample is right
 54.5% of the time and the majority of seven is right 84.4% — a real gain from a
 model we never touched.
 
-Note the last printed line, and note the 15.6% of trials where the majority is
-still wrong. Self-consistency multiplies cost by $N$ for a gain that flattens
-quickly, and it needs an answer you can *compare*: "42" votes cleanly, a
-three-paragraph essay does not. It is superb for arithmetic, multiple choice,
-extraction and classification; it is nearly useless for open-ended writing
-unless you first extract a comparable key.
+Now the two limits, both visible in the same output:
+
+- **It costs $N$ times as much**, for a gain that flattens quickly, and the
+  majority is still wrong on 15.6% of trials.
+- **It needs answers you can *compare*.** "42" votes cleanly; a
+  three-paragraph essay does not.
+
+So it is superb for arithmetic, multiple choice, extraction and classification,
+and nearly useless for open-ended writing unless you first extract a comparable
+key.
 
 ## Searching over actions: beam search and Tree of Thoughts
 
 Greedy means: take the best next action. **Tree of Thoughts** (Yao et al.,
 2023) means: expand several candidate next steps, score the states they lead
-to, and keep the promising ones. The classic bounded version is **beam search**
-— keep the best $k$ states at each depth — and keeping the best $k$ of anything
-is a job for the priority queue from
-[21.2 Priority queues](../ch21-heaps/02-priority-queues.md); `heapq.nlargest`
-is exactly that in one call.
+to, and keep the promising ones.
 
-Our toy world: start at 3, apply `+2`, `*3` or `-1`, and get as close to 23 as
-possible in four steps. The **value function** scores a state by how far it is
-from the target.
+The classic bounded version is **beam search** — keep the best $k$ states at
+each depth. Keeping the best $k$ of anything is a job for the priority queue
+from [21.2 Priority queues](../ch21-heaps/02-priority-queues.md), and
+`heapq.nlargest` is exactly that in one call.
+
+Our toy world:
+
+- **Start** at 3.
+- **Actions:** `+2`, `*3`, `-1`.
+- **Goal:** get as close to 23 as possible in four steps.
+- **Value function:** score a state by how far it is from the target, so higher
+  is better and 0 means solved.
 
 ```python
 """Beam search over a toy action space, with heapq keeping the top k."""
@@ -414,11 +444,12 @@ for width in (2, 4):
 ```
 
 Width 2 finishes on `3 *3 *3 -1 -1 = 25`, off by 2. Width 4 finds
-`3 *3 -1 *3 -1 = 23` exactly. Look at *where* the answer was lost: the winning
-route passes through the state `8` at depth 2, scoring $-15$, while the two
-states a width-2 beam keeps scored $-4$ and $-8$. Once `8` is pruned the branch
-is gone forever, and no amount of good judgement later can recover it. That is
-the entire trade-off of search:
+`3 *3 -1 *3 -1 = 23` exactly.
+
+Look at *where* the answer was lost. The winning route passes through the state
+`8` at depth 2, scoring $-15$, while the two states a width-2 beam keeps scored
+$-4$ and $-8$. **Once `8` is pruned the branch is gone forever**, and no amount
+of good judgement later can recover it. That is the entire trade-off of search:
 
 | | Greedy (width 1) | Beam (width $k$) | Full tree |
 | --- | --- | --- | --- |
@@ -434,15 +465,16 @@ next idea.
 ## Verification-first thinking
 
 The single most reliable structural change you can make to an agent is to
-**prefer outputs a program can check**: code that runs, arithmetic that
+**prefer outputs a program can check** — code that runs, arithmetic that
 recomputes, JSON that validates, SQL that returns rows, a citation that
-resolves. A checkable output turns "the model is probably right" into "the
-model is right, and here is the check".
+resolves. A checkable output turns "the model is probably right" into "the model
+is right, and here is the check".
 
 The trick is to make the agent emit *both* an answer and a machine-runnable
-recipe for it. Notice that the recipe is a structured `(name, args)` tuple
-dispatched through an allowlist, not a string we hand to `eval` — the same
-security rule as [28.1](../ch28-tools-mcp/01-function-calling.md).
+recipe for it. Note the security detail: the recipe is a structured
+`(name, args)` tuple dispatched through an allowlist, **not** a string we hand
+to `eval` — the same rule as
+[28.1](../ch28-tools-mcp/01-function-calling.md).
 
 ```python
 """Verify an agent's arithmetic instead of trusting it."""
@@ -494,18 +526,26 @@ print("\nsecond question:", verify(agent.answer("What is 17 times 23?"))[1])
 The agent's first answer, 380, is wrong, and nothing about its confidence would
 have told you. The verifier caught it in microseconds
 (`claimed 380 but sum_odds_below(40) = 400`), and the corrective message went
-back into the next attempt, which passed. Design your agents so their outputs
-land in checkable form whenever you can; when you cannot, at least make them
-*comparable*, so self-consistency has something to vote on.
+back into the next attempt, which passed.
+
+So: design your agents so their outputs land in **checkable** form whenever you
+can. When you cannot, at least make them **comparable**, so self-consistency has
+something to vote on.
 
 ## When not to add planning
 
 Every technique on this page multiplies model calls. Before adding one, do the
-arithmetic. With $c$ calls, $t$ tokens per call, latency $\ell$ per call and a
-price $\rho$ per thousand tokens:
+arithmetic:
 
 $$\text{latency} \approx c \cdot \ell, \qquad
   \text{cost} \approx \frac{c \cdot t \cdot \rho}{1000}$$
+
+| Symbol | Meaning |
+| --- | --- |
+| $c$ | model calls the architecture makes for one task |
+| $t$ | tokens per call |
+| $\ell$ | latency of one call, in seconds |
+| $\rho$ | price per thousand tokens |
 
 ```python
 """What each architecture costs, on the same task."""
@@ -535,8 +575,9 @@ print(f"\nthe full stack costs {worst / base:.0f}x a plain ReAct run "
 ```
 
 Fifteen times the cost and eighty-four seconds of latency is an easy trade for
-a nightly batch job and an absurd one for an autocomplete box. Skip the
-planning machinery when:
+a nightly batch job and an absurd one for an autocomplete box.
+
+Skip the planning machinery when:
 
 - **the task is one or two steps** — a plan for a two-step task is overhead
   with a planning-error risk attached;

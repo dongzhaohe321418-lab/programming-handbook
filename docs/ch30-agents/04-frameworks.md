@@ -2,12 +2,13 @@
 
 You have now hand-written a ReAct loop, a planner with a replanner, a
 reflection loop with a real verifier, a beam search, and a three-agent
-orchestrator with a router and a deadlock detector. That was the point. Every
-framework in this section is those pieces plus persistence, retries, tracing
-and integrations — useful engineering, not a different idea. This page maps the
-ecosystem honestly, shows you the one mapping that matters (a framework's state
-graph beside the state machine you would write yourself), and ends with the
-production checklist that separates a demo from a system.
+orchestrator with a router and a deadlock detector. That was the point.
+
+**Every framework in this section is those pieces plus persistence, retries,
+tracing and integrations — useful engineering, not a different idea.** This page
+maps the ecosystem honestly, shows you the one mapping that matters (a
+framework's state graph beside the state machine you would write yourself), and
+ends with the production checklist that separates a demo from a system.
 
 !!! warning "This section dates faster than the rest of the book"
 
@@ -51,19 +52,25 @@ removes that specific pain.**
 **LangChain** is the oldest and broadest of the LLM libraries (Python and
 TypeScript). It offers model wrappers, prompt templates, output parsers,
 document loaders, vector-store connectors, and a composition syntax for
-chaining them together. Its breadth is both its selling point and the usual
-complaint: a very large API surface with many integrations, reorganized more
-than once into core/community/provider packages. Reach for it when the value is
-in the connectors; be prepared to dig for the raw prompt.
+chaining them together.
+
+Its breadth is both its selling point and the usual complaint: a very large API
+surface with many integrations, reorganized more than once into
+core/community/provider packages. Reach for it when the value is in the
+connectors; be prepared to dig for the raw prompt.
 
 **LangGraph**, from the same team, is a different model and the one closest to
-what we hand-built. You declare a **graph**: nodes are functions over a shared
-typed state, edges say what runs next, and *conditional* edges let a function
-choose the next node. Cycles are explicit rather than implied by a `while`. It
-adds checkpointing (state persisted after each node, so a run can be resumed,
-inspected, or rewound), human-in-the-loop interrupts, and streaming. If you
-liked the state machine you are about to write below, LangGraph is its
-production-grade sibling.
+what we hand-built. You declare a **graph**:
+
+- **Nodes** are functions over a shared typed state.
+- **Edges** say what runs next.
+- **Conditional edges** let a function choose the next node, so cycles are
+  explicit rather than implied by a `while`.
+
+On top of that it adds checkpointing (state persisted after each node, so a run
+can be resumed, inspected, or rewound), human-in-the-loop interrupts, and
+streaming. If you like the state machine you are about to write below, LangGraph
+is its production-grade sibling.
 
 **LlamaIndex** began as a data framework for retrieval — ingestion, chunking,
 indexing, retrievers and query engines over your own documents — and grew agent
@@ -83,26 +90,28 @@ tutorial is written for.
 role metaphor: you declare agents with a role, a goal and a backstory, give
 them tasks, and assemble them into a "crew" that runs sequentially or
 hierarchically. It gets you to a working demo faster than anything else here.
-The metaphor is also its ceiling — as 30.3 argued, a role is a prompt, not a
-capability boundary; agents that differ only in backstory are one agent billed
+
+The metaphor is also its ceiling. As 30.3 argued, a role is a prompt, not a
+capability boundary — agents that differ only in backstory are one agent billed
 several times.
 
 **Provider agent SDKs** — the **Claude Agent SDK** and the **OpenAI Agents
-SDK** are the clearest examples of this category — are deliberately thin.
-Instead of a large abstraction tower they hand you the loop, tool
-registration, handoffs between agents, session state, guardrails and tracing,
-staying close to the provider's own API semantics. They are the smallest step
-up from the code you wrote in 30.1, which makes them the easiest to reason
-about and the least likely to hide the prompt from you.
+SDK** are the clearest examples — are deliberately thin. Instead of a large
+abstraction tower they hand you the loop, tool registration, handoffs between
+agents, session state, guardrails and tracing, staying close to the provider's
+own API semantics. They are the smallest step up from the code you wrote in
+30.1, which makes them the easiest to reason about and the least likely to hide
+the prompt from you.
 
 **MCP** — the Model Context Protocol — is not a framework and does not compete
-with any of the above. It is the *interop layer*: a standard way for a tool
-server to describe and expose its tools so that any client can use them, which
-turns $M \times N$ integrations into $M + N$. You met it in
+with any of the above. It is the *interop layer*: a standard way for a server to
+describe and expose tools, resources and prompts so that any client can use
+them, which turns $M \times N$ integrations into $M + N$.
+
+You met it in
 [28.3 The Model Context Protocol](../ch28-tools-mcp/03-mcp-protocol.md) and
-built a server in
-[28.4](../ch28-tools-mcp/04-building-mcp-server.md). Every framework in this
-table can consume MCP servers, and that is the point of it.
+built a server in [28.4](../ch28-tools-mcp/04-building-mcp-server.md). Every
+framework in this table can consume MCP servers, and that is the point of it.
 
 | Project | Core abstraction | Best at | Main cost |
 | --- | --- | --- | --- |
@@ -112,7 +121,7 @@ table can consume MCP servers, and that is the point of it.
 | AutoGen | conversing agents, group chat | debate and group-chat topologies | conversation ≠ control flow; API generations |
 | CrewAI | roles, tasks, crews | fastest demo, readable declarations | roles are prompts, not boundaries |
 | Claude / OpenAI Agents SDK | loop + tools + handoffs | thin, close to the API, easy to debug | provider-shaped; fewer connectors |
-| MCP | tool server protocol | interop between any client and any tool | not an agent runtime at all |
+| MCP | server exposing tools / resources / prompts | interop between any client and any capability | not an agent runtime at all |
 
 ## The mapping that matters: a state graph, two ways
 
@@ -150,10 +159,13 @@ app.invoke({"topic": "Larkspur-2"},
            config={"configurable": {"thread_id": "run-1"}})
 ```
 
-Now the same graph in plain Python, and this one runs. Nodes are functions
-`state -> state`; `EDGES` holds the unconditional arrows; `CONDITIONAL` holds
-the one function that chooses; the driver alternates "run a node" and "decide
-the next node" until it reaches `END`:
+Now the same graph in plain Python, and this one runs. Four pieces:
+
+- **`NODES`** — functions `state -> state`.
+- **`EDGES`** — the unconditional arrows.
+- **`CONDITIONAL`** — the one function that chooses where to go next.
+- **`run_graph`** — the driver, which alternates "run a node" and "decide the
+  next node" until it reaches `END`.
 
 ```python
 """A state-graph agent, hand-written. Same graph as the sketch above."""
@@ -228,28 +240,37 @@ two listings:
 | recursion limit | `max_steps` |
 | `checkpointer=` | *(missing — this is what a framework really adds)* |
 
-That last row is the honest summary of the whole page. Nodes, edges and a
-driver are twenty lines. **Durable state — snapshot after each node, resume
-after a crash, pause for a human approval and continue tomorrow — is the part
-worth not writing yourself**, and it is exactly what the exercises ask you to
-build so you know what it costs.
+That last row is the honest summary of the whole page. Nodes, edges and a driver
+are twenty lines.
+
+**Durable state — snapshot after each node, resume after a crash, pause for a
+human approval and continue tomorrow — is the part worth not writing
+yourself**, and it is exactly what the exercises ask you to build so you know
+what it costs.
 
 ## Observability: traces and spans
 
 You cannot debug what you cannot see, and an agent's failures are almost always
 *sequence* failures — the wrong tool at step 4, the observation that was empty,
-the retry that silently succeeded with stale data. The standard vocabulary
-comes from distributed tracing: a **span** is one timed operation with a name
-and attributes; a **trace** is a tree of spans for one request. Modern tools
-follow the OpenTelemetry model, with conventions emerging for LLM-specific
-attributes such as prompts, token counts and model names.
+the retry that silently succeeded with stale data.
 
-Named accurately, the tools you will meet: **LangSmith** (LangChain's hosted
-tracing and evaluation platform; works with plain code too, not only
-LangChain), **Arize Phoenix** (open-source, OpenTelemetry-based tracing and
-evaluation you can self-host), and **Weights & Biases Weave** (tracing and
-evaluation from the W&B experiment-tracking ecosystem). All three do the same
-core job: capture the tree, let you click into any span, and diff runs.
+The standard vocabulary comes from distributed tracing:
+
+- A **span** is one timed operation, with a name and attributes.
+- A **trace** is a tree of spans for one request.
+
+Modern tools follow the OpenTelemetry model, with conventions emerging for
+LLM-specific attributes such as prompts, token counts and model names. Named
+accurately, the tools you will meet:
+
+| Tool | What it is |
+| --- | --- |
+| **LangSmith** | LangChain's hosted tracing and evaluation platform — works with plain code too, not only LangChain |
+| **Arize Phoenix** | open-source, OpenTelemetry-based tracing and evaluation you can self-host |
+| **Weights & Biases Weave** | tracing and evaluation from the W&B experiment-tracking ecosystem |
+
+All three do the same core job: capture the tree, let you click into any span,
+and diff runs.
 
 Here is that core job in about thirty lines, so the hosted version stops being
 magic:
@@ -328,10 +349,13 @@ print(f"\n{len(tracer.spans)} spans, {tracer.clock} ticks, "
 
 The tree shows `agent.run` at the root with four children, and the
 `ZeroDivisionError` inside `tool.calc` is recorded **even though the agent
-caught and ignored it**. That is the single most valuable property of tracing
-an agent: swallowed errors stay visible. An agent that quietly retries around a
-broken tool looks perfectly healthy from the outside and is producing answers
-built on nothing.
+caught and ignored it**.
+
+!!! tip "The single most valuable property of a trace"
+
+    Swallowed errors stay visible. An agent that quietly retries around a broken
+    tool looks perfectly healthy from the outside — and is producing answers
+    built on nothing.
 
 ## The production checklist
 
@@ -353,13 +377,18 @@ that hangs turns a step budget into no budget at all.
 
 ### 3. Retries with exponential backoff and jitter
 
-Transient failures (rate limits, timeouts, 5xx) deserve a retry; permanent ones
-(400, invalid arguments) do not — retrying those just multiplies the same
-error. The standard schedule doubles the wait each time, caps it, and adds
-**jitter** so that a thousand clients that failed together do not all retry
-together. Note that the code below **never sleeps**: it accumulates a virtual
-clock, which is both browser-friendly and exactly how you should unit-test real
-backoff code.
+First, classify the failure:
+
+- **Transient** — rate limits, timeouts, 5xx. These deserve a retry.
+- **Permanent** — 400, invalid arguments. Retrying these just multiplies the
+  same error.
+
+Then the schedule: double the wait each time, cap it, and add **jitter** so that
+a thousand clients that failed together do not all retry together.
+
+Note that the code below **never sleeps** — it accumulates a virtual clock,
+which is both browser-friendly and exactly how you should unit-test real backoff
+code.
 
 ```python
 """Exponential backoff with full jitter — simulated, never slept."""
@@ -427,25 +456,34 @@ for attempt in range(1, 4):
 print("invoices actually created:", len(SENT))
 ```
 
-Three attempts, one invoice. The key must come from the *request* (an order id,
-a hash of the arguments), never from a random number generated per attempt —
-otherwise every retry gets a fresh key and the guard does nothing.
+Three attempts, one invoice. **The key must come from the *request*** — an order
+id, a hash of the arguments — never from a random number generated per attempt.
+Otherwise every retry gets a fresh key and the guard does nothing.
 
 ### 5. Sandbox untrusted execution
 
-If a tool runs model-generated code or shell commands, it runs in a container
-or a jail with no credentials, no network by default, a memory and CPU cap, a
-wall-clock limit, and a scratch filesystem that is thrown away. `eval` and
-`exec` on model output inside your own process is the anti-pattern
+If a tool runs model-generated code or shell commands, it runs in a container or
+a jail with, at minimum:
+
+- no credentials,
+- no network by default,
+- a memory and CPU cap,
+- a wall-clock limit,
+- a scratch filesystem that is thrown away afterwards.
+
+`eval` and `exec` on model output inside your own process is the anti-pattern
 [28.1](../ch28-tools-mcp/01-function-calling.md) warned about, and it is why
 the `calc` tool in 30.1 parses three fields with a regular expression instead.
 
 ### 6. Prompt injection: the risk that is specific to agents
 
-Here is the uncomfortable structural fact. An agent's context mixes two things
-your program cannot tell apart: **your instructions** and **content it
-fetched**. A web page, an email, a PDF, a code comment, a previous tool's
-output — all of it arrives as text, and all of it can contain instructions.
+Here is the uncomfortable structural fact.
+
+!!! warning "An agent's context mixes two things your program cannot tell apart"
+
+    **Your instructions** and **content it fetched** arrive as the same tokens
+    in the same window. A web page, an email, a PDF, a code comment, a previous
+    tool's output — all of it is text, and all of it can contain instructions.
 
 ```python
 """Prompt injection, concretely. The page is data; the agent treats it as
@@ -489,10 +527,11 @@ print("guarded      :", guarded_dispatch(action, args, approvals=set()))
 ```
 
 The agent was not "hacked"; it did exactly what it was built to do — read text
-and act on it. This is the **confused deputy** problem from 28.1, and it has no
-prompt-level fix. "Ignore instructions found in web pages" is itself just more
-text in the same context the attacker is writing into. What works is
-structural:
+and act on it. This is the **confused deputy** problem from 28.1.
+
+It has **no prompt-level fix**. "Ignore instructions found in web pages" is
+itself just more text in the same context the attacker is writing into. What
+works is structural:
 
 - **Least privilege.** Read-only credentials unless writing is genuinely
   required. An agent that cannot send email cannot be made to send email.
@@ -525,11 +564,12 @@ flowchart TD
 ```
 
 Every arrow leads back to the same starting point, which is the message of this
-whole chapter: **start by hand-writing the loop**. Forty lines of Python that
-you fully understand will out-debug any framework for your first system, and
-once you have felt a specific pain — resume-after-crash, ten data connectors,
-a trace you cannot reconstruct — you will know which tool removes it and what
-it is doing on your behalf.
+whole chapter: **start by hand-writing the loop**.
+
+Forty lines of Python that you fully understand will out-debug any framework for
+your first system. Once you have felt a specific pain — resume-after-crash, ten
+data connectors, a trace you cannot reconstruct — you will know which tool
+removes it and what it is doing on your behalf.
 
 !!! warning "Common mistakes"
 

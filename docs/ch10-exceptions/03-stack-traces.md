@@ -5,9 +5,11 @@ and "reads the error message" will be near the top of the list. A Python
 **traceback** (or *stack trace* — the terms are interchangeable) is not
 punishment. It is a precision instrument: a snapshot of the entire call
 chain, taken at the exact instant an exception ran out of handlers, with
-the failing line pinpointed to the character. Beginners scroll past it with
-a groan; professionals read it and usually know the fix before touching the
-keyboard. This page teaches you to read it their way — bottom line first.
+the failing line pinpointed to the character.
+
+Beginners scroll past it with a groan; professionals read it and usually know
+the fix before touching the keyboard. This page teaches you to read it their
+way — bottom line first.
 
 ## A failure three calls deep
 
@@ -76,21 +78,27 @@ Now move **up one entry** to answer **where**:
 
 Each two-to-three-line group like this is one **frame** — one entry of the
 call stack you met in
-[Section 5.3](../ch05-under-the-hood/03-stack-heap.md). Read its anatomy:
-the file (`ratio.py`), the line number (9), the function (`c`), the source
-line itself, and — on Python 3.11 and later — little markers underneath
-pinpointing the failing operation: tildes under the operands, a caret at
-the `/` itself. (The exact shape of those markers varies slightly between
-Python versions; the information does not.) The *bottom frame is where the
-exception was born.*
+[Section 5.3](../ch05-under-the-hood/03-stack-heap.md). Its anatomy, part by
+part:
+
+- **the file** — `ratio.py`;
+- **the line number** — 9;
+- **the function** — `c`;
+- **the source line itself**, copied out for you;
+- **markers underneath** (Python 3.11 and later) pinpointing the failing
+  operation: tildes under the operands, a caret at the `/` itself. Their exact
+  shape varies between Python versions; the information does not.
+
+The *bottom frame is where the exception was born.*
 
 Keep walking **up** to answer **how we got there**: `b` line 6 called `c`;
 `a` line 3 called `b`; the module's `print(a(0))` on line 11 started it
 all. The full story, bottom-up: *the division in `c` failed; `c` was
 called by `b`, which was called by `a`, which was called at the top level
-with the argument 0.* The traceback is the call stack, printed root-first
-— which is exactly why the freshest, most useful information is at the
-bottom.
+with the argument 0.*
+
+The traceback is the call stack, printed root-first — which is exactly why
+the freshest, most useful information is at the bottom.
 
 !!! tip "The three-step read"
     1. **Bottom line** — what kind of failure, and what message?
@@ -228,11 +236,18 @@ Exception in thread "main" java.lang.ArithmeticException: / by zero
 ```
 
 Java prints **most recent call first**: the *what* is on the top line, and
-the frame where the failure happened (`Ratio.c`) comes immediately after
-it, with `main` at the bottom. Python prints most recent call *last*. So
-the universal rule is not "read the bottom" but "**start where the
-exception is named and read outward**" — bottom-up in Python, top-down in
-Java.
+the frame where the failure happened (`Ratio.c`) comes immediately after it,
+with `main` at the bottom. Python prints most recent call *last*:
+
+| Where to find … | Python traceback | Java stack trace |
+| --- | --- | --- |
+| the exception type and message | the **last** line | the **first** line |
+| the frame where it was raised | the bottom-most frame | the first `at ...` line |
+| where the program started | the top frame | the last `at ...` line |
+| reading direction | bottom-up | top-down |
+
+So the universal rule is not "read the bottom" but "**start where the
+exception is named and read outward**".
 
 !!! warning "Common mistakes"
 

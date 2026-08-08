@@ -7,9 +7,10 @@ frame** — a private workspace holding that call's parameters and local
 variables — onto the [call stack](../ch05-under-the-hood/03-stack-heap.md),
 runs the function body, and pops the frame when the function returns. A
 recursive function simply ends up with several of *its own* frames on the
-stack at once, each with its own value of `n`. Once you see that, recursion
-stops being mysterious and becomes a bookkeeping exercise you can trace on
-paper.
+stack at once, each with its own value of `n`.
+
+Once you see that, recursion stops being mysterious and becomes a bookkeeping
+exercise you can trace on paper.
 
 ## A function that calls itself is still just a function
 
@@ -71,11 +72,15 @@ column shows the frames currently on the stack, with the newest on the left.
 | 9 | `f(3)` computes `3 * 2`, returns `6` | `f(4)` |
 | 10 | `f(4)` computes `4 * 6`, returns `24` | *(empty)* |
 
-Two things deserve emphasis. First, the multiplications happen on the *way
-back up*: `f(4)` cannot compute `4 * ...` until `f(3)` has finished. Second,
-at step 5 there are five separate frames alive at once, each holding its own
-`n`. Here is the stack at that moment of maximum depth (each frame returns
-its result to the frame below it):
+Two things deserve emphasis:
+
+- **The multiplications happen on the *way back up*.** `f(4)` cannot compute
+  `4 * ...` until `f(3)` has finished and handed back a number.
+- **At step 5 there are five separate frames alive at once**, each holding
+  its own `n`.
+
+Here is the stack at that moment of maximum depth (each frame returns its
+result to the frame below it):
 
 ```mermaid
 flowchart TB
@@ -142,16 +147,20 @@ print(sys.getrecursionlimit())
 In standard CPython the default is 1000 frames (your runtime may print a
 different value — whatever it prints is *your* limit). The cap is deliberate:
 each frame costs real memory, and a runaway recursion would otherwise eat the
-whole stack region of the process. The limit can be raised with
-`sys.setrecursionlimit(...)`, but treat that as a last resort — a function
-that needs 100 000 frames usually wants to be a loop instead, as
-[section 17.3](03-vs-iteration.md) shows.
+whole stack region of the process.
 
-Note the subtlety: `broken` breaks law 1 outright. A function can also keep a
-base case but break law 2 — `factorial(n - 1)` accidentally written as
-`factorial(n)` never gets closer to `0` and fails the same way. Also beware
-inputs that *step over* the base case: our `factorial(-1)` would recurse
-through $-2, -3, \dots$ forever, because `n == 0` is never hit from below.
+The limit can be raised with `sys.setrecursionlimit(...)`, but treat that as a
+last resort. A function that needs 100 000 frames usually wants to be a loop
+instead, as [section 17.3](03-vs-iteration.md) shows.
+
+There are three distinct ways to earn a `RecursionError`, and only the first
+is obvious:
+
+- **No base case at all** — `broken` above, which breaks law 1 outright.
+- **A base case that never gets closer** — `factorial(n - 1)` accidentally
+  written as `factorial(n)` keeps law 1 but breaks law 2.
+- **An input that steps *over* the base case** — `factorial(-1)` recurses
+  through $-2, -3, \dots$ forever, because `n == 0` is never hit from below.
 
 !!! info "Java corner"
     Java behaves the same way, with different vocabulary. Each thread gets a

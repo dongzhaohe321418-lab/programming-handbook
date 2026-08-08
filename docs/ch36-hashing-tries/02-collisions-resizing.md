@@ -88,16 +88,18 @@ m =      1000: 50% chance of a collision after just    38 keys (1.177*sqrt(m) = 
 m =   1000000: 50% chance of a collision after just  1178 keys (1.177*sqrt(m) = 1177)
 ```
 
-The simulation lands on the analytic estimate $\sqrt{\pi m/2}$ almost
-exactly. And the last block is the number to remember: **a table with a
-million buckets collides after about 1178 keys**, when it is 0.1% full.
-Collisions are not an edge case to handle later; they are the normal
-operating condition, and the whole design question is what to do about them.
+The simulation lands on the analytic estimate $\sqrt{\pi m/2}$ almost exactly.
+And the last block is the number to remember: **a table with a million buckets
+collides after about 1178 keys**, when it is 0.1% full.
 
-There are two families of answers. **Separate chaining** keeps colliding
-keys outside the table, in a list per bucket. **Open addressing** keeps
-everything inside the table and, on a collision, goes looking for another
-slot.
+Collisions are not an edge case to handle later. They are the normal operating
+condition, and the whole design question is what to do about them. There are
+two families of answer, and the rest of this section is about both:
+
+- **Separate chaining** keeps colliding keys *outside* the table, in a list
+  per bucket.
+- **Open addressing** keeps everything *inside* the table and, on a
+  collision, goes looking for another slot.
 
 ## Separate chaining, and why the load factor is the only number that matters
 
@@ -120,11 +122,15 @@ halfway down, on average, giving the classic
 
 $$ \text{probes(successful)} \;\approx\; 1 + \frac{\alpha}{2} $$
 
-Notice what is missing from both formulas: $n$. A table with a hundred keys
-in fifty buckets and one with a hundred million keys in fifty million
-buckets have the same $\alpha$ and the same cost. **That, precisely, is
-where the $O(1)$ comes from** — not from magic, but from a promise to grow
-$m$ whenever $n$ grows.
+Notice what is missing from both formulas: $n$. A table with a hundred keys in
+fifty buckets and one with a hundred million keys in fifty million buckets have
+the same $\alpha$ and the same cost.
+
+!!! tip "Where the $O(1)$ actually comes from"
+
+    Not from magic — from a **promise to grow $m$ whenever $n$ grows**. Cost
+    depends on $\alpha$ alone, so keeping $\alpha$ bounded keeps the cost
+    constant.
 
 ```python
 import random
@@ -168,13 +174,14 @@ breaks; it just gets slowly slower.
 
 ## Open addressing: no chains, one array
 
-Chaining pays for its robustness with pointers. Every entry is a separate
-list node somewhere else in memory, which is a cache miss per hop and an
-allocation per insert. **Open addressing** stores every entry directly in the
-table and resolves a collision by probing: if slot $h(k)$ is taken, try
-another slot, and another, until an empty one appears. The sequence of slots
-tried is the **probe sequence**, and the three classic choices differ only in
-how they generate it.
+Chaining pays for its robustness with pointers. Every entry is a separate list
+node somewhere else in memory, which is a cache miss per hop and an allocation
+per insert.
+
+**Open addressing** stores every entry directly in the table and resolves a
+collision by probing: if slot $h(k)$ is taken, try another slot, and another,
+until an empty one appears. The sequence of slots tried is the **probe
+sequence**, and the three classic choices differ only in how they generate it.
 
 $$
 \begin{aligned}
@@ -198,11 +205,14 @@ flowchart LR
     end
 ```
 
-Linear probing is the fastest per step — the next slot is the next cache
-line, already in memory — and it has the worst failure mode. Occupied slots
-merge into runs, and a run *grows at both ends*: any key hashing anywhere
-inside a run of length $L$ ends up extending it. Long runs therefore get
-longer faster than short ones. This is **primary clustering**, and it is
+### Linear probing and primary clustering
+
+Linear probing is the fastest per step — the next slot is the next cache line,
+already in memory — and it has the worst failure mode.
+
+Occupied slots merge into runs, and a run *grows at both ends*: any key hashing
+anywhere inside a run of length $L$ ends up extending it. Long runs therefore
+get longer faster than short ones. This is **primary clustering**, and it is
 measurable.
 
 ```python
@@ -266,23 +276,26 @@ for alpha in (0.5, 0.7, 0.9):
 ```
 
 At 90% full, linear probing has produced a run of **121 consecutive occupied
-slots** where scattering the same number of keys at random gives a worst run
-of 55. Any key unlucky enough to hash into the front of that run walks the
-whole thing.
+slots** where scattering the same number of keys at random gives a worst run of
+55. Any key unlucky enough to hash into the front of that run walks the whole
+thing.
 
-**Quadratic probing** breaks up primary clustering by making the step grow:
-$+1, +4, +9, +16, \dots$ Two keys with *different* home slots now diverge
-instead of marching in lock-step. Two keys with the *same* home slot still
-follow identical paths — that residue is called **secondary clustering**.
-The price is a guarantee: with $m$ prime, $h + j^2$ visits only about half
-the slots, so insertion is only guaranteed to succeed while $\alpha < 0.5$.
+### Quadratic probing and double hashing
 
-**Double hashing** removes secondary clustering too, by making the *step
-size itself* depend on the key: $h_2(k)$ must never be zero and must be
-coprime with $m$ (easy if $m$ is prime and $1 \le h_2(k) < m$). Two keys with
-the same home slot now walk away from each other at different speeds, and
-the resulting probe sequences behave almost exactly like independent random
-choices — the theoretical ideal.
+The other two probe sequences each remove one layer of clustering.
+
+- **Quadratic probing** breaks up *primary* clustering by making the step grow:
+  $+1, +4, +9, +16, \dots$ Two keys with *different* home slots now diverge
+  instead of marching in lock-step. Two keys with the *same* home slot still
+  follow identical paths — that residue is called **secondary clustering**. The
+  price is a guarantee: with $m$ prime, $h + j^2$ visits only about half the
+  slots, so insertion is only guaranteed to succeed while $\alpha < 0.5$.
+- **Double hashing** removes secondary clustering too, by making the *step size
+  itself* depend on the key. $h_2(k)$ must never be zero and must be coprime
+  with $m$ — easy if $m$ is prime and $1 \le h_2(k) < m$. Two keys with the same
+  home slot now walk away from each other at different speeds, and the
+  resulting probe sequences behave almost exactly like independent random
+  choices: the theoretical ideal.
 
 ```python
 import random
@@ -380,14 +393,19 @@ find(17) -> None  <-- WRONG: reported missing
 
 Deleting 9 deleted 17 as well, as far as anyone can tell. The search for 17
 starts at slot 1, steps to slot 2, finds it empty, and concludes — correctly,
-by its own rule — that 17 was never inserted. The value is intact, occupying
-memory, and permanently unreachable. No exception, no warning; just a table
-that has started lying. Delete a few thousand keys from a busy cache and you
-will lose entries you never touched.
+by its own rule — that 17 was never inserted.
 
-The fix has a name: a **tombstone**. Deleting writes a special marker that
-means *"something used to be here — keep probing"*. Searches walk past
-tombstones; insertions may reuse them.
+The value is intact, occupying memory, and permanently unreachable. No
+exception, no warning; just a table that has started lying. Delete a few
+thousand keys from a busy cache and you will lose entries you never touched.
+
+!!! note "The tombstone rule"
+
+    Deleting from an open-addressed table must write a **tombstone** — a
+    marker meaning *"something used to be here, keep probing"* — never an
+    empty slot. Searches walk past tombstones; insertions may reuse them.
+
+### A table that deletes correctly
 
 ```python
 EMPTY = None
@@ -493,14 +511,19 @@ len: 2  17 in t: True  9 in t: False
 after put(25): ['.', '1', '25', '17', '.', '.', '.', '.']
 ```
 
-The tombstone in slot 2 keeps the road open to slot 3, and the next
-insertion that probes through it reclaims the space. Note the two separate
-counters in the class: `_size` counts live entries, `_used` counts live
-entries *plus* tombstones. Resizing must be triggered by `_used`, because a
-table full of tombstones is just as slow as a table full of keys even though
-`len()` says it is empty. Rehashing drops the tombstones, which is why a
-heavily churned table gets faster after a resize even when it holds the same
-number of keys.
+The tombstone in slot 2 keeps the road open to slot 3, and the next insertion
+that probes through it reclaims the space.
+
+Note the two separate counters in the class, because getting them confused is
+the follow-up bug:
+
+- **`_size`** counts live entries — this is what `len()` reports.
+- **`_used`** counts live entries *plus* tombstones — this is what must
+  trigger a resize, because a table full of tombstones is just as slow as a
+  table full of keys even though `len()` says it is empty.
+
+Rehashing drops the tombstones, which is why a heavily churned table gets
+faster after a resize even when it holds the same number of keys.
 
 ## Load factor and resizing
 
@@ -603,22 +626,34 @@ plt.legend()
   0.95      1.46    1.48     7.68   10.50     3.14    3.15
 ```
 
-There they are — the classic curves. Chaining crawls from 1.04 to 1.46 over
-the entire range. Double hashing tracks its theory to two decimals. Linear
-probing is fine up to about $\alpha = 0.7$ and then turns upward hard: 2.13
-probes at 0.7, 4.57 at 0.9, 7.68 at 0.95. (Measured linear probing runs a
-little *below* theory at high load because the formula assumes an infinitely
-large table; with $m = 1021$ the clusters cannot grow without bound.)
+There they are — the classic curves.
 
-That knee is why every real implementation resizes. The rule is simple:
+- **Chaining** crawls from 1.04 to 1.46 over the entire range.
+- **Double hashing** tracks its theory to two decimals.
+- **Linear probing** is fine up to about $\alpha = 0.7$ and then turns upward
+  hard: 2.13 probes at 0.7, 4.57 at 0.9, 7.68 at 0.95.
 
-> When $\alpha$ exceeds a threshold, allocate a table of double the size and
-> **rehash every key into it**. You cannot copy slots across — bucket
-> indices are computed modulo $m$, and $m$ just changed.
+(Measured linear probing runs a little *below* theory at high load because the
+formula assumes an infinitely large table; with $m = 1021$ the clusters cannot
+grow without bound.)
 
-Java's `HashMap` resizes at $\alpha = 0.75$; CPython's `dict` grows when it
-is two-thirds full; Rust's `HashMap` uses about 0.875 with a
-cluster-friendly layout. All of them sit at or below the knee.
+### The resize rule
+
+That knee is why every real implementation resizes.
+
+!!! note "Grow and rehash"
+
+    When $\alpha$ exceeds a threshold, allocate a table of **double the size**
+    and **rehash every key into it**. You cannot copy slots across — bucket
+    indices are computed modulo $m$, and $m$ just changed.
+
+Where real libraries put that threshold:
+
+- **Java `HashMap`** — resizes at $\alpha = 0.75$.
+- **CPython `dict`** — grows when it is two-thirds full.
+- **Rust `HashMap`** — about 0.875, with a cluster-friendly layout.
+
+All of them sit at or below the knee.
 
 ```python
 class ResizingHashMap:
@@ -688,6 +723,8 @@ print("\nall values still correct:",
         512      1024   0.50         7          769       1.50
        4096      8192   0.50        10         6148       1.50
       20000     32768   0.61        12        24582       1.23
+
+all values still correct: True
 ```
 
 ## Why doubling is free: amortized $O(1)$
@@ -699,12 +736,17 @@ amortized constant.
 
 Growing from capacity 1 to capacity $2^t$ by doubling moves
 
-$$ 1 + 2 + 4 + \dots + 2^{t-1} = 2^t - 1 < n $$
+$$ 1 + 2 + 4 + \dots + 2^{t-1} = 2^t - 1 < 2n $$
 
-pairs in total, spread over $n$ insertions. Look at the `moved / n` column
-above: it hovers around 1.5 and never grows. Each insert pays a constant
-*average* price no matter how large the table gets — even though one insert
-in every few thousand is individually expensive.
+pairs in total, spread over $n$ insertions. The bound is $2n$ rather than $n$
+because doubling overshoots: the last capacity $2^t$ is the first power of two
+past the point where the table filled, so $2^{t-1} \le n$.
+
+What matters is that the total is a *constant multiple* of $n$; the constant
+itself depends on the threshold you resize at. Look at the `moved / n` column
+above — with `max_load = 0.75` it settles at about 1.5 and never grows. Each
+insert pays a constant *average* price no matter how large the table gets, even
+though one insert in every few thousand is individually expensive.
 
 ```python
 n = 1_000_000
@@ -792,24 +834,35 @@ for n in (250, 500, 1000, 2000):
 ```
 
 Double $n$ and the honest column doubles — linear, as promised. The
-adversarial column *quadruples*. That is $O(n^2)$ written in wall-clock
-time: 2000 keys take 34 ms instead of a fifth of one, a 170-fold penalty,
-and it gets worse with every key added.
+adversarial column *quadruples*. That is $O(n^2)$ written in wall-clock time:
+2000 keys take some 30 ms instead of a fifth of one — a penalty of well over a
+hundredfold on any machine — and it gets worse with every key added.
 
-Now make it an attack. A web server puts every query parameter of an
-incoming request into a dictionary. If the attacker knows the hash function,
-they can compute thousands of keys that all collide and send them in one
-request. The server spends quadratic time parsing it, and a handful of small
-requests take the machine down. This is **hash flooding**, and it was
-demonstrated against most major web platforms at once in 2011.
+### Hash flooding: the attack
+
+Now make it an attack, in four steps:
+
+1. A web server puts every query parameter of an incoming request into a
+   dictionary.
+2. The attacker, knowing the hash function, computes thousands of keys that
+   all collide.
+3. They send them in one request.
+4. The server spends quadratic time parsing it, and a handful of small
+   requests take the machine down.
+
+This is **hash flooding**, and it was demonstrated against most major web
+platforms at once in 2011.
+
+### Randomized hashing, and what it does not fix
 
 The defence is to make the hash function unpredictable. CPython (since 3.3)
 seeds string and bytes hashing with a random value chosen at interpreter
-start-up, using SipHash — a function specifically designed to be
-*keyed*, so that without the secret you cannot predict which keys collide.
+start-up; since 3.4 the function underneath is SipHash — a function
+specifically designed to be *keyed*, so that without the secret you cannot
+predict which keys collide.
 
-Run the same one-line program three times in three fresh interpreters and
-you get three different answers:
+Run the same one-line program three times in three fresh interpreters and you
+get three different answers:
 
 ```console
 $ python3 -c 'print(hash("collide me"))'
@@ -848,18 +901,20 @@ integers are NOT randomized: True True
 stable across runs and machines: ec100dc1f10af47a
 ```
 
-The rule that follows: **never store, transmit, or compare a Python string
-hash across processes.** If you need a hash value that survives — a cache
-key on disk, a shard index, a content address — use `hashlib`, whose digests
-are specified down to the byte.
+The rule that follows: **never store, transmit, or compare a Python string hash
+across processes.** If you need a hash value that survives — a cache key on
+disk, a shard index, a content address — use `hashlib`, whose digests are
+specified down to the byte.
 
-Randomization raises the cost of an attack; it does not change the worst
+Randomization raises the *cost* of an attack; it does not change the worst
 case. Two other defences do:
 
 - **Treeify long chains.** Java's `HashMap` (since Java 8) converts a bucket
-  whose chain exceeds eight entries into a
+  whose chain grows past eight entries into a
   [red-black tree](../ch35-balanced-trees/03-red-black.md), turning the
-  worst case from $O(n)$ into $O(\log n)$ per bucket.
+  worst case from $O(n)$ into $O(\log n)$ per bucket. (It only does this once
+  the table has at least 64 buckets; below that it resizes instead, on the
+  theory that a tiny table's long chain is a sizing problem, not an attack.)
 - **Use a data structure with a guarantee.** A balanced tree is $O(\log n)$
   for *every* input, adversarial or not — which brings us to the comparison
   this whole chapter has been building toward.
@@ -885,13 +940,14 @@ things in order?*
 | Cost profile | spiky (resizes) | uniform | uniform |
 
 A hash table's speed comes from **destroying the order information**.
-$h(\texttt{"apple"})$ and $h(\texttt{"banana"})$ are two unrelated numbers;
-the fact that `"apple" < "banana"` is nowhere in the table, so there is no
-cheaper way to list the keys in order than to collect them all and sort —
-$O(n \log n)$, no better than starting from a plain list. A balanced tree
-keeps that information in its shape, which is exactly why it can answer
-"every key between 100 and 200" in $O(\log n + k)$ and why Java's `TreeMap`
-exists alongside `HashMap`.
+$h(\texttt{"apple"})$ and $h(\texttt{"banana"})$ are two unrelated numbers; the
+fact that `"apple" < "banana"` is nowhere in the table. So there is no cheaper
+way to list the keys in order than to collect them all and sort —
+$O(n \log n)$, no better than starting from a plain list.
+
+A balanced tree keeps that information in its shape. That is exactly why it can
+answer "every key between 100 and 200" in $O(\log n + k)$, and why Java's
+`TreeMap` exists alongside `HashMap`.
 
 So the rule of thumb:
 
@@ -915,7 +971,7 @@ So the rule of thumb:
     - **Copying buckets across on resize.** The bucket index is
       `hash(key) % m`, and `m` has changed. Every key must be rehashed.
     - **Running a table close to full.** Linear probing at $\alpha = 0.95$
-      costs three times what it costs at 0.7, and unsuccessful searches are
+      costs over three times what it costs at 0.7, and unsuccessful searches are
       far worse than successful ones. Resize at 0.5–0.75.
     - **Assuming average means always.** $O(1)$ is an average over a
       well-behaved key distribution. Adversarial or merely unlucky keys give
@@ -931,8 +987,9 @@ So the rule of thumb:
    at least one collision?
 
     ??? success "Answer"
-        Yes, but only just — the exact probability is 0.356, so the safer bet
-        is *no collision*, at about 2:1 on. Push it to 38 keys and it becomes
+        No — but it is much closer than it looks. The exact probability of a
+        collision is 0.356, so the safer bet is *no collision*, at a little
+        under 2:1 on. Push it to 38 keys and it becomes
         an even-money bet. The point is how few keys it takes: the table is
         3% full and a collision is already a serious possibility, because
         what matters is the number of *pairs*, which grows quadratically.

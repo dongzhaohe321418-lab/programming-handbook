@@ -1,5 +1,64 @@
 # Chapter 33 · Exercises
 
+## The chapter in brief
+
+What you now know, in the order the chapter taught it.
+
+- **Evaluation is the discipline that replaces the missing compiler** — a model
+  always answers, always fluently, so only a measurement tells you whether a
+  change helped ([33.1](01-benchmarks.md)).
+- **A benchmark is four things bolted together** — dataset, reference, metric,
+  protocol — and changing any one of them changes the number, which is why most
+  "model A beats model B" disputes are really scoring disputes.
+- **Exact match is a family of scorers rather than one**: the normalization
+  chain alone moved a single unchanged model from 16.7% to 91.7%, and it hands
+  out undeserved credit as silently as deserved credit.
+- **pass@k needs $n > k$ samples and the unbiased estimator**; the plug-in
+  shortcut is biased low, and no number of extra tasks ever fixes a bias.
+- **Multiple choice can be scored six defensible ways for scores from 25% to
+  100%**, and a large share of apparent model failures are parsing failures that
+  belong to your harness.
+- **Public benchmarks wear out**: n-gram detection cannot see paraphrase, label
+  noise puts a hard ceiling below 100%, and optimisation turns a measure into a
+  target — which is the case for a private eval built from your own failures.
+- **A harness is five parts** — dataset, model adapter, scorers, runner, report —
+  and the runner's job is to catch everything, record what it caught, and keep
+  going ([33.2](02-eval-harness.md)).
+- **On 50 tasks the 95% interval is about ±12 points**, so report an interval,
+  and pair the comparison on identical tasks — pairing shrank ours from 40
+  points wide to 10.
+- **Gate the build on per-task regressions, not the aggregate**, because a gain
+  and a regression cancel in a mean: ours held at exactly 87.5% while breaking
+  a task.
+- **Agents are scored on trajectories, not answers** — a 66.7% success rate hid
+  a 22.2% tool-error rate, a 50.0% clean-trajectory rate, and one unauthorised
+  tool call.
+- **A judge prompt is a specification**: one named criterion, anchored integer
+  levels, evidence before the score, constrained output
+  ([33.3](03-llm-as-judge.md)).
+- **Judge biases are protocol problems, not prompt problems** — swap orders and
+  average, control for length, hide authorship, normalise formatting — and you
+  **validate the judge against human labels with Cohen's kappa before you trust
+  it**, because a panel reduces variance and never shared bias.
+
+### Key terms
+
+| Term | One-clause reminder |
+| --- | --- |
+| **[benchmark](../appendix/E-ai-glossary.md#b)** | a dataset, a reference, a metric and a protocol, bolted together |
+| **[exact match](../appendix/E-ai-glossary.md#e)** | string equality *after* a normalization chain that is part of the metric |
+| **[pass@k](../appendix/E-ai-glossary.md#p)** | the probability that at least one of $k$ samples passes the tests |
+| **[contamination](../appendix/E-ai-glossary.md#c)** | test items seen in training, so the score measures recall, not ability |
+| **saturation** | a benchmark that can no longer separate the models you care about ([33.1](01-benchmarks.md)) |
+| **[eval harness](../appendix/E-ai-glossary.md#e)** | dataset, model adapter, scorers, runner and report, in one program |
+| **[bootstrap confidence interval](../concept-index.md#b)** | resample the tasks, re-average, keep the middle 95% |
+| **[regression gate](../concept-index.md#r)** | a build step that fails when any single task goes backwards |
+| **[LLM-as-a-judge](../appendix/E-ai-glossary.md#l)** | a model grading output against a rubric, with biases you must measure |
+| **[Cohen's kappa](../concept-index.md#c)** | agreement with human labels, corrected for chance |
+| **[reward hacking](../appendix/E-ai-glossary.md#r)** | optimising against a measure until it stops measuring — Goodhart, in a phrase |
+
+Now put all of it to work.
+
 Eight problems on measuring systems that have no compiler to tell you they are
 wrong, easiest first. They build on [33.1](01-benchmarks.md),
 [33.2](02-eval-harness.md) and [33.3](03-llm-as-judge.md), and every solution

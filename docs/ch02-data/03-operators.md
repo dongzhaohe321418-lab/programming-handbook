@@ -59,8 +59,18 @@ the remainder away, so `7 / 2` is `3` and an average like
 gives the exact answer (`3.5`), and if you *want* whole-number division you
 say so explicitly with `//`.
 
-One subtlety: `//` rounds **down** (toward negative infinity), not toward
-zero. For negative results those differ:
+Five expressions cover everything you need to remember:
+
+| Expression | Result | Why |
+| --- | --- | --- |
+| `7 / 2` | `3.5` | true division — the exact quotient |
+| `7 // 2` | `3` | floor division — divide, then round down |
+| `6 / 3` | `2.0` | `/` returns a float even when the division is exact |
+| `-7 // 2` | `-4` | floor rounds *down*, and $-3.5$ floored is $-4$ |
+| `int(-7 / 2)` | `-3` | `int()` truncates toward zero instead |
+
+The last two rows are the subtlety: `//` rounds **down** (toward negative
+infinity), not toward zero, so for negative results the two differ:
 
 ```python
 print(-7 // 2)       # -4: -3.5 floored DOWNWARD is -4
@@ -81,18 +91,21 @@ a = b \cdot (a \mathbin{//} b) + (a \bmod b)
 $$
 
 so `17 % 5` is `2` because $17 = 5 \times 3 + 2$. Modulo looks humble but
-appears constantly in real code. Four everyday uses:
+appears constantly in real code. Here are its four everyday uses.
 
-**Even or odd.** A number is even exactly when dividing by 2 leaves
-remainder 0:
+### Even or odd
+
+A number is even exactly when dividing by 2 leaves remainder 0:
 
 ```python
 print(10 % 2)   # 0 -> 10 is even
 print(11 % 2)   # 1 -> 11 is odd
 ```
 
-**Extracting digits.** `% 10` peels off the last decimal digit, and `// 10`
-discards it — the basis of every digit-processing trick:
+### Extracting digits
+
+`% 10` peels off the last decimal digit, and `// 10` discards it — the basis
+of every digit-processing trick:
 
 ```python
 n = 8675309
@@ -101,8 +114,10 @@ print(n // 10)         # everything but the last digit: 867530
 print(n // 10 % 10)    # second-to-last digit: 0
 ```
 
-**Wrap-around (clock) arithmetic.** Clocks wrap at 12 or 24; modulo *is*
-that wrap. What time is 7 hours after 22:00?
+### Wrap-around (clock) arithmetic
+
+Clocks wrap at 12 or 24; modulo *is* that wrap. What time is 7 hours after
+22:00?
 
 ```python
 start = 22
@@ -111,8 +126,8 @@ print(finish)          # 5 -> 05:00, correctly wrapped past midnight
 ```
 
 Plain addition says 29 o'clock; `% 24` folds it back onto the clock face,
-printing `5`. The same idea handles minutes — convert to minutes-past-
-midnight, add, wrap, convert back:
+printing `5`. The same idea handles minutes, in four moves: convert to
+minutes-past-midnight, add, wrap, convert back.
 
 ```python
 # What time is 90 minutes after 22:45?
@@ -125,9 +140,11 @@ This prints `0 h 15 min` — a quarter past midnight, thanks to the wrap.
 Notice how `// 60` and `% 60` split the total back into hours and minutes:
 quotient and remainder answering "how many whole groups?" and "what's left?"
 
-**Cycling through a sequence.** When you need position 0, 1, 2, 0, 1, 2, …
-forever — dealing cards, taking turns, striping table rows — `% length`
-converts an ever-growing counter into a repeating index:
+### Cycling through a sequence
+
+When you need position 0, 1, 2, 0, 1, 2, … forever — dealing cards, taking
+turns, striping table rows — `% length` converts an ever-growing counter into
+a repeating index:
 
 ```python
 players = ["Ada", "Grace", "Alan"]

@@ -23,11 +23,15 @@ print("3 coffees cost", total)
 ```
 
 Run it. Three instructions, executed top to bottom, one result. Two things
-distinguish this from a recipe for a human cook. First, the vocabulary and
-grammar are fixed and tiny — you cannot improvise. Second, the machine
-follows instructions *exactly* and *literally*: it never guesses what you
-meant, only what you wrote. Most of learning to program is learning to say
-precisely what you mean in this small language.
+distinguish this from a recipe for a human cook:
+
+- **The vocabulary and grammar are fixed and tiny.** You cannot improvise a
+  new word and hope to be understood.
+- **The machine follows instructions exactly and literally.** It never
+  guesses what you meant, only what you wrote.
+
+Most of learning to program is learning to say precisely what you mean in
+this small language.
 
 But the CPU cannot execute this text. Its native language — **machine
 code** — is patterns of bits encoding its primitive instructions, and every
@@ -35,6 +39,20 @@ CPU family (Intel/AMD's x86, Apple's and phones' ARM) has a different one.
 Source code must be translated. There are two broad strategies.
 
 ## Two strategies: compile ahead of time, or interpret as you go
+
+The two strategies differ in *when* the translation happens, and everything
+else follows from that:
+
+| | **Compiler** | **Interpreter** |
+| --- | --- | --- |
+| When it translates | once, before you run | continuously, while running |
+| What it produces | an executable file | nothing — it just performs the code |
+| To run elsewhere you need | only the executable | the interpreter installed there |
+| Speed | full hardware speed | slower: translation costs run-time work |
+| Feedback loop | edit, compile, then run | edit, run |
+| Classic examples | C, C++, Rust | Python, Ruby, JavaScript |
+
+### The compiler: translate everything first
 
 A **compiler** translates your entire source file into machine code *ahead
 of time*, producing an executable file you can run again and again — or
@@ -52,6 +70,8 @@ Compilation takes time up front, and the result is tied to one CPU family
 and operating system — but the finished program runs at full hardware
 speed, with no translator present at run time.
 
+### The interpreter: translate while running
+
 An **interpreter** takes the opposite approach: it is a program that reads
 your source code and *performs* it, effect by effect, while it reads. No
 executable file is produced; to run the program anywhere, you need the
@@ -59,13 +79,17 @@ interpreter installed there. Translation work happens at run time, which
 costs speed — but you can change a line and re-run instantly.
 
 The two big languages of this handbook each mix these strategies, in
-different proportions. **Java compiles in two stages.** The compiler
-(`javac`) does *not* produce machine code for your CPU. It produces
-**bytecode** — machine code for an imaginary, standardised computer called
-the **Java Virtual Machine** (JVM). A separate program (`java`) then
-*simulates* that imaginary computer on your real one, executing the
-bytecode (and re-compiling the busiest parts to real machine code on the
-fly, a trick called *just-in-time compilation*):
+different proportions.
+
+### Java: compile to bytecode, then interpret that
+
+**Java compiles in two stages.** The compiler (`javac`) does *not* produce
+machine code for your CPU. It produces **bytecode** — machine code for an
+imaginary, standardised computer called the **Java Virtual Machine** (JVM).
+
+A separate program (`java`) then *simulates* that imaginary computer on your
+real one, executing the bytecode — and re-compiling the busiest parts to
+real machine code on the fly, a trick called *just-in-time compilation*:
 
 ```mermaid
 flowchart LR
@@ -78,6 +102,8 @@ flowchart LR
 The payoff is portability: one `.class` file runs on any machine with a
 JVM — Windows, Mac, a phone — because the bytecode targets the imaginary
 machine, and only the JVM needs porting.
+
+### Python: interpret, but compile quietly first
 
 **Python interprets — but compiles quietly first.** When you run a `.py`
 file, the Python interpreter first compiles it to *its own* bytecode (for
@@ -148,9 +174,11 @@ the loop tightens to **edit–run**:
 Neither rhythm is "better". The compiler's up-front pass catches whole
 categories of mistakes before the program ever runs, and compiled programs
 are typically much faster; the interpreter's instant feedback makes
-experimenting frictionless. This book leans on that instant feedback
-constantly — every Run button on these pages is an edit–run loop. Try it:
-change `3` to `10` below and run again.
+experimenting frictionless.
+
+This book leans on that instant feedback constantly — every Run button on
+these pages is an edit–run loop. Try it: change `3` to `10` below and run
+again.
 
 ```python
 cups = 3                     # edit me, then press Run again
@@ -187,8 +215,16 @@ CPU. Machines all the way down.
 
 The single most useful skill this chapter can leave you with is **tracing**:
 executing a program in your head, line by line, keeping a written table of
-every variable — exactly what the machine does, at human speed. Trace this
-six-line program before running it:
+every variable — exactly what the machine does, at human speed. The
+procedure:
+
+1. Draw a table with one row per line of code and one column per variable.
+2. Walk the lines in order, doing exactly what each one says — no skipping,
+   no shortcuts.
+3. After each line, write down the current value of *every* variable.
+4. Read the answer off the table, then run the code and compare.
+
+Trace this six-line program before running it:
 
 ```text
 1   a = 4
@@ -211,10 +247,14 @@ We track the variables after each line (`—` means "does not exist yet";
 | 5 | 8 | 7 | 11 | `"total is 11"` |
 | 6 | prints: `total is 11 8` | | | |
 
-Two details deserve attention. Line 4 *replaces* `a`: a variable holds only
-its latest value, and the old 4 is gone. And `total` stays 11 even after
-`a` changes — line 3 stored the *result* of `a + b`, not the formula;
-nothing gets recomputed later. Now confirm the trace:
+Two details deserve attention:
+
+- **Line 4 *replaces* `a`.** A variable holds only its latest value; the old
+  4 is gone for good.
+- **`total` stays 11 even after `a` changes.** Line 3 stored the *result* of
+  `a + b`, not the formula — nothing gets recomputed later.
+
+Now confirm the trace:
 
 ```python
 a = 4

@@ -12,19 +12,26 @@ makes priority queues fast: the **binary heap**.
 The heap is a tree, but a strangely relaxed one. Where the binary search tree
 of [Chapter 20](../ch20-bst/index.md) keeps *everything* in order, a heap
 enforces just one modest rule — each parent is no bigger than its children —
-and profits enormously from the discount: it never goes lopsided, it lives
-inside a plain Python list with no node objects or pointers at all, and its
-two core operations run in $O(\log n)$ *guaranteed*, not just on a lucky day.
+and profits enormously from the discount:
+
+- **It never goes lopsided.** Its shape is fixed by its size, so there is no
+  bad case to fall into and no balancing code to write.
+- **It needs no nodes or pointers.** The whole tree lives inside a plain
+  Python list; the parent–child links are arithmetic.
+- **Its two core operations are $O(\log n)$ guaranteed**, not just on a
+  lucky day.
+
 The price is that a heap can answer only one question quickly: *what is the
 smallest item?* This chapter is the story of why that narrow bargain is one
 of the best deals in computer science.
 
 We first pin down the heap's two invariants — the heap property and the
-complete shape — and the index arithmetic that turns a tree into a list. Then
-we implement the two repair operations, sift-up and sift-down, grow them into
-a working `MinHeap` class, meet Python's built-in `heapq` module, and put the
-heap to work twice: as **heapsort**, a guaranteed $O(n \log n)$ sorting
-algorithm, and as the **top-k pattern** used all over data processing.
+complete shape — and the index arithmetic that turns a tree into a list.
+Then we implement the two repair operations, sift-up and sift-down, grow them
+into a working `MinHeap` class, and meet Python's built-in `heapq` module.
+Finally we put the heap to work twice: as **heapsort**, a guaranteed
+$O(n \log n)$ sorting algorithm, and as the **top-k pattern** used all over
+data processing.
 
 ## After this chapter you can …
 

@@ -1,14 +1,16 @@
 # Chapter 35 · Balanced Search Trees
 
 [Chapter 20](../ch20-bst/index.md) ended with a confession. A binary search
-tree gives you insert, search, and delete in $O(h)$ time, and in a bushy
-tree $h$ is about $\log_2 n$ — a million keys in twenty steps. But $h$ is
-not a law of nature; it is a consequence of the order the keys happened to
-arrive in. Feed the same tree its keys already sorted and it degenerates
-into a linked list of height $n-1$, and every logarithm in the chapter turns
-back into a linear scan. Worse, sorted input is not an exotic attack: log
-entries by timestamp, database rows by auto-incrementing id, names imported
-alphabetically. The failure mode is the *common* case.
+tree gives you insert, search, and delete in $O(h)$ time, and in a bushy tree
+$h$ is about $\log_2 n$ — a million keys in twenty steps. But $h$ is not a law
+of nature; it is a consequence of the order the keys happened to arrive in.
+Feed the same tree its keys already sorted and it degenerates into a linked
+list of height $n-1$, turning every logarithm in the chapter back into a linear
+scan.
+
+Worse, sorted input is not an exotic attack: log entries by timestamp, database
+rows by auto-incrementing id, names imported alphabetically. The failure mode
+is the *common* case.
 
 This chapter closes that hole four times over. It starts with the single
 structural move that makes repair possible — the **rotation**, a

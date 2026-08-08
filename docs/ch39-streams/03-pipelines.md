@@ -130,18 +130,32 @@ the generator object        :        200 bytes
 Your exact byte counts will differ — they depend on the interpreter build and
 on how the allocator happens to round — but the shape will not. Roughly
 **eight megabytes versus one kilobyte** for the identical arithmetic and the
-identical answer — a ratio of several thousand. And note the last two lines: the
-list *object* alone is 1.6 MB of pointers, before counting the integers it
-points at, while the generator object is a couple of hundred bytes no matter
-how many items will eventually pass through it.
+identical answer.
+
+The two spellings differ on every axis that matters:
+
+| | List chain | Generator chain |
+|---|---|---|
+| Memory used | proportional to the data | constant, whatever $n$ is |
+| When work happens | immediately, stage by stage | on demand, one item at a time |
+| Passes over the data | as many as you like | exactly one |
+| Random access (`xs[500]`) | yes | no |
+| Works on input larger than RAM | no | yes |
+
+And note the last two lines of the output: the list *object* alone is 1.6 MB
+of pointers, before counting the integers it points at, while the generator
+object is a couple of hundred bytes no matter how many items will eventually
+pass through it.
 
 [Section 23.2](../ch23-os/02-memory-layout.md) explains where that memory
 comes from: the list's 1.6 MB block lives on the **heap**, and every one of
 those integers is a separate heap object that the garbage collector must
 track. The generator keeps a single frame with a couple of local variables
-and one item in flight. Multiply by a real log file — 40 GB of web-server
-records is unremarkable — and the difference stops being an optimisation and
-becomes the difference between "runs" and "your process is killed".
+and one item in flight.
+
+Multiply by a real log file — 40 GB of web-server records is unremarkable —
+and the difference stops being an optimisation and becomes the difference
+between "runs" and "your process is killed".
 
 ## Building a composable pipeline
 
@@ -223,14 +237,19 @@ reading is missing from the aggregate because `next(pipeline)` already pulled
 it out. A stream is consumed exactly once, and whatever you take out early is
 not there later.
 
-Fifteen lines of pipeline, and it has all the properties you want from
-production code. It never holds more than one line in memory, so the same
-code works on a four-gigabyte file. Each stage is four lines and testable on
-a hand-written list — `list(drop_noise(["", "# x", "keep"]))` is a complete
-unit test. Adding a stage (deduplicate, convert units, redact) means writing
-one more four-line generator and slotting it into the chain. And the `with`
-block inside `read_lines` still closes the file correctly, because the
-generator's frame stays alive until the iteration finishes.
+About twenty lines of pipeline, and it has all four properties you want from
+production code:
+
+- **Constant memory.** It never holds more than one line at a time, so the
+  same code works unchanged on a four-gigabyte file.
+- **Testable in isolation.** Each stage is four to seven lines and runs on a
+  hand-written list — `list(drop_noise(["", "# x", "keep"]))` is a complete
+  unit test.
+- **Extensible.** Adding a stage (deduplicate, convert units, redact) means
+  writing one more small generator and slotting it into the chain.
+- **Correct about resources.** The `with` block inside `read_lines` still
+  closes the file, because the generator's frame stays alive until the
+  iteration finishes.
 
 !!! note "Nesting reads inside-out"
 
@@ -278,8 +297,9 @@ takewhile <10: [3, 5, 8]
 filter    <10: [3, 5, 8, 2]
 ```
 
-`islice` on an infinite `count` is the pattern to remember: an unbounded
-stream is perfectly safe as long as something downstream stops pulling.
+`islice` on an infinite `count` is the pattern to remember: **an unbounded
+stream is perfectly safe as long as something downstream stops pulling.**
+
 Compare the last two lines closely — `takewhile` **stops** at 13 and never
 looks at the rest, while `filter` examines every item and keeps the 2 near
 the end. On an infinite stream, `takewhile` terminates and `filter` does not.
@@ -321,9 +341,11 @@ WITH sorting first (same key function!):
 
 Three separate `east` groups in the first run, and no error to warn you. The
 rule is absolute: **sort by the same key you group by, or use a dict
-instead.** Note the second consequence, though — sorting is a stage that must
-see *all* the data, so a `groupby` pipeline is no longer constant-memory. If
-you want grouping without sorting, accumulate into a dict:
+instead.**
+
+Note the second consequence, though. Sorting is a stage that must see *all*
+the data, so a `groupby` pipeline is no longer constant-memory. If you want
+grouping without sorting, accumulate into a dict:
 
 ```python
 sales = [("east", 10), ("west", 7), ("east", 4), ("north", 9), ("east", 2)]
@@ -381,27 +403,34 @@ input, as a stream of bytes.
 
 Three things about this deserve to be stated explicitly.
 
-**It streams.** [Section 23.1](../ch23-os/01-os-processes.md) described a
-process as a program in motion with its own memory. A pipeline starts *all
-seven* processes at once, and they run concurrently: `grep` is filtering line
-17 while `cat` is still reading line 400. No temporary file is created, and
-no stage waits for the previous one to finish — except the two marked
-*blocking*.
+### It streams
 
-**It applies backpressure.** A pipe is a small fixed-size buffer in the
-kernel (64 KB is typical on Linux). When `head` has its three lines and stops
-reading, the buffer feeding it fills, so `sort -rn` blocks when it writes,
-and the stall propagates back down the chain until `cat` itself is paused.
-That is exactly `next()` refusing to be called again — a fast producer cannot
-overwhelm a slow consumer, because the consumer sets the pace. Piping a huge
+[Section 23.1](../ch23-os/01-os-processes.md) described a process as a program
+in motion with its own memory. A pipeline starts *all seven* processes at
+once, and they run concurrently: `grep` is filtering line 17 while `cat` is
+still reading line 400. No temporary file is created, and no stage waits for
+the previous one to finish — except the two marked *blocking*.
+
+### It applies backpressure
+
+A pipe is a small fixed-size buffer in the kernel (64 KB is typical on Linux).
+When `head` has its three lines and stops reading, the buffer feeding it
+fills, so `sort -rn` blocks when it writes, and the stall propagates back down
+the chain until `cat` itself is paused.
+
+That is exactly `next()` refusing to be called again: **a fast producer cannot
+overwhelm a slow consumer, because the consumer sets the pace.** Piping a huge
 file into `head -3` finishes instantly for this reason.
 
-**Sorting is where streaming stops.** `sort` cannot emit its first line until
-it has read its last, so it must hold the whole input (real `sort`
-implementations spill to temporary files when that input is larger than
-memory). Every pipeline has this property: a stage that needs to see
-everything is a wall the stream cannot flow through. Put such stages as late
-as possible, after the filters have shrunk the data.
+### Sorting is where streaming stops
+
+`sort` cannot emit its first line until it has read its last, so it must hold
+the whole input (real `sort` implementations spill to temporary files when
+that input is larger than memory).
+
+Every pipeline has this property: a stage that needs to see everything is a
+wall the stream cannot flow through. Put such stages as late as possible,
+after the filters have shrunk the data.
 
 !!! tip "`cat file |` is a small waste"
 
@@ -486,8 +515,10 @@ implementations; the `f"{n:>7}"` here matches the GNU one.)
 That equivalence is the point of the whole chapter. A Unix pipeline and a
 Python generator chain are the same architecture at two scales: independent
 stages, connected by a stream, each pulling one item at a time, with the
-consumer setting the pace. Java's Streams are a third instance of it. Learn
-the shape once and you can read all three.
+consumer setting the pace.
+
+Java's Streams are a third instance of it. **Learn the shape once and you can
+read all three.**
 
 !!! info "Java corner"
 

@@ -165,12 +165,22 @@ item: eggs
 item: bread
 ```
 
-Two details make this loop idiomatic. First, it reads one line at a time
-rather than the whole file, so it works just as happily on a million-line
-log. Second, the `strip()`: each `line` arrives *with its trailing `"\n"`
-still attached*, and since `print` adds a newline of its own, forgetting to
-strip gives mysteriously double-spaced output. `line.strip()` (or
-`line.rstrip()`) removes it.
+Two details make this loop idiomatic:
+
+- **It reads one line at a time**, not the whole file, so it works just as
+  happily on a million-line log.
+- **It strips.** Each `line` arrives *with its trailing `"\n"` still
+  attached*, and since `print` adds a newline of its own, forgetting to strip
+  gives mysteriously double-spaced output. `line.strip()` (or
+  `line.rstrip()`) removes it.
+
+That one-line-at-a-time property is worth more than it looks: it means a file
+can be processed in *stages* — read, clean, filter, summarise — where each
+stage handles one line and passes it on, and the whole chain never holds more
+than a line or two in memory.
+[Section 39.3](../ch39-streams/03-pipelines.md) builds those stages out of
+generators, measures the constant memory footprint, and shows that the result
+is the same thing you get by typing `|` in a shell.
 
 === "Python"
 
@@ -280,11 +290,16 @@ Chloe: 92.7
 ```
 
 Read the loop body slowly, because it is a template you will reuse for the
-exercises and far beyond: **strip** the newline, **split** on the delimiter,
-**convert** the numeric columns with `int` (everything read from a file is a
-string until you say otherwise), then compute. The `f.readline()` before the
-loop reads exactly one line — here, the header — so the `for` loop sees only
-data rows.
+exercises and far beyond:
+
+1. **Strip** the trailing newline off the line.
+2. **Split** what is left on the delimiter.
+3. **Convert** the numeric columns with `int` — everything read from a file
+   is a string until you say otherwise.
+4. **Compute** whatever the report needs.
+
+The `f.readline()` before the loop reads exactly one line — here, the
+header — so the `for` loop sees only data rows.
 
 ## When the file isn't there
 

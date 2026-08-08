@@ -113,9 +113,12 @@ print(grid)
 [[99, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]]
 ```
 
-Only row 0 changed — exactly what we want. Now for the trap. Chapter 7
-showed that `[0] * 4` builds `[0, 0, 0, 0]`, so it is very tempting to
-build the whole grid the same way:
+Only row 0 changed — exactly what we want.
+
+### The `[[0] * cols] * rows` trap
+
+Chapter 7 showed that `[0] * 4` builds `[0, 0, 0, 0]`, so it is very
+tempting to build the whole grid the same way:
 
 ```python
 grid = [[0] * 4] * 3     # looks reasonable...
@@ -136,6 +139,8 @@ row**. The outer `* 3` does not build three lists; it copies the
 holds arrows, and `* 3` duplicated the arrow, not the thing it points
 to.
 
+### The comprehension fix
+
 The idiomatic fix is a list comprehension whose body *runs* once per
 row, manufacturing a fresh inner list each time:
 
@@ -151,9 +156,11 @@ print(grid)
 
 (`_` is a conventional name for a loop variable you never use.) The
 inner `[0] * 4` is safe because the elements are plain numbers, which
-you can never modify in place — only replace. The rule of thumb:
-`*` is fine for a flat list of numbers, and wrong whenever the thing
-being repeated is itself a list.
+you can never modify in place — only replace.
+
+!!! tip "The rule of thumb for `*`"
+    `*` is fine for a flat list of numbers, and wrong whenever the thing
+    being repeated is itself a list.
 
 ## Traversing a grid
 
@@ -286,12 +293,17 @@ print(grid.sum(axis=1))    # row sums
 [19 21 14]
 ```
 
-Three luxuries to notice: `shape` reports both dimensions at once;
-indexing is `grid[r, c]` with a comma instead of `grid[r][c]`; and the
-row/column sums we hand-rolled above are one call each — `axis=0`
-collapses the rows (summing down each column), `axis=1` collapses the
-columns. NumPy arrays must be rectangular — no ragged rows — which is
-part of how they earn their speed.
+Three luxuries to notice:
+
+- **`shape` reports both dimensions at once**, as a single tuple.
+- **Indexing takes one pair of brackets**, `grid[r, c]`, with a comma inside
+  instead of `grid[r][c]`.
+- **The row and column sums we hand-rolled above are one call each** —
+  `axis=0` collapses the rows (summing down each column) and `axis=1`
+  collapses the columns.
+
+NumPy arrays must be rectangular — no ragged rows — which is part of how
+they earn their speed.
 
 !!! warning "Common mistakes"
     - **`[[0] * cols] * rows`.** Every "row" is the same list; writing

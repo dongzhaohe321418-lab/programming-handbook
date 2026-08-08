@@ -1,5 +1,51 @@
 # Exercises
 
+## The chapter in brief
+
+- Assignment evaluates the right-hand side first, then makes the name on the
+  left refer to the result ([2.1](01-variables-types.md)).
+- A Python name is a **label tied to an object by an arrow**, not a box
+  holding a value — so assignment moves one arrow and leaves others alone.
+- Names must be letters, digits, and underscores (never starting with a
+  digit, never a keyword), and Python's convention is `snake_case`.
+- Four types carry almost every beginner program — `int`, `float`, `str`,
+  `bool` — and `type()` will tell you which one you have.
+- Python checks types *while the program runs* (dynamic typing); Java checks
+  them at compile time and fixes each variable's type forever.
+- `int()`, `float()`, and `str()` convert between types — `int()` truncates
+  toward zero, and an impossible conversion raises `ValueError`.
+- `42`, `0b101010`, and `0x2A` are three spellings of one integer, and
+  `bin()`/`hex()` return *strings* while `int(text, base)` converts back
+  ([2.2](02-number-systems.md)).
+- Python's `int` grows to any size and never overflows, while Java's 32-bit
+  `int` silently wraps past about 2.1 billion.
+- `/` always produces a float, `//` floors toward negative infinity, and `%`
+  returns the remainder that matches `//` ([2.3](03-operators.md)).
+- Modulo earns its keep four ways: even/odd tests, digit extraction,
+  clock-style wrap-around, and cycling an index through a sequence.
+- Precedence runs parentheses, `**`, unary minus, then `* / // %`, then
+  `+ -`; only `**` groups right to left.
+- `round()` rounds halves to *even*, the `math` module supplies the rest, and
+  `input()` always hands back a string — so interactive programs **read,
+  convert, then compute** ([2.4](04-math-input.md)).
+
+### Key terms
+
+| Term | What it means |
+| --- | --- |
+| [**variable**](../concept-index.md#v) | A name attached to an object, re-attachable at any time |
+| [**type**](../concept-index.md#t) | The category of a value, deciding what operations it supports |
+| [**dynamic typing**](../concept-index.md#d) | Types belong to objects and are checked while the program runs |
+| **keyword** | A reserved word like `if` or `class` that cannot be used as a name |
+| [**binary**](../concept-index.md#b) / [**hexadecimal**](../concept-index.md#h) | Base 2 and base 16 — written in Python as `0b…` and `0x…` |
+| **arbitrary precision** | Python's integers grow as large as needed instead of overflowing |
+| [**true vs floor division**](../concept-index.md#t) | `/` gives the exact float; `//` rounds the result downward |
+| [**modulo**](../concept-index.md#m) | `%`, the remainder that pairs with floor division |
+| [**operator precedence**](../concept-index.md#o) | The order operators are applied in when parentheses do not say |
+| **banker's rounding** | `round()`'s rule: exact halves go to the nearest *even* number |
+| **`math` module** | The standard library's `sqrt`, `floor`, `ceil`, `pi`, and more |
+| **read → convert → compute** | The three-act shape of every program that takes input |
+
 Ten problems, easiest first. For each one: attempt it honestly — on paper or
 in a scratch block — *before* opening the solution. The predict-the-output
 exercises are wasted if you run the code first; the whole point is to test

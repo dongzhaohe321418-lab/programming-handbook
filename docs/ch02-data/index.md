@@ -9,14 +9,17 @@ builds molecules from.
 
 We start with **variables**: what a name really is in Python (a label tied to
 an object — not a box, and the difference matters), and the four core types
-you will use constantly: `int`, `float`, `str`, and `bool`. Then we look at
-how numbers are *written* — decimal, binary, and hexadecimal are three
-spellings of the same value — and how Python's integers differ radically from
-Java's fixed-size `int` and `long`. From there we cover the arithmetic
-operators, including the two kinds of division (a spot where Python and Java
-genuinely disagree) and the surprisingly useful modulo operator `%`. We close
-with the `math` module and the standard pattern for turning keyboard input
-into numbers you can compute with.
+you will use constantly: `int`, `float`, `str`, and `bool`.
+
+Then we look at how numbers are *written* — decimal, binary, and hexadecimal
+are three spellings of the same value — and how Python's integers differ
+radically from Java's fixed-size `int` and `long`.
+
+From there we cover the arithmetic operators, including the two kinds of
+division (a spot where Python and Java genuinely disagree) and the
+surprisingly useful modulo operator `%`. We close with the `math` module and
+the standard pattern for turning keyboard input into numbers you can compute
+with.
 
 If you are following a Java course alongside this handbook, this chapter maps
 onto the "data types and expressions" module. Watch for the side-by-side
@@ -24,7 +27,7 @@ Python/Java tabs: static vs dynamic typing, integer division, and integer
 overflow are the three places the two languages behave differently enough to
 trip you up.
 
-**After this chapter you can …**
+## After this chapter you can …
 
 - create variables, explain what a name refers to, and follow the
   name → object arrow model when values are reassigned;
@@ -41,7 +44,9 @@ trip you up.
 - write a complete small program that converts user input to numbers and
   prints a formatted result.
 
-**Prerequisites.** You should know what a program is and roughly how one runs
+## Prerequisites
+
+You should know what a program is and roughly how one runs
 — [Chapter 0](../ch00-machine/index.md) covers that, and
 [Chapter 0.2](../ch00-machine/02-binary.md) introduces the binary ideas we
 build on in section 2.2. [Chapter 1](../ch01-tools/index.md) is useful if you

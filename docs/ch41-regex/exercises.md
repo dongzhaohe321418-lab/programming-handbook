@@ -1,5 +1,55 @@
 # Chapter 41 · Exercises
 
+## The chapter in brief
+
+- A regular expression describes the **shape** of text, which is why twelve
+  lines of `split` and `isdigit` collapse into `\d{4}-\d{2}-\d{2}`
+  ([41.1](01-fundamentals.md)).
+- Shape is not validity: `2024-13-45` has the right shape, so real checking
+  still ends in `datetime.strptime` or an explicit range test.
+- Character classes (`[aeiou]`, `[a-f]`, `[^0-9]`) and the shorthands (`\d`,
+  `\w`, `\s`) say *which characters*; quantifiers (`*`, `+`, `?`, `{n,m}`) say
+  *how many*.
+- Anchors match a **position**, not a character — and `\b` is the fix for
+  almost every "why did it match inside a longer word?" bug.
+- `search` looks anywhere, `match` only at position zero, `fullmatch` must
+  consume the whole string: **use `fullmatch` for validation.**
+- Always write patterns as raw strings, because `"\b"` is a backspace
+  character while `r"\b"` is the word boundary you meant.
+- Parentheses both group and **capture**, and `(?P<name>…)` plus `groupdict()`
+  turns a line of text straight into a record ([41.2](02-groups-parsing.md)).
+- `(?:…)` groups without capturing, which keeps `findall` returning whole
+  matches and keeps group numbers stable when the pattern is edited.
+- Quantifiers are **greedy** by default and **lazy** with a trailing `?` — but
+  a negated class such as `[^>]+` usually beats both.
+- Lookaround asserts what sits next to the current position without consuming
+  it, which is how four password rules stack up at one place in the string.
+- **A quantifier inside a quantifier is a denial-of-service waiting to
+  happen**: `(a+)+b` tries exponentially many splits before it can fail.
+- Regex cannot count nesting depth, so HTML, JSON, CSV, URLs, and email
+  addresses belong to parsers — `html.parser`, `json`, `csv`, `urllib.parse`.
+
+### Key terms
+
+| Term | One-clause reminder |
+|---|---|
+| Metacharacter | one of the fourteen characters that mean something other than themselves |
+| Character class | `[...]` — any one character from the set, `^` first to negate it |
+| Quantifier | how many times the thing immediately before it may repeat |
+| Anchor | a zero-width assertion about a *position*: `^`, `$`, `\b`, `\A` |
+| Capturing group | `(...)` — remembers what it matched, numbered from 1 |
+| Named group | `(?P<name>...)` in Python, read back with `groupdict()` |
+| Non-capturing group | `(?:...)` — groups for structure, remembers nothing |
+| Backreference | `\1` or `(?P=name)` — "the same text group 1 matched" |
+| [Greedy vs lazy](../concept-index.md#g) | take the most and give back, versus take the least and extend |
+| Lookaround | `(?=)`, `(?!)`, `(?<=)`, `(?<!)` — a condition that consumes nothing |
+| Catastrophic backtracking (ReDoS) | exponential retries caused by nested quantifiers |
+| Raw string | `r"..."` — Python leaves the backslashes alone for `re` to read |
+| Verbose mode | `re.VERBOSE` — whitespace and `#` comments allowed inside a pattern |
+
+The one-page pattern card is in
+[Appendix F](../appendix/F-toolchain-reference.md#regex). Now put it to work.
+
 Regex is learned at the keyboard: write the pattern, run it against text you
 chose, and be wrong a few times. Every solution here is runnable, and several
 of them print the *failing* version alongside the fixed one, because seeing

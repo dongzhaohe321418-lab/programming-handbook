@@ -30,15 +30,20 @@ print(greeting)
 ```
 
 All the blocks on a page **share one namespace**, like cells in a notebook:
-a name defined in one block still exists in the next, so work down the page
-in order. If a block complains that a name is not defined, run the earlier
-blocks first (or reload the page to start fresh).
+a name defined in one block still exists in the next.
+
+Most blocks stand alone, so you can run any of them on its own. A block that
+deliberately builds on the ones above it starts with the marker
+`# continues` — and when you run one of those, the earlier blocks on the page
+are executed for you first, so it works even if you clicked it out of order.
 
 ```python
 # continues
 # `greeting` still exists — it was defined in the block above.
 print(greeting.upper())
 ```
+
+Reloading the page always gives you a clean slate.
 
 Plots need no extra steps — run this and a chart appears below it:
 

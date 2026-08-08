@@ -27,17 +27,47 @@ flowchart LR
 
 The dotted arrow is the part people skip and the part that makes the system
 improve: every failure the report surfaces becomes a new dataset item, which is
-the private-eval loop from [33.1](01-benchmarks.md). Five decisions live in that
-diagram, and they are yours to make: what a task *is*, how the model is called,
-what counts as correct, what happens when something explodes, and what the
-report must show for you to act on it.
+the private-eval loop from [33.1](01-benchmarks.md).
+
+Five decisions live in that diagram, and every one of them is yours to make:
+
+1. what a task *is*;
+2. how the model is called;
+3. what counts as correct;
+4. what happens when something explodes;
+5. what the report must show for you to act on it.
+
+The next section makes all five, in code.
 
 ## The harness
 
-Here is all of it, in one runnable block. Read it as five labelled regions: the
-dataset (a frozen dataclass so a task cannot be mutated mid-run), two models
-behind one interface, four pluggable scorers, a runner that isolates failures,
-and a report. Everything after this section is an extension of this code.
+All of it fits in one runnable block, and everything later in this section is an
+extension of that code. Two tables first, so the block is a thing you recognise
+rather than a wall you read.
+
+### The five regions
+
+| Region | What it owns | The decision inside it |
+| --- | --- | --- |
+| **Dataset** | a frozen `Task` dataclass, so an item cannot be mutated mid-run | what counts as one eval item |
+| **Models** | two `FakeLLM`s behind a single `complete(prompt)` interface | how a provider is swapped without touching anything else |
+| **Scorers** | four pluggable functions, chosen per task by name | what counts as correct |
+| **Runner** | the loop, with `try/except` around every single task | what happens when something explodes |
+| **Report** | per-task table, aggregate, per category, failure buckets | what you need to see in order to act |
+
+### The four scorers, and the fifth
+
+| Scorer | Decides by | Partial credit | Breaks down when |
+| --- | --- | --- | --- |
+| `exact` | string equality after stripping | no | the model is chatty, or the gold has a variant spelling |
+| `contains` | is the reference a substring of the output | no | the reference appears inside a *denial* of it |
+| `regex` | does the output match a pattern | no | the pattern is stricter than the real requirement |
+| `execution` | run the code, then run its tests | yes — the fraction of tests that passed | there is nothing executable to test |
+| a judge ([33.3](03-llm-as-judge.md)) | ask a model to grade against a rubric | yes, on an anchored scale | the judge has not been validated against humans |
+
+The first four are in the block below. The fifth is the whole of
+[33.3](03-llm-as-judge.md), because it needs far more care than a function
+signature suggests.
 
 ```python
 """A complete evaluation harness: dataset, models, scorers, runner, report."""
@@ -237,6 +267,8 @@ for model in (STRONG, WEAK):
     report(model, run_eval(model, TASKS))
 ```
 
+### What the two runs show
+
 `strong-1` scores **87.5%** and `weak-1` scores **28.1%**, and the interesting
 content is not those two numbers.
 
@@ -344,7 +376,7 @@ for n in (20, 50, 200, 1000, 5000):
     print(f"  {n:>5} tasks   +/- {half:.1%}")
 ```
 
-Four lessons, in the order the output prints them.
+### Four lessons, in the order the output prints them
 
 **Run-to-run variance is not small.** Five runs of one unchanged model at
 nonzero temperature score 50.0%, 56.0%, 58.0%, 52.0% and 50.0% — an 8-point
@@ -426,11 +458,13 @@ else:
 
 Read the first line of that output very carefully: **aggregate accuracy is
 87.5% before and 87.5% after.** A gate that only checked the average would have
-waved this change through. Per task, one item improved and one *regressed* — the
-new system prompt fixed the summary and silently broke the ISO date format, and
-in a real product the broken date is the one that pages someone at 2 a.m.
+waved this change through.
 
-Three rules that make gates survivable in practice:
+Per task, one item improved and one *regressed* — the new system prompt fixed the
+summary and silently broke the ISO date format. In a real product the broken date
+is the one that pages someone at 2 a.m.
+
+### Three rules that make gates survivable
 
 - **Gate on per-task regressions, not only on the aggregate.** Improvements and
   regressions cancel in a mean.
@@ -452,7 +486,7 @@ the recorded sequence of thoughts, tool calls, observations and errors from
 throws away almost all of the information and hides the failures that will hurt
 you.
 
-Five metrics carry most of the signal, and each of them has a decision attached:
+### Five metrics, each with a decision attached
 
 | Metric | Question it answers | What a bad value makes you do |
 | --- | --- | --- |
@@ -557,6 +591,8 @@ print(f"p90 latency           "
       f"{sorted(wall_clock(t) for t in TRAJECTORIES)[int(0.9 * n)]:>7.1f}s")
 ```
 
+### What the trajectories say that the success rate does not
+
 The headline is a respectable **66.7% success rate**. Everything below it is
 worse news.
 
@@ -610,7 +646,8 @@ each is *for*:
   MBPP, MultiPL-E, with sandboxed execution and pass@k.
 - **SWE-bench harness** — builds a container per task instance, applies the
   model's patch, runs the repository's own tests, and reports resolution.
-- **promptfoo** and **Inspect** (UK AI Safety Institute) — the
+- **promptfoo** and **Inspect** (UK AI Security Institute, formerly the AI
+  Safety Institute) — the
   application-developer end: declare your own datasets, assertions and judges
   in config or Python, diff prompt versions side by side, and run in CI.
 

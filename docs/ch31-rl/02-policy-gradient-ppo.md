@@ -1,12 +1,13 @@
 # 31.2 Policy gradients and PPO
 
 Section 31.1 left us with a policy, a reward, and one tool: gradient descent.
-This section connects them. The connection has a name — the **policy gradient**
-— and once you have it, PPO is not a new algorithm so much as four patches
-applied to it, each one fixing a specific way the naive version breaks. We will
-apply them in order, and you will implement every patch. By the end you will
-have a working PPO loop in about forty lines of numpy, and a memory calculation
-that explains why half the field went looking for something cheaper.
+This section connects them. The connection has a name — the **policy gradient**.
+
+Once you have it, PPO is not a new algorithm so much as **four patches applied
+to it**, each one fixing a specific way the naive version breaks. We will apply
+them in order, and you will implement every patch. By the end you will have a
+working PPO loop in about forty lines of numpy, and a memory calculation that
+explains why half the field went looking for something cheaper.
 
 ## The idea in one sentence
 
@@ -43,12 +44,20 @@ $$
 | $\mathbb{E}[\cdot]$ | average over many sampled trajectories |
 | the minus sign | we minimise loss, so maximising reward means minimising its negative |
 
-Read the gradient as a recipe: for each action taken, find the direction that
-makes it more likely, scale that direction by how good the outcome was, and add
-it up. Actions followed by $G_t = 0$ contribute nothing. Actions followed by
-negative return get pushed *down*, because scaling an "uphill" direction by a
-negative number points downhill. This is **REINFORCE** (Williams, 1992), and it
-is the ancestor of every method in this chapter.
+Read the gradient as a recipe, three steps per action taken:
+
+1. **Find the direction** in parameter space that makes this action more likely.
+2. **Scale that direction** by how good the outcome was.
+3. **Add it up** over every action in every sampled trajectory.
+
+Two consequences fall straight out. Actions followed by $G_t = 0$ contribute
+nothing. Actions followed by *negative* return get pushed **down**, because
+scaling an "uphill" direction by a negative number points downhill.
+
+This is **REINFORCE** (Williams, 1992), and it is the ancestor of every method
+in this chapter.
+
+### The softmax case, written out
 
 For a softmax policy the gradient has a form you can write by hand. With one
 logit $\theta_j$ per action,
@@ -57,16 +66,21 @@ $$
 \frac{\partial \log \pi_\theta(a)}{\partial \theta_j} = \mathbb{1}[j = a] - \pi_\theta(j)
 $$
 
-which reads: *push the chosen action's logit up by one unit, and pull every
-logit down in proportion to its current probability*. Softmax's competitive
-nature (31.1) does the rest.
+In words: *push the chosen action's logit up by one unit, and pull every logit
+down in proportion to its current probability.* ($\mathbb{1}[j = a]$ is 1 when
+$j$ is the action actually taken and 0 otherwise.) Softmax's competitive nature
+(31.1) does the rest.
 
 ## REINFORCE, running
 
-Here is the whole algorithm on a **contextual bandit**: a customer message
-arrives in one of two moods, the policy picks one of three replies, and a
-reward comes back. Six parameters — two contexts times three actions — and you
-can watch every one of them move.
+Here is the whole algorithm on a **contextual bandit**:
+
+1. A customer message arrives in one of two moods (the *context*).
+2. The policy picks one of three replies (the *action*).
+3. A noisy reward comes back.
+4. The six logits — two contexts times three actions — move.
+
+Six parameters, and you can watch every one of them.
 
 ```python
 import numpy as np
@@ -121,10 +135,12 @@ fig.tight_layout()
 
 The policy starts uniform — every reply equally likely in every mood — and ends
 essentially deterministic and *context-dependent*: `apologise` to the angry
-customer, `explain` to the confused one. Nobody ever told it which reply was
-correct. It tried all three, the world scored them, and the log-probabilities
-moved. That is the complete loop, and swapping the six-parameter softmax for a
-7-billion-parameter transformer changes the code but not the algorithm.
+customer, `explain` to the confused one.
+
+**Nobody ever told it which reply was correct.** It tried all three, the world
+scored them, and the log-probabilities moved. That is the complete loop, and
+swapping the six-parameter softmax for a 7-billion-parameter transformer changes
+the code but not the algorithm.
 
 !!! note "What is toy, what is faithful"
     Toy: six parameters, three actions, two contexts, a reward table instead of
@@ -136,11 +152,12 @@ moved. That is the complete loop, and swapping the six-parameter softmax for a
 ## The variance problem, and the fix that is one subtraction
 
 REINFORCE is *unbiased* — average enough samples and you get the true gradient
-— but it is extremely noisy, and there is a specific reason. Suppose every
-reward in your problem is positive. Then every sampled action gets pushed *up*,
-including the bad ones; the only thing distinguishing good from bad is that good
-ones get pushed harder. The learning signal is buried under a large common
-offset.
+— but it is extremely noisy, and there is a specific reason.
+
+Suppose every reward in your problem is positive. Then every sampled action gets
+pushed *up*, including the bad ones. The only thing distinguishing good from bad
+is that the good ones get pushed harder, so **the learning signal is buried
+under a large common offset.**
 
 The fix is to subtract a **baseline** $b$ — any number that does not depend on
 the action:
@@ -149,9 +166,14 @@ $$
 \nabla_\theta \mathcal{L} = -\,\mathbb{E}\left[(G_t - b)\, \nabla_\theta \log \pi_\theta(a_t \mid s_t)\right]
 $$
 
-Subtracting $b$ leaves the gradient's *average* unchanged (this is a real
-theorem, not a hack: $\mathbb{E}[b \nabla \log \pi] = b \nabla \sum_a \pi(a) = b \nabla 1 = 0$)
-while potentially shrinking its variance enormously. Let us measure both claims.
+Subtracting $b$ does two things:
+
+- **It leaves the gradient's average unchanged.** This is a real theorem, not a
+  hack:
+  $\mathbb{E}[b \nabla \log \pi] = b \nabla \sum_a \pi(a) = b \nabla 1 = 0$.
+- **It can shrink the variance enormously**, which is the whole point.
+
+Let us measure both claims.
 
 ```python
 import numpy as np
@@ -186,11 +208,14 @@ for offset in [0.0, 2.0, 10.0]:
           f"   with baseline {np.round(m_yes, 3)}")
 ```
 
-Adding a constant to every reward cannot change which action is best — but
-without a baseline it multiplies the gradient's variance by 239. With a
-baseline the variance is *identical* at every offset (0.2854 in all three
-rows), and the two mean estimates agree to within sampling noise, confirming
-the unbiasedness claim: the baseline removed variance, not signal.
+Adding a constant to every reward cannot change which action is best. And yet:
+
+- **Without a baseline**, an offset of $+10$ multiplies the gradient's variance
+  by 239.
+- **With a baseline**, the variance is *identical* at every offset — 0.2854 in
+  all three rows.
+- **The mean estimates agree** either way, to within sampling noise. The
+  baseline removed variance, not signal.
 
 This is not an academic point. Reward-model scores routinely live in a range
 like $[2, 8]$ with no natural zero, and the difference between a good and a
@@ -227,14 +252,20 @@ Without a baseline, a reward offset of $+10$ destroys the run. Every action
 looks good, so whichever action happened to be sampled first gets reinforced
 hardest, the policy collapses onto `apologise` in *both* contexts, and it can
 never recover because it no longer samples anything else. Final reward 0.552.
+
 With a baseline — the same code, one subtraction — the policy learns both
-contexts correctly and scores 0.995. **A baseline is not an optimisation; it is
-usually the difference between learning and not learning.**
+contexts correctly and scores 0.995.
+
+!!! note "A baseline is not an optimisation"
+
+    It is usually the difference between learning and not learning. Reward
+    models have no natural zero, so a constant offset is the normal case, not a
+    corner case.
 
 ## Advantage and value functions
 
 The best baseline is not a single running average but one that depends on the
-state: how good is this *situation*, before we consider which action we chose?
+state: *how good is this situation, before we consider which action we chose?*
 That function is the **value function** $V(s)$, and the difference
 
 $$
@@ -242,28 +273,48 @@ A(s, a) = G - V(s)
 $$
 
 is the **advantage**: how much better than expected this action turned out.
-Positive advantage, push up; negative, push down; average action, no update.
+
+| Advantage | What the update does |
+| --- | --- |
+| positive | push this action up |
+| negative | push this action down |
+| zero — exactly average | nothing |
 
 A policy-gradient method that learns $V$ alongside $\pi$ is called
-**actor-critic**: the *actor* is the policy that acts, the *critic* is the value
-model that judges how good the state was. The critic is trained by ordinary
-supervised regression — predict the return, minimise squared error — and PPO for
-LLMs uses exactly this arrangement. Remember that the critic is a whole extra
-neural network; that fact returns with a vengeance at the end of this section,
-and it is precisely what GRPO in [31.3](03-dpo-grpo.md) deletes.
+**actor-critic**:
+
+- the **actor** is the policy that acts;
+- the **critic** is the value model that judges how good the state was, trained
+  by ordinary supervised regression — predict the return, minimise squared
+  error.
+
+PPO for LLMs uses exactly this arrangement. Remember that **the critic is a
+whole extra neural network**: that fact returns with a vengeance at the end of
+this section, and it is precisely what GRPO in [31.3](03-dpo-grpo.md) deletes.
 
 ## PPO as four fixes
 
 **Proximal Policy Optimization** (Schulman et al., 2017) is REINFORCE plus
-answers to four practical problems. Take them one at a time.
+answers to four practical problems:
+
+| # | Problem with plain REINFORCE | PPO's answer |
+| --- | --- | --- |
+| 1 | data is stale after one gradient step | reweight by an **importance ratio** |
+| 2 | the ratio can run away and wreck the policy | **clip** the objective |
+| 3 | one expensive batch, one cheap step | take **several epochs** on it |
+| 4 | the policy drifts into reward-model exploits | a **KL penalty** to a frozen reference |
+
+Take them one at a time.
 
 ### Fix 1 — reuse samples with an importance ratio
 
 REINFORCE is *on-policy*: the expectation is over trajectories from the
 **current** policy, so the instant you take one gradient step your data is
-stale and must be thrown away. For an LLM, that data cost you a full generation
-run over a batch of prompts — by far the most expensive part of the loop. We
-would very much like to take several steps per batch.
+stale and must be thrown away.
+
+For an LLM, that data cost you a full generation run over a batch of prompts —
+by far the most expensive part of the loop. We would very much like to take
+several steps per batch.
 
 **Importance sampling** makes that legal. If you have samples from an old
 policy $\pi_{\theta_{\text{old}}}$ but want the gradient for the new one,
@@ -273,20 +324,30 @@ $$
 r_t(\theta) = \frac{\pi_\theta(a_t \mid s_t)}{\pi_{\theta_{\text{old}}}(a_t \mid s_t)}
 $$
 
-A ratio of 1 means the new policy would have made the same choice just as
-often. A ratio of 3 means the new policy is now three times as likely to do
-this — and that the sample is being counted three times.
+In words: *how much more likely is the action under the policy now than it was
+when we sampled it?*
+
+| Ratio | Means |
+| --- | --- |
+| $1$ | the new policy would have made the same choice just as often |
+| $3$ | the new policy is three times as likely to do this — so the sample counts three times |
+| $0.2$ | the new policy has largely abandoned this choice |
 
 ### Fix 2 — stop the ratio running away: clipping
 
-And there is the danger. If a sample has a large positive advantage, the update
-raises its probability, which raises the ratio, which makes the next update on
-that same sample larger still. The estimate degrades exactly where it is being
-trusted most, and one unlucky batch can flatten the policy into a
-near-deterministic answer that it can never sample its way out of.
+And there is the danger — a feedback loop in three steps:
 
-PPO's answer is blunt and effective: refuse to let the objective reward a ratio
-that has moved too far.
+1. A sample has a large positive advantage, so the update raises its
+   probability.
+2. That raises the ratio.
+3. Which makes the next update on that same sample larger still.
+
+The estimate degrades exactly where it is being trusted most, and one unlucky
+batch can flatten the policy into a near-deterministic answer it can never
+sample its way out of.
+
+PPO's answer is blunt and effective: **refuse to let the objective reward a
+ratio that has moved too far.**
 
 $$
 \mathcal{L}^{\text{CLIP}}(\theta) = -\,\mathbb{E}\Big[
@@ -294,8 +355,15 @@ $$
 \text{clip}(r_t(\theta), 1-\epsilon, 1+\epsilon)\, A_t\big)\Big]
 $$
 
-with $\epsilon$ typically $0.1$–$0.2$. The `min` is the clever part, and it is
-worth drawing rather than arguing about.
+| Symbol | Meaning |
+| --- | --- |
+| $r_t(\theta)$ | the importance ratio from fix 1 |
+| $A_t$ | the advantage of this sample |
+| $\epsilon$ | how far the ratio may move before the clip bites — typically $0.1$–$0.2$ |
+| $\text{clip}(r, 1-\epsilon, 1+\epsilon)$ | $r$, pinned into the band $[1-\epsilon,\, 1+\epsilon]$ |
+| $\min(\cdot, \cdot)$ | take the *smaller* of the two terms — the clever part |
+
+The `min` is worth drawing rather than arguing about.
 
 ```python
 import numpy as np
@@ -332,18 +400,20 @@ for r in [0.5, 0.79, 1.0, 1.21, 1.5]:
           f"{clipped_objective(r, -1.0):>11.3f}{has_gradient(r, -1.0):>7}")
 ```
 
-Read the left panel ($A > 0$, a good action). The objective rises with the
-ratio until $1 + \epsilon$, then goes flat: making a good action *even more*
-likely stops paying, so the gradient becomes zero and the update stops. Now the
-right panel ($A < 0$, a bad action). The objective rises as the ratio *falls*,
-but stops at $1 - \epsilon$ — you get credit for making a bad action less
-likely, up to a point.
+**Left panel ($A > 0$, a good action).** The objective rises with the ratio
+until $1 + \epsilon$, then goes flat. Making a good action *even more* likely
+stops paying, so the gradient becomes zero and the update stops.
 
-The asymmetry is deliberate and it is what the `min` buys. On the left panel
-the objective still *falls* below $1 - \epsilon$: if the ratio has gone the
-wrong way on a good action, the gradient is alive and pulls it back. The clip
-only ever removes the incentive to keep pushing in the direction you were
-already going too far in. It never removes the incentive to come back.
+**Right panel ($A < 0$, a bad action).** The objective rises as the ratio
+*falls*, but stops at $1 - \epsilon$. You get credit for making a bad action
+less likely, up to a point.
+
+The asymmetry is deliberate, and it is what the `min` buys. On the left panel
+the objective still *falls* below $1 - \epsilon$: if the ratio has gone the wrong
+way on a good action, the gradient is alive and pulls it back.
+
+**The clip only ever removes the incentive to keep pushing in the direction you
+were already going too far in. It never removes the incentive to come back.**
 
 ### Fix 3 — several epochs per batch
 
@@ -355,11 +425,13 @@ produce zero gradient.
 ### Fix 4 — a KL penalty to the reference model
 
 The last fix is specific to language models, and it is the one with the most
-character. A reward model is not the truth; it is a model, trained on finite
-data, with holes in it. A policy optimised hard enough against it will find the
-holes — strings that score wonderfully and read like nothing a person would
-write. The literature calls it **reward hacking** and
-[31.4](04-reward-models.md) is largely about it.
+character.
+
+A reward model is not the truth. It is a model, trained on finite data, with
+holes in it. A policy optimised hard enough against it will find the holes —
+strings that score wonderfully and read like nothing a person would write. The
+literature calls it **reward hacking**, and [31.4](04-reward-models.md) is
+largely about it.
 
 The standard defence: keep a frozen copy of the model as it was before RL — the
 **reference policy** $\pi_{\text{ref}}$, usually the SFT checkpoint — and charge
@@ -369,6 +441,18 @@ $$
 r_{\text{total}} = r_{\text{RM}}(\tau) - \beta \, \mathrm{KL}\!\left(\pi_\theta \,\|\, \pi_{\text{ref}}\right)
 $$
 
+In words: *the reward the model actually optimises is the reward model's score,
+minus a charge for how far the policy has drifted from where it started.*
+
+| Symbol | Meaning |
+| --- | --- |
+| $r_{\text{RM}}(\tau)$ | what the reward model says about this trajectory |
+| $\pi_{\text{ref}}$ | the frozen starting policy, usually the SFT checkpoint |
+| $\mathrm{KL}(\pi_\theta \,\|\, \pi_{\text{ref}})$ | how far the current policy has moved from it, in nats |
+| $\beta$ | the exchange rate: how much reward one nat of drift costs |
+
+### The closed-form optimum
+
 This regularised objective has a beautiful property: its exact optimum can be
 written down in closed form.
 
@@ -376,9 +460,9 @@ $$
 \pi^{*}(a) \;\propto\; \pi_{\text{ref}}(a)\, \exp\!\left(\frac{r(a)}{\beta}\right)
 $$
 
-*Start from the reference distribution, and re-weight it by the exponential of
-the reward.* You do not need to trust that — you can compute it on five
-candidate responses, one of which is a reward-model exploit.
+In words: *start from the reference distribution, and re-weight it by the
+exponential of the reward.* You do not need to trust that — you can compute it
+on five candidate responses, one of which is a reward-model exploit.
 
 ```python
 import numpy as np
@@ -399,19 +483,19 @@ for beta in [10.0, 3.0, 1.0, 0.3, 0.1]:
           + f"{float(star @ r_true):>15.3f}")
 ```
 
-Read the `true quality` column down the page — it is an arc, and that arc is the
-whole of RLHF in one table. The reference policy scores 0.315. At $\beta = 10$
-the KL penalty dominates and the optimum is barely distinguishable from the
-reference: safe, and almost useless (0.324). At $\beta = 1$ true quality peaks
-at 0.395 — the policy has shifted real mass onto `good` and `great` and away
-from `terse`, which is exactly the improvement we wanted. Push further and it
-inverts: by $\beta = 0.3$ the exploit is already the single most likely response
-and true quality has fallen to 0.171, below where we started; by $\beta = 0.1$
-the policy puts 97% of its mass on the exploit, its reward-model score is superb,
-and its true quality is $-0.938$.
+Read the `true quality` column down the page. It is an arc, and that arc is the
+whole of RLHF in one table:
 
-$\beta$ is the dial between "did not learn anything" and "learned to cheat",
-there is a genuine optimum in between, and it is not marked. Finding it — by
+| $\beta$ | True quality | What happened |
+| --- | --- | --- |
+| reference | 0.315 | where we started |
+| 10 | 0.324 | the KL penalty dominates; safe, and almost useless |
+| 1 | **0.395** | mass has moved onto `good` and `great` — exactly the improvement we wanted |
+| 0.3 | 0.171 | the exploit is now the single most likely response; we are *below* where we started |
+| 0.1 | $-0.938$ | 97% of the mass on the exploit, a superb RM score, and a policy nobody would ship |
+
+**$\beta$ is the dial between "did not learn anything" and "learned to cheat".**
+There is a genuine optimum in between, and it is not marked. Finding it — by
 measuring true quality on held-out data, not by watching the reward go up — is a
 real part of the job.
 
@@ -421,10 +505,14 @@ for $\pi$ is the entire idea behind DPO.
 ## A toy PPO loop
 
 Now all four fixes at once, on the same contextual bandit. The rewards here are
-deliberately hard: `apologise` (1.0) barely beats `explain` (0.8) for the angry
-customer, the noise is large, and the batch is only eight samples — so batches
-frequently *disagree with the truth*, which is exactly the regime where an
-unclipped update does damage.
+deliberately hard:
+
+- `apologise` (1.0) barely beats `explain` (0.8) for the angry customer;
+- the noise is large;
+- the batch is only eight samples.
+
+So batches frequently *disagree with the truth*, which is exactly the regime
+where an unclipped update does damage.
 
 ```python
 import numpy as np
@@ -494,21 +582,28 @@ for use_clip in [True, False]:
           f"{np.mean([r[1] for r in runs]):>12.1%}{max(r[2] for r in runs):>14.3f}")
 ```
 
-Twelve seeds each. The clipped runs average 0.957 true reward with a worst seed
-of 0.892, and the clip fires on about 12% of sample-epochs — proof that it is
-actually binding rather than decorative. The unclipped runs average 0.907 with a
-worst seed of **0.250**: one of the twelve collapsed onto the wrong action and
-never came back.
+Twelve seeds each:
+
+- **Clipped** — 0.957 average true reward, worst seed 0.892, and the clip fires
+  on about 12% of sample-epochs. That is proof it is actually binding rather
+  than decorative.
+- **Unclipped** — 0.907 average, worst seed **0.250**. One of the twelve
+  collapsed onto the wrong action and never came back.
 
 That is the honest shape of the result, and it is worth stating plainly. Without
-clipping, most runs are fine and slightly *sharper* than the clipped ones — the
-last column tells you why they are not safe: the largest single-iteration KL is
-0.169 with clipping and 11.9 without. Unclipped PPO occasionally takes a step
-seventy times larger than it should, and on a language model such a step does
-not produce a slightly worse policy; it produces one that emits the same token
-forever. **Clipping trades a little final performance for the guarantee that no
-single batch can destroy the run** — and when a run costs thousands of GPU-hours,
-that is a trade you take every time.
+clipping, most runs are fine and slightly *sharper* than the clipped ones. The
+last column tells you why they are still not safe: **the largest
+single-iteration KL is 0.169 with clipping and 11.9 without.**
+
+Unclipped PPO occasionally takes a step seventy times larger than it should, and
+on a language model such a step does not produce a slightly worse policy — it
+produces one that emits the same token forever.
+
+!!! note "What clipping actually buys"
+
+    A little final performance, traded for the guarantee that **no single batch
+    can destroy the run**. When a run costs thousands of GPU-hours, that is a
+    trade you take every time.
 
 ## The bill: four models in memory
 
@@ -522,10 +617,20 @@ infrastructure project. Count the models you must hold:
 4. the **value model** (critic) — also being trained, so also a full optimiser
    state.
 
-Mixed-precision Adam costs about 16 bytes per trainable parameter (bf16 weights
-2, bf16 gradients 2, fp32 master copy 4, and Adam's two moment buffers at 4
-each). A frozen model costs 2. And on top of all that, generation needs a KV
-cache — the structure from
+Now the per-parameter cost. Mixed-precision Adam is about **16 bytes per
+trainable parameter**:
+
+| Buffer | Bytes per parameter |
+| --- | --- |
+| bf16 weights | 2 |
+| bf16 gradients | 2 |
+| fp32 master copy | 4 |
+| Adam's first moment | 4 |
+| Adam's second moment | 4 |
+| **total, trainable** | **16** |
+| **total, frozen (weights only)** | **2** |
+
+And on top of all that, generation needs a KV cache — the structure from
 [Section 27.1](../ch27-inference/01-kv-cache.md) — because every RL step begins
 by generating fresh responses.
 
@@ -566,23 +671,34 @@ print(f"one trainable 7B model: {training_gb(P7B):.1f} GB   "
 ```
 
 Look at the two single-model figures at the bottom first, because they carry the
-whole argument: a *trainable* 7B model costs 104 GB, while a *frozen* one costs
-13 GB. Optimiser state, not weights, is what fills a GPU — the weights are 12%
-of the trainable figure.
+whole argument: **a *trainable* 7B model costs 104 GB, while a *frozen* one
+costs 13 GB.** Optimiser state, not weights, is what fills a GPU — the weights
+are 12% of the trainable figure.
 
-So a 7B PPO setup needs about 235 GB of weights and optimiser state, 251 GB
-once a modest KV cache for the rollouts is added, and that is before
-activations: four 80 GB GPUs at an absolute minimum, in practice more. All four
-models must be resident *simultaneously*, because every step touches every one
-of them. Scale to 70B and multiply by ten. The two-model recipes need 117 GB,
-133 GB with the cache — half the hardware — and one of their two models never
-needs an optimiser state at all.
+(This block counts in binary gigabytes, $2^{30}$ bytes, so its 13 GB of frozen
+weights is the same quantity as the $14 \times 10^9$ bytes
+[Section 27.1](../ch27-inference/01-kv-cache.md) quoted with
+$\text{GB} = 10^9$.)
+
+Then the totals:
+
+- **PPO at 7B** needs about 235 GB of weights and optimiser state, 251 GB once a
+  modest KV cache for the rollouts is added — and that is *before* activations.
+  Four 80 GB GPUs at an absolute minimum, in practice more.
+- **All four models must be resident simultaneously**, because every step
+  touches every one of them.
+- **Scale to 70B** and multiply by ten.
+- **The two-model recipes** need 117 GB, or 133 GB with the cache — half the
+  hardware — and one of their two models never needs an optimiser state at all.
 
 That number is the reason the rest of this chapter exists. Two of the four
-models — the value model and the reward model — are pure overhead in the sense
-that neither is the thing you are shipping. Delete the reward model and you get
-DPO. Delete the value model and you get GRPO. Both are in
-[31.3](03-dpo-grpo.md).
+models — the value model and the reward model — are pure overhead, in the sense
+that neither is the thing you are shipping:
+
+- **Delete the reward model** and you get DPO.
+- **Delete the value model** and you get GRPO.
+
+Both are in [31.3](03-dpo-grpo.md).
 
 !!! warning "Common mistakes"
     - **Forgetting the baseline.** Without one, a constant offset in your
@@ -649,5 +765,5 @@ DPO. Delete the value model and you get GRPO. Both are in
         model has holes; the closed-form optimum at $\beta \to 0$ puts all its
         mass on whatever scores highest, which in the demo was the exploit with
         *negative* true quality. Note the reference model is also the cheapest
-        of the four (frozen, 14 GB at 7B), so it is the worst possible place to
+        of the four (frozen, 13 GB at 7B), so it is the worst possible place to
         save memory.

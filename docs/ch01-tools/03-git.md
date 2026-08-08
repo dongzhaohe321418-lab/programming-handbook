@@ -85,8 +85,10 @@ you see everywhere are abbreviations).
 ## Your first repository
 
 Time for the real thing. The commands below are a complete, honest session —
-this is what it looks like on screen. `git init` turns a folder into a
-repository; `git status` is the command you will run more than any other,
+this is what it looks like on screen.
+
+Two commands do the setup. `git init` turns an ordinary folder into a
+repository. `git status` is the command you will run more than any other,
 because it always tells you what state the three areas are in and what to
 type next.
 
@@ -128,6 +130,14 @@ the snapshot permanent, with the message in quotes. Git's reply names the
 branch (`main`), the new commit's abbreviated ID (`f4a2c1d`), and the size
 of the change.
 
+That is the whole daily cycle, and you will repeat it for the rest of your
+programming life:
+
+1. **`git status`** — see what you have changed.
+2. **`git add <file>`** — move the changes you want onto the staging table.
+3. **`git commit -m "..."`** — turn the staged changes into a permanent
+   snapshot with an honest message.
+
 !!! tip "One-time setup: tell Git who you are"
     The very first commit on a new machine fails with *"Please tell me who
     you are"* until you run:
@@ -144,6 +154,8 @@ of the change.
 
 ## Looking back: `log` and `diff`
 
+### `git log` — the history
+
 `git log` shows the history, newest first; the `--oneline` flag condenses it
 to one line per commit:
 
@@ -155,6 +167,8 @@ Date:   Wed Mar 4 10:15:00 2026 -0600
 
     Add pancake recipe
 ```
+
+### `git diff` — what changed
 
 `git diff` answers "what have I changed since the last snapshot?" — line by
 line, with `-` for removed and `+` for added:
@@ -175,8 +189,10 @@ index 8f2e1a3..c7b4d92 100644
 ```
 
 This "unified diff" format is worth learning to read — you will see it in
-code reviews for the rest of your career. It is not Git magic, either;
-Python's standard library computes the same thing, and you can run it here:
+code reviews for the rest of your career.
+
+It is not Git magic, either. Python's standard library computes the same
+thing, and you can run it here:
 
 ```python
 import difflib
@@ -216,12 +232,16 @@ $ git push                                       # upload your new commits
 $ git pull                                       # download others' commits
 ```
 
-Two conventions make a repository welcoming on arrival. A **README** file
-(usually `README.md`, written in Markdown) is the repository's front page —
-what the project is, how to run it — and GitHub displays it automatically.
-And a **`.gitignore`** file lists things Git should pretend not to see:
-generated files that can always be rebuilt and belong to *your machine*,
-not to history. A typical Python one:
+Two conventions make a repository welcoming on arrival:
+
+- **`README.md`** — the repository's front page, written in Markdown: what
+  the project is and how to run it. GitHub displays it automatically under
+  the file list.
+- **`.gitignore`** — a list of things Git should pretend not to see:
+  generated files that can always be rebuilt, and files that belong to
+  *your machine* rather than to the project's history.
+
+A typical Python `.gitignore`:
 
 ```text
 .venv/
@@ -250,6 +270,11 @@ before it gets in.
     (`git add .` stages everything in the folder; `git remote add` tells
     your local repository its GitHub address; `-u` makes plain `git push`
     work from then on.)
+
+    Once those six are muscle memory, the Git card in
+    [Appendix F](../appendix/F-toolchain-reference.md) lists the rest
+    grouped by task — inspecting history, undoing a mistake, working with
+    remotes — for looking up rather than learning.
 
 !!! warning "Common mistakes"
     - **Editing after `git add`, then committing.** The commit contains the

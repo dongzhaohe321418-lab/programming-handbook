@@ -131,10 +131,12 @@ nav:
   - Home: index.md
   - Start Here:
       - How to use: how-to-use.md
+      - Map of the Book: map-of-the-book.md
       - Learning Path: learning-path.md
       - Python and Java: python-vs-java.md
       - Try in Jupyter (in browser): try-in-jupyter.md
   - I · The Machine:
+      - Overview: part1-overview.md
       - Chapter 0 · How Computers Work:
           - Overview: ch00-machine/index.md
           - 0.1 What is a computer, really: ch00-machine/01-hardware.md
@@ -148,6 +150,7 @@ nav:
           - 1.3 Git and version control, first taste: ch01-tools/03-git.md
           - Exercises: ch01-tools/exercises.md
   - II · Programming I:
+      - Overview: part2-overview.md
       - Chapter 2 · Values, Types, and Expressions:
           - Overview: ch02-data/index.md
           - 2.1 Variables and types: ch02-data/01-variables-types.md
@@ -230,6 +233,7 @@ nav:
           - 14.3 GUIs and other directions: ch14-beyond/03-guis-and-beyond.md
           - Exercises: ch14-beyond/exercises.md
   - III · Programming II:
+      - Overview: part3-overview.md
       - Chapter 15 · Inheritance and Interfaces:
           - Overview: ch15-inheritance/index.md
           - 15.1 Inheritance: ch15-inheritance/01-inheritance.md
@@ -278,6 +282,7 @@ nav:
           - 22.3 Searching: ch22-sorting/03-searching.md
           - Exercises: ch22-sorting/exercises.md
   - IV · Systems & Practice:
+      - Overview: part4-overview.md
       - Chapter 23 · Memory, Processes, and the OS:
           - Overview: ch23-os/index.md
           - 23.1 What an operating system does: ch23-os/01-os-processes.md
@@ -426,3 +431,4 @@ nav:
       - D · Further reading: appendix/D-reading.md
       - E · AI engineering glossary: appendix/E-ai-glossary.md
       - F · Toolchain quick reference: appendix/F-toolchain-reference.md
+  - Concept Index: concept-index.md

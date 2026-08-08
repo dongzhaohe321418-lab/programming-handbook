@@ -9,13 +9,16 @@ documentation) are what make large software possible.
 
 ## Why functions?
 
-Three reasons, all mattering from day one. **Naming**:
-`celsius_to_fahrenheit(20)` tells the reader *what* is computed, while the
-bare formula `20 * 9 / 5 + 32` only says *how*. **Reuse**: write the logic
-once, call it in ten places, fix bugs in one place. **Testing**: a function
-is a sealed box with inputs and an output, so you can feed it known inputs
-and check the answers mechanically — Chapter 8 builds a whole workflow
-([unit testing](../ch08-grids/04-unit-testing.md)) on exactly this.
+Three reasons, all mattering from day one:
+
+- **Naming.** `celsius_to_fahrenheit(20)` tells the reader *what* is
+  computed; the bare formula `20 * 9 / 5 + 32` only says *how*.
+- **Reuse.** Write the logic once, call it in ten places, and fix any bug in
+  a single spot.
+- **Testing.** A function is a sealed box with inputs and an output, so you
+  can feed it known inputs and check the answers mechanically — Chapter 8
+  builds a whole workflow
+  ([unit testing](../ch08-grids/04-unit-testing.md)) on exactly this.
 
 ## Defining a function with `def`
 
@@ -102,11 +105,16 @@ are independent, and nothing lingers from one to the next.
 
 ## `return` vs `print` — the classic confusion
 
-This is the most common conceptual bug in early programming. `return`
-**hands a value back to the caller** — the call itself becomes that value,
-ready to store or compute with. `print` **displays text on the screen** and
-hands back nothing. They feel similar in small test programs, because both
-make a number "appear" — but only one produces a value your program can use.
+This is the most common conceptual bug in early programming. They feel
+similar in small test programs, because both make a number "appear" — but
+only one of them produces a value your program can use:
+
+| | `return value` | `print(value)` |
+| --- | --- | --- |
+| What it does | hands the value back to the caller | displays text on the screen |
+| What the call evaluates to | that value | `None` |
+| Can you compute with the result? | yes | no — `None` breaks arithmetic |
+| Who sees it | the rest of your program | the person watching |
 
 ```python
 def add_return(a, b):
@@ -173,8 +181,10 @@ print(bus_fare(30))
 
 (We are borrowing `if` a chapter early — read `if age < 6:` as the English it
 resembles; [Chapter 4](../ch04-branching/index.md) covers branching
-properly.) A related trick: one `return` can hand back *several* values,
-separated by commas, and the caller can unpack them into several variables:
+properly.)
+
+A related trick: one `return` can hand back *several* values, separated by
+commas, and the caller can unpack them into several variables:
 
 ```python
 def divide_with_remainder(dividend, divisor):
@@ -217,10 +227,13 @@ because Python could not tell which argument fills which slot.
 ## Scope: where variables live
 
 Every variable has a **scope** — the region of the program where its name
-means something. A variable assigned inside a function is **local**: it is
-created when the call starts and destroyed when the call ends. Inside the
-body it works like any other variable; from *outside*, it simply does not
-exist:
+means something.
+
+### Locals are born and die with the call
+
+A variable assigned inside a function is **local**: it is created when the
+call starts and destroyed when the call ends. Inside the body it works like
+any other variable; from *outside*, it simply does not exist:
 
 ```python
 # raises NameError
@@ -235,6 +248,8 @@ print(temperature)    # the local vanished the moment bake() returned
 The call succeeds and prints `Baking at 220`; the final line then fails with
 `NameError: name 'temperature' is not defined` — the local evaporated when
 `bake()` returned.
+
+### Globals can be read from anywhere
 
 A variable assigned at the top level of the file is **global**: readable from
 everywhere, including inside functions:
@@ -251,6 +266,8 @@ describe()
 ```text
 The cake is vanilla
 ```
+
+### Assigning to a global: the `UnboundLocalError` trap
 
 Reading a global works; **assigning** to one inside a function does not do
 what you might hope. The moment a function assigns to a name anywhere in its
@@ -269,12 +286,13 @@ bump()
 ```
 
 `UnboundLocalError` is a special kind of `NameError`: "you used a local
-variable before giving it a value." Python does have an escape hatch (a
-`global` declaration), but the far better design — the one professionals
-reach for — is to avoid the situation entirely: **pass values in as
-arguments, hand results back with `return`** — here,
-`def bumped(n): return n + 1` and then `count = bumped(count)`. No globals
-touched, no surprises.
+variable before giving it a value."
+
+Python does have an escape hatch (a `global` declaration), but the far better
+design — the one professionals reach for — is to avoid the situation
+entirely: **pass values in as arguments, hand results back with `return`**.
+Here that means `def bumped(n): return n + 1` and then
+`count = bumped(count)`. No globals touched, no surprises.
 
 ## Docstrings: the function's contract
 
@@ -306,12 +324,15 @@ Gregorian calendar's leap-year rule:
 > A year is a leap year if it is divisible by 4 — except that years divisible
 > by 100 are not leap years, unless they are also divisible by 400.
 
-The design procedure: **(1)** name the function and its input,
-`is_leap_year(year)`; **(2)** decide the output — `True`/`False`; **(3)**
-translate each clause into a divisibility test with `%` from
-[Section 2.3](../ch02-data/03-operators.md); **(4)** combine the clauses,
-mirroring the spec's "except… unless…" structure; **(5)** check against
-years where you *know* the answer.
+The design procedure is the same every time:
+
+1. **Name the function and its input** — `is_leap_year(year)`.
+2. **Decide the output** — here, `True` or `False`.
+3. **Translate each clause** into a divisibility test with `%` from
+   [Section 2.3](../ch02-data/03-operators.md).
+4. **Combine the clauses**, mirroring the spec's "except… unless…"
+   structure.
+5. **Check against cases where you already know the answer.**
 
 ```python
 def is_leap_year(year):
@@ -339,9 +360,20 @@ The `and`/`or` operators combine true/false conditions just as the English
 words suggest; they get their formal treatment in
 [Section 4.1](../ch04-branching/01-booleans-logic.md). Notice how the final
 line of code echoes the sentence structure of the spec — that is the mark of
-a good translation. And those four test calls are not decoration: 1900 and
-2000 are the cases that catch wrong implementations, and checking them now is
-a first taste of testing.
+a good translation.
+
+And those four test calls are not decoration: 1900 and 2000 are exactly the
+cases that catch wrong implementations, so checking them now is a first taste
+of testing.
+
+!!! tip "Functions are values too"
+    This page treats a function as something you *call*. It is also something
+    you can *hand around*: `rule = is_leap_year` names the function without
+    calling it, and a function can accept another function as an argument or
+    build and return a brand-new one.
+    [Section 39.1](../ch39-streams/01-lambdas.md) develops that one idea into
+    lambdas, closures, and higher-order functions — the machinery behind
+    `sorted(words, key=len)` and, in Java, behind the Streams API.
 
 !!! warning "Common mistakes"
 

@@ -1,5 +1,68 @@
 # Chapter 42 · Exercises
 
+## The chapter in brief
+
+- **A web page is a text document that the browser parses into a tree** — the
+  DOM — and everything CSS and JavaScript do is done to that tree
+  ([42.1](01-html-css.md)).
+- HTML says what the content *is*, CSS says what it *looks like*, and keeping
+  the two apart is the most useful habit in front-end work.
+- Semantic elements (`<nav>`, `<main>`, `<article>`) cost nothing and give a
+  screen-reader user landmarks to jump between; a page of `<div>`s gives them
+  nothing.
+- When two CSS rules collide, **specificity** decides — ids, then classes,
+  then elements, compared left to right with no carrying — and source order
+  only breaks an exact tie.
+- `box-sizing: border-box` at the top of every stylesheet stops a 300-pixel
+  card from occupying 344 pixels.
+- Between typing a URL and seeing a page there are six steps — DNS, TCP, TLS,
+  request, server, render — and **only the server step is your program**
+  ([42.2](02-http-server.md)).
+- An HTTP message is four parts: a start line, headers, a blank line, and an
+  optional body — plain text you could type by hand.
+- `4xx` is the client's fault and `5xx` is yours; returning `200 OK` with an
+  error in the body breaks every cache, monitor, and retry between you and
+  your user.
+- Every web framework is the same six pieces you built: request object,
+  router, handler, middleware chain, error boundary, and serializer.
+- HTTP is **stateless**, so a session is a cookie the browser sends back — and
+  that cookie needs `HttpOnly`, `Secure`, and `SameSite` or it is a session
+  waiting to be stolen.
+- JavaScript runs on **one thread** that also lays out and paints, so anything
+  slow must be handed off: synchronous code first, then *all* microtasks, then
+  one task ([42.3](03-javascript.md)).
+- `textContent` renders text as text; `innerHTML` parses it as markup, which
+  is cross-site scripting waiting to happen.
+- A desktop toolkit is a widget tree, a layout pass, event dispatch up the
+  parent chain, and one thread allowed to touch widgets — the same shape as
+  the browser, in a different accent ([42.4](04-desktop-gui.md)).
+- In all three worlds the winning architecture is identical: **state in one
+  place, view derived from state, handlers touching only state.**
+
+### Key terms
+
+| Term | One-clause reminder |
+|---|---|
+| DOM | the tree of nodes a browser builds from your HTML text |
+| Semantic element | a tag that says what a region *is*, giving screen readers landmarks |
+| [Specificity](../concept-index.md#s) | ids, classes, elements — the score that decides which CSS rule wins |
+| Box model | content, then padding, then border, then margin |
+| Media query | a block of rules that applies only when a condition holds |
+| URL parts | scheme, host, port, path, query, fragment — and the fragment never leaves the browser |
+| Idempotent | doing it twice has the same effect as doing it once, so a retry is safe |
+| Status family | `2xx` worked, `3xx` look elsewhere, `4xx` your fault, `5xx` mine |
+| [Middleware](../concept-index.md#m) | a wrapper around a handler that may inspect, rewrite, or short-circuit |
+| Session cookie | a random id the browser returns on every request to that site |
+| [Event loop](../concept-index.md#e) | run the sync code, drain every microtask, then take exactly one task |
+| [Microtask](../concept-index.md#m) | a promise callback — it always jumps ahead of any `setTimeout` |
+| Event delegation | one listener on a parent, using `event.target` to find the real hit |
+| XSS | user text parsed as markup, then executed by the browser |
+| Scene graph | JavaFX's name for the widget tree |
+| UI thread | the one thread allowed to touch widgets — never block it |
+| Hit testing | finding the deepest, topmost widget under a click |
+
+Now put it to work.
+
 Web and GUI work is learned by breaking things and looking at what happened.
 Two of these exercises ask you to **predict output before running anything** —
 do that honestly, because the gap between your prediction and the printed

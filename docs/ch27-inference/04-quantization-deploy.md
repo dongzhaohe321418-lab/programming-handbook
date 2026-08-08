@@ -18,9 +18,13 @@ computer is bits, and [Section 5.1](../ch05-under-the-hood/01-numeric-pitfalls.m
 showed what happens when a number does not fit the bits allotted to it:
 overflow at the top, silent underflow at the bottom, and rounding error
 everywhere in between. A floating-point format spends its bits on three
-things — one **sign** bit, some **exponent** bits that set the *range*, and
-some **mantissa** bits that set the *precision*. How you split the budget
-matters more than the total.
+things:
+
+- one **sign** bit;
+- some **exponent** bits, which set the *range*;
+- some **mantissa** bits, which set the *precision*.
+
+**How you split the budget matters more than the total.**
 
 | Format | Bits | sign / exp / mantissa | Largest finite | Decimal digits | Where it is used |
 | --- | --- | --- | --- | --- | --- |
@@ -58,21 +62,31 @@ print(f"bf16 range : same exponent field as fp32, so up to "
 print("\nfp16 keeps 10 mantissa bits (more precision), bf16 keeps 7 (more range).")
 ```
 
-Three of those five values break fp16 outright: $10^{-8}$ flushes to zero,
-and both $10^{5}$ and $10^{38}$ overflow to infinity, because fp16's five
-exponent bits only reach 65,504. bf16 handles all three. The price is
-precision: $\pi$ comes back as 3.14062 in both formats, but 65,000 returns as
-64,992 in fp16 and 65,024 in bf16 — the coarser 7-bit mantissa showing. Since
-gradients during training are frequently tiny, *range* matters more than
-precision there, which is why bf16 became the training default and why fp16
+Three of those five values break fp16 outright, because fp16's five exponent
+bits only reach 65,504:
+
+- **$10^{-8}$** flushes to zero.
+- **$10^{5}$** overflows to infinity.
+- **$10^{38}$** overflows to infinity.
+
+bf16 handles all three. The price is precision: $\pi$ comes back as 3.14062 in
+both formats, but 65,000 returns as 64,992 in fp16 and 65,024 in bf16 — the
+coarser 7-bit mantissa showing.
+
+Gradients during training are frequently tiny, so *range* matters more than
+precision there. That is why bf16 became the training default, and why fp16
 training needs the extra machinery of loss scaling.
 
 ## Quantizing to int8: the whole idea in four lines
 
-Integer quantization drops floating point entirely. Take a block of weights,
-find the largest magnitude, and pick a **scale** $s$ that maps that maximum
-onto the largest representable integer. Then every weight becomes a small
-integer, and the original is recovered by multiplying back:
+Integer quantization drops floating point entirely. Four steps:
+
+1. Take a block of weights.
+2. Find the largest magnitude in the block.
+3. Pick a **scale** $s$ that maps that maximum onto the largest representable
+   integer.
+4. Round every weight to a small integer — and recover the original by
+   multiplying back.
 
 $$
 s = \frac{\max_i |w_i|}{q_{\max}}, \qquad
@@ -215,11 +229,15 @@ ax.set_title("Smaller groups cost bits and buy accuracy")
 fig.tight_layout()
 ```
 
-Diminishing returns set in fast. Going from one scale to groups of 128 costs
-0.12 bits per weight and removes 69% of the error (76.93% → 24.06%); the next
-0.38 bits, down to groups of 32, removes another 11 percentage points; the
-0.5 bits after that, down to groups of 16, buys under 3. Group sizes of
-32–128 are the industry choice for exactly this reason.
+Diminishing returns set in fast:
+
+- **One scale → groups of 128** costs 0.12 bits per weight and removes 69% of
+  the error (76.93% → 24.06%).
+- **Groups of 128 → groups of 32** costs another 0.38 bits and removes another
+  11 percentage points.
+- **Groups of 32 → groups of 16** costs 0.5 bits more and buys under 3.
+
+Group sizes of 32–128 are the industry choice for exactly this reason.
 
 !!! note "What is toy, what is faithful"
     Toy: 4096 weights instead of billions, one tensor instead of a whole
@@ -273,13 +291,16 @@ print(f"  KV at 4k: {kv_gb(32, 32, 128, 4096):.2f} GB for a 7B MHA model, "
       f"{kv_gb(80, 8, 128, 4096):.2f} GB for a 70B GQA model")
 ```
 
-This is the table to keep. A 7B model in fp16 is 14.0 GB of weights and
-17.6 GB all-in, so it misses a 16 GB card; at int8 it is 10.8 GB all-in and
-fits comfortably, and at int4 it fits in 8 GB. A 70B model in fp16 needs
-142.8 GB — several GPUs — while at int4 it needs 42.2 GB, which is a single
-48 GB card or a well-specified laptop with unified memory. That last row is
-why 4-bit quantization matters so much: it moves a frontier-class open model
-from *datacenter* to *desk*.
+This is the table to keep. Read the two extreme rows:
+
+- **7B**: 14.0 GB of weights in fp16 and 17.6 GB all-in, which misses a 16 GB
+  card. At int8 it is 10.8 GB all-in and fits comfortably; at int4 it fits in
+  8 GB.
+- **70B**: 142.8 GB in fp16, meaning several GPUs. At int4 it needs 42.2 GB —
+  a single 48 GB card, or a well-specified laptop with unified memory.
+
+That last line is why 4-bit quantization matters so much: **it moves a
+frontier-class open model from *datacenter* to *desk*.**
 
 Watch the KV column too. For the 7B MHA model it is 2.15 GB at a 4k context —
 comparable to the entire int4 weight footprint — and it scales linearly with
@@ -299,12 +320,14 @@ quantization happens and *what* it optimises:
 | **AWQ** | GPU runtimes incl. vLLM | activation-aware: identify the small fraction of weight channels that matter most to the activations, and protect them from aggressive rounding | 4-bit GPU serving; often better instruction-following retention than plain rounding |
 | **bitsandbytes (NF4)** | PyTorch, Transformers | quantize on the fly at load time; NF4 is a 4-bit format whose levels are spaced for normally distributed weights; the basis of **QLoRA** fine-tuning | quick experiments and fine-tuning quantized models, no offline step |
 
-Two clarifications that save confusion. GGUF is a *container format* as well
-as a quantization family — the same file holds the weights, the tokenizer,
-and the metadata, which is why `ollama run` needs nothing else. And GPTQ and
-AWQ are algorithms for *choosing* the quantized values, not new number
-formats: both still end up storing small integers with per-group scales,
-exactly like the code above.
+Two clarifications save a lot of confusion:
+
+- **GGUF is a *container format* as well as a quantization family.** The same
+  file holds the weights, the tokenizer, and the metadata, which is why
+  `ollama run` needs nothing else.
+- **GPTQ and AWQ are algorithms for *choosing* the quantized values, not new
+  number formats.** Both still end up storing small integers with per-group
+  scales, exactly like the code above.
 
 ## What quality does it actually cost?
 
@@ -319,9 +342,11 @@ selling something. What is reliably true, as *direction*:
   and code where one wrong token derails everything after it.
 - **Below 4 bits, quality falls off a cliff** — 3-bit is usable for some
   models and unusable for others, 2-bit generally is not worth it.
-- **Bigger models tolerate quantization better.** A 70B model at 4 bits
-  usually beats a 13B model at fp16 while using less memory, which is the
-  most useful practical fact in this section.
+- **Bigger models tolerate quantization better.** Given a fixed memory
+  budget, the larger model quantized usually beats the smaller model at full
+  precision. From the table above, a 13B at int4 needs 12.2 GB all-in against
+  a 7B at fp16's 17.6 GB — less memory, and better answers on most tasks.
+  That is the most useful practical fact in this section.
 - **Perplexity is a weak proxy.** A quantized model can show almost no
   perplexity change while losing noticeably on instruction-following or tool
   use. Evaluate on *your* task.
@@ -359,12 +384,15 @@ INFO  Using AWQ 4-bit weights
 INFO  Starting vLLM API server on http://0.0.0.0:8000
 ```
 
-Two things to know. Quantized weights shrink the *weights*; the KV cache is
-still fp16 unless you separately enable KV-cache quantization (fp8 KV cache
-is supported in current versions and roughly halves the cache). And 4-bit
-weights are not automatically faster: they must be dequantized before the
-matrix multiply, so the win is memory first, and speed only insofar as
-decode is memory-bandwidth-bound — which, per Section 27.1, it is.
+Two things to know:
+
+- **Quantized weights shrink the *weights*, not the cache.** The KV cache is
+  still fp16 unless you separately enable KV-cache quantization (an fp8 KV
+  cache is supported in current versions and roughly halves it).
+- **4-bit weights are not automatically faster.** They must be dequantized
+  before the matrix multiply, so the win is memory first, and speed only
+  insofar as decode is memory-bandwidth-bound — which, per Section 27.1, it
+  is.
 
 ## Choosing: a decision flowchart
 
@@ -416,7 +444,7 @@ is to run your own evaluation set through both and compare.
         The scale is set by the largest magnitude in the block, so the
         ordinary weights are squeezed into whatever levels remain. int8 has
         255 levels, so an outlier 25× larger than typical still leaves about
-        ten distinct levels for ordinary weights — degraded (5.60% error) but
+        thirty distinct levels for ordinary weights — degraded (5.60% error) but
         workable. int4 has 15 levels in total; the same outlier consumes the
         range and everything else collapses onto 0 and ±1, giving 76.93%
         error. Grouping fixes it by giving each block of 32–128 weights its

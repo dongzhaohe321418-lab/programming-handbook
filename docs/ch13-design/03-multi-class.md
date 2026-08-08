@@ -6,8 +6,10 @@ reservation desk — from four sentences of requirements to a running
 scenario, using every tool this chapter has introduced: nouns become
 classes, verbs become methods, the design goes on paper as a mermaid
 diagram *before* any code, and encapsulation decides who is allowed to
-touch what. The system is small enough to hold in your head and real
-enough to teach the design lessons that scale.
+touch what.
+
+The system is small enough to hold in your head and real enough to teach the
+design lessons that scale.
 
 ## From requirements to nouns and verbs
 
@@ -77,11 +79,13 @@ classDiagram
     Flight ..> Reservation : creates
 ```
 
-Two deliberate choices are worth pausing on. First, a `Seat` does **not**
-know which `Flight` it belongs to — nothing in the requirements needs
-that direction, and every arrow you *don't* draw is complexity you don't
-pay for. Second, the seat's `occupant` starts as `None`; "no passenger"
-is a state a seat must be able to represent.
+Two deliberate choices are worth pausing on:
+
+- **A `Seat` does not know which `Flight` it belongs to.** Nothing in the
+  requirements needs that direction, and every arrow you *don't* draw is
+  complexity you don't pay for.
+- **The seat's `occupant` starts as `None`.** "No passenger" is a state a
+  seat must be able to represent.
 
 ## Building it, class by class
 
@@ -245,15 +249,20 @@ Booked: Chloe Park -> seat 1A on NW713
 Flight NW713: 4 of 6 seats free
 ```
 
-Walk through it against the requirements. Line 1: a fresh flight, all
-six seats open. Lines 2–3: two successful bookings, each returning a
-`Reservation` whose `__str__` states the link it records. Line 4: Chloe
-asks for Ada's seat; `book` finds the seat occupied and returns `None` —
-the rejection required by sentence 2, and note that *nothing changed*:
-a refused booking leaves no fingerprints. Line 5: Ada cancels, and her
-seat's `occupant` goes back to `None`. Line 6: the very same seat is
-booked again, this time by Chloe — proof the cancel truly freed it.
-Line 7: two seats taken (Ben in 2C, Chloe in 1A), four free.
+Walk through that output against the requirements, one line at a time:
+
+1. **A fresh flight** — all six seats open.
+2. **A booking succeeds** — `book` returns a `Reservation` whose `__str__`
+   states the link it records.
+3. **A second booking succeeds**, on a different seat.
+4. **A booking is rejected.** Chloe asks for Ada's seat, `book` finds it
+   occupied and returns `None` — the refusal required by sentence 2. Note
+   that *nothing changed*: a refused booking leaves no fingerprints.
+5. **A cancellation.** Ada gives up 1A, and the seat's `occupant` goes back
+   to `None`.
+6. **The very same seat is booked again**, this time by Chloe — proof the
+   cancel truly freed it.
+7. **The final count**: two seats taken (Ben in 2C, Chloe in 1A), four free.
 
 One more design decision hides in plain sight: the *classes* never call
 `print`. All printing lives in the scenario script at the bottom. Keeping
@@ -262,8 +271,10 @@ behind a web page, a phone app, or a test suite without changing a line.
 
 ## The design lessons, made explicit
 
-**Single responsibility.** Each class has one job you can state in one
-sentence — and when you cannot, the class wants splitting:
+### Single responsibility
+
+Each class has one job you can state in one sentence — and when you cannot,
+the class wants splitting:
 
 | Class | Its one job |
 | --- | --- |
@@ -272,17 +283,23 @@ sentence — and when you cannot, the class wants splitting:
 | `Reservation` | record one passenger–seat–flight link |
 | `Flight` | own the seats and enforce the booking rules |
 
-**Who owns what data.** The seats live in `Flight._seats` — underscored,
-because outside code has no business rearranging them — and only
-`Flight.book` and `Flight.cancel` ever write to a seat's `occupant`.
-When every mutation of a piece of state flows through one class, bugs
-have a return address.
+### Who owns what data
 
-**Law of least surprise.** `book` on a taken seat could have raised an
-exception, silently evicted the current occupant, or picked a different
-seat "helpfully". It returns `None` and changes nothing: the least
-surprising behaviour, and the easiest for calling code to handle
-honestly. Design APIs the way you wish others designed them for you.
+The seats live in `Flight._seats` — underscored, because outside code has no
+business rearranging them — and only `Flight.book` and `Flight.cancel` ever
+write to a seat's `occupant`.
+
+When every mutation of a piece of state flows through one class, bugs have a
+return address.
+
+### The law of least surprise
+
+`book` on a taken seat could have raised an exception, silently evicted the
+current occupant, or picked a different seat "helpfully". It returns `None`
+and changes nothing: the least surprising behaviour, and the easiest for
+calling code to handle honestly.
+
+Design APIs the way you wish others designed them for you.
 
 ## Three shapes, one itch
 
@@ -339,9 +356,10 @@ Look at the three `describe` methods: apart from one word, they are the
 same code, written three times. Fix a formatting bug in one and you must
 remember to fix it in all three. And although the loop at the bottom
 treats the shapes uniformly, nothing in the language *knows* they are all
-"shapes" — the similarity lives only in our heads. Three classes share
-`area()` and triplicate `describe()`... there must be a better way. There
-is, and it is the single biggest idea remaining in this book:
+"shapes" — the similarity lives only in our heads.
+
+Three classes share `area()` and triplicate `describe()`... there must be a
+better way. There is, and it is the single biggest idea remaining in this book:
 [Chapter 15](../ch15-inheritance/index.md) resolves this exact example
 with inheritance.
 

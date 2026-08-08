@@ -1,14 +1,18 @@
 # 4.3 Equality vs identity
 
-"Are these two things the same?" is actually two different questions. *Do
-they have the same value?* — two ten-euro notes have equal value. *Are they
-literally the same object?* — those two notes are still two separate pieces
-of paper. Python gives each question its own operator: `==` asks about
-**equality** (same value), while `is` asks about **identity** (the very same
-object in memory). Confusing them produces code that seems to work — until
-one day it silently doesn't. Java programmers: this is your `==` vs
-`.equals()` distinction wearing a different outfit, and we will map the two
-below.
+"Are these two things the same?" is actually two different questions:
+
+- **Do they have the same value?** Two ten-euro notes have equal value.
+- **Are they literally the same object?** Those two notes are still two
+  separate pieces of paper.
+
+Python gives each question its own operator. `==` asks about **equality**
+(same value); `is` asks about **identity** (the very same object in memory).
+Confusing them produces code that seems to work — until one day it silently
+doesn't.
+
+Java programmers: this is your `==` vs `.equals()` distinction wearing a
+different outfit, and we will map the two below.
 
 ## Two questions, two operators
 
@@ -68,20 +72,24 @@ print(a)          # [1, 2, 3, 4]  — a "changed" too: there is only ONE list
 
 For beginners this is the single most surprising behaviour in Python:
 `c = a` does **not** copy the list. It copies the *reference* — the name tag.
+
 This becomes central once your programs pass lists to functions and store
 them inside other structures, so
 [Chapter 9](../ch09-collections/01-references.md) gives references and
-copying a full treatment. For now, remember the headline: *assignment never
-copies an object; it creates an alias.*
+copying a full treatment.
+
+!!! note "The headline to carry forward"
+    Assignment never copies an object; it creates an alias.
 
 ## When is is the right tool: None checks
 
 If `is` is so easy to misuse, when is it correct? One answer covers nearly
-all real code: **checking for `None`.** `None` is Python's "no value here"
-marker — and there is exactly *one* `None` object in the whole program, so
-identity is precisely the right question. The official Python style guide
-(PEP 8) says: comparisons to `None` should always use `is` or `is not`,
-never `==`.
+all real code: **checking for `None`.**
+
+`None` is Python's "no value here" marker, and there is exactly *one* `None`
+object in the whole program — so identity is precisely the right question.
+The official Python style guide (PEP 8) agrees: comparisons to `None` should
+always use `is` or `is not`, never `==`.
 
 ```python
 def find_first_negative(numbers):
@@ -105,11 +113,15 @@ business using `is` — reach for `==`.
 ## The Java version of this trap
 
 Java splits the same idea across its type system, and getting it wrong is a
-rite of passage in every Java course. In Java, `==` on **primitives**
-(`int`, `double`, `boolean`, …) compares values — but `==` on **objects**
-(including `String`!) compares references, i.e. it behaves like Python's
-`is`. To compare object *values* you must call `.equals()`. Here is the same
-experiment in both languages:
+rite of passage in every Java course:
+
+- **`==` on primitives** (`int`, `double`, `boolean`, …) compares *values*,
+  exactly like Python's `==`.
+- **`==` on objects** — including `String`! — compares *references*, so it
+  behaves like Python's `is`. To compare object values you must call
+  `.equals()`.
+
+Here is the same experiment in both languages:
 
 === "Python"
 
@@ -171,12 +183,20 @@ print(big_a is big_b)       # False — two separate objects
 Why does `is` say `True` for 7 but `False` for 10 000? Because CPython (the
 standard Python, and the Pyodide running these blocks) pre-builds one shared
 object for every integer from $-5$ to $256$ and hands that same object out
-whenever one of those values appears. It is purely a memory-saving
-**implementation detail**: the language makes no promise about it, other
-Python implementations do it differently, and the exact behaviour can vary
-with how the code is compiled. The lesson is *not* "learn the cached range"
-— it is **never use `is` to compare numbers or strings**. Use `==`, which is
-guaranteed to mean what you want, everywhere, forever.
+whenever one of those values appears.
+
+That is purely a memory-saving **implementation detail**, and the word
+*implementation* is the warning label:
+
+- **The language promises nothing.** Nothing in Python's definition requires
+  the cache to exist.
+- **Other Python implementations differ.** They are free to cache a different
+  range, or none at all.
+- **Even CPython can vary**, depending on how the code was compiled.
+
+So the lesson is *not* "learn the cached range". It is **never use `is` to
+compare numbers or strings**. Use `==`, which is guaranteed to mean what you
+want, everywhere, forever.
 
 !!! info "Java corner"
     Java has the identical quirk: `Integer` objects from $-128$ to $127$ are

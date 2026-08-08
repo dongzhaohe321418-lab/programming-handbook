@@ -4,30 +4,42 @@ Every chapter of Part V so far has taught you to build something: a sampler, a
 serving stack, a tool protocol, a retrieval pipeline, an agent loop, a training
 update, a dataset. This chapter asks the question that decides whether any of it
 was worth building. Did the change help? By how much? Would you bet a release on
-it? For every other kind of program you have written, the machine answers that
-question for you — the tests pass or they do not, the program crashes or it
-does not. A language model always answers, always fluently, and is sometimes
+it?
+
+For every other kind of program you have written, the machine answers that
+question for you — the tests pass or they do not, the program crashes or it does
+not. A language model always answers, always fluently, and is sometimes
 confidently wrong in ways nothing in your toolchain notices. Evaluation is the
 discipline that replaces the missing compiler, and it is the skill that most
 reliably separates people who ship working AI systems from people who ship
 demos.
 
 It is also where the field is weakest, which makes it unusually valuable to be
-good at. Public benchmarks are contaminated, saturated, and measured with
-undocumented normalizers; run-to-run variance routinely exceeds the improvements
-people announce; and the fashionable shortcut — asking a model to grade another
-model — carries biases large enough to reverse a conclusion. None of that means
-evaluation is hopeless. It means the numbers require the same engineering care
-as the systems they describe: error bars, isolation, version control, regression
-gates, and a healthy suspicion of any measurement you did not produce yourself.
+good at. Three specific weaknesses:
 
-This chapter builds that care from the ground up. You will implement the metrics
-rather than import them, watch a single unchanged model score anywhere from 25%
-to 100% depending only on the scorer, build a complete harness with error
-isolation and a report that tells you what to fix, put confidence intervals on
-everything, and then construct an LLM judge whose biases are written in the
-source so you can measure each one and remove the ones that are removable. The
-running theme is the one [31.4](../ch31-rl/04-reward-models.md) introduced for
+- **Public benchmarks are contaminated, saturated, and measured with
+  undocumented normalizers.**
+- **Run-to-run variance routinely exceeds the improvements people announce.**
+- **The fashionable shortcut — asking a model to grade another model — carries
+  biases large enough to reverse a conclusion.**
+
+None of that means evaluation is hopeless. It means the numbers require the same
+engineering care as the systems they describe: error bars, isolation, version
+control, regression gates, and a healthy suspicion of any measurement you did
+not produce yourself.
+
+This chapter builds that care from the ground up. You will:
+
+- implement the metrics rather than import them;
+- watch a single unchanged model score anywhere from 25% to 100% depending only
+  on the scorer;
+- build a complete harness with error isolation and a report that tells you what
+  to fix;
+- put confidence intervals on everything;
+- construct an LLM judge whose biases are written in the source, so you can
+  measure each one and remove the ones that are removable.
+
+The running theme is the one [31.4](../ch31-rl/04-reward-models.md) introduced for
 reward models and that applies with equal force here: **the measurement is a
 component of your system, and an unvalidated component is a liability.**
 
@@ -70,19 +82,22 @@ component of your system, and an unvalidated component is a liability.**
 **Prerequisites.** [Chapter 24](../ch24-practice/index.md) is the direct
 ancestor of this chapter: [24.2 Testing](../ch24-practice/02-testing.md) is where
 regression discipline was introduced, and a golden-set gate is that idea pointed
-at a probabilistic component. From Part V you need
-[26.4 Sampling](../ch26-llm-internals/04-sampling.md) (temperature is why the
-same eval gives different answers twice),
-[28.2 Structured output](../ch28-tools-mcp/02-structured-output.md) (a large
-share of apparent model failures are parsing failures),
-[Chapter 30](../ch30-agents/index.md) (agent evaluation scores trajectories, not
-answers), and [31.4 Reward models](../ch31-rl/04-reward-models.md) — the
-Goodhart's-law argument there is the same argument as benchmark saturation here,
-on a different timescale. [32.1](../ch32-data/01-why-data.md) supplies the
-training-data view of contamination. From Parts I–IV you need dictionaries and
-classes ([Chapter 12](../ch12-classes/index.md)), exceptions
-([Chapter 10](../ch10-exceptions/index.md) — error isolation is the whole
-runner), and comfort with reading a table of numbers.
+at a probabilistic component. Beyond that:
+
+- **From Part V** — [26.4 Sampling](../ch26-llm-internals/04-sampling.md),
+  because temperature is why the same eval gives different answers twice;
+  [28.2 Structured output](../ch28-tools-mcp/02-structured-output.md), because a
+  large share of apparent model failures are parsing failures;
+  [Chapter 30](../ch30-agents/index.md), because agent evaluation scores
+  trajectories rather than answers; and
+  [31.4 Reward models](../ch31-rl/04-reward-models.md), whose Goodhart's-law
+  argument is the same argument as benchmark saturation here, on a different
+  timescale. [32.1](../ch32-data/01-why-data.md) supplies the training-data view
+  of contamination.
+- **From Parts I–IV** — dictionaries and classes
+  ([Chapter 12](../ch12-classes/index.md)), exceptions
+  ([Chapter 10](../ch10-exceptions/index.md)), since error isolation is the whole
+  runner, and comfort with reading a table of numbers.
 
 **Sections**
 

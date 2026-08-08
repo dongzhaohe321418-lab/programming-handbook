@@ -1,13 +1,15 @@
 # 17.3 Recursion vs iteration
 
-Recursion and loops are not rivals from different universes — they are two
+Recursion and loops are not rivals from different universes. They are two
 notations for the same underlying idea, *repetition*, and every algorithm
-written in one style can be rewritten in the other. That equivalence matters
-practically: it means the choice between them is an engineering decision
-about clarity, memory, and language limits, not a question of what is
-possible. This section shows the same job in both shapes, gives honest
-criteria for choosing, and teaches the one conversion trick you will actually
-need — replacing the call stack with a stack you manage yourself.
+written in one style can be rewritten in the other.
+
+That equivalence matters practically: the choice between them is an
+engineering decision about clarity, memory, and language limits, not a
+question of what is possible. This section shows the same job in both shapes,
+gives honest criteria for choosing, and teaches the one conversion trick you
+will actually need — replacing the call stack with a stack you manage
+yourself.
 
 ## Same job, two shapes
 
@@ -118,6 +120,21 @@ slower (typically around $2\times$ for this workload) — same $O(n)$ complexity
 bigger constant factor. When the algorithm is identical either way, the loop
 is the cheaper spelling.
 
+## Choosing between them
+
+Side by side, the trade-offs line up cleanly:
+
+| | Recursion | Iteration |
+| --- | --- | --- |
+| Where the state lives | one stack frame per pending call | a handful of local variables |
+| Fits data that is | nested or tree-shaped, depth unknown | flat and sequential |
+| Depth it can handle | ~1000 frames in CPython, then `RecursionError` | as many iterations as you like |
+| Cost per repetition | a frame: allocate, pass arguments, return | far cheaper |
+| Reads best for | divide and conquer, backtracking, recursive definitions | counting, accumulating, scanning |
+
+Neither column is the "advanced" one. **Match the shape of the code to the
+shape of the data**, and prefer the loop when both fit.
+
 ## Converting recursion to iteration: the explicit stack
 
 The general-purpose conversion replaces the *call* stack with a plain Python
@@ -155,13 +172,20 @@ print(names_r)
 print(names_r == names_s)
 ```
 
-Both produce the same nine names in the same order. Study the two moves of
-the conversion: a recursive *call* becomes a *push*, and returning to
-continue an enclosing call becomes *popping the next item*. The `reversed`
-is the classic fine point — a stack pops last-pushed-first, so children must
-be pushed backwards to come out forwards. This stack lives on the heap and
-can grow to millions of entries, so the depth limit disappears; the price is
-that the elegant shape of the recursion is gone.
+Both produce the same nine names in the same order. The conversion is always
+these two moves:
+
+1. **A recursive call becomes a push.** Instead of calling, drop the
+   subproblem on the to-do stack.
+2. **A return becomes a pop.** Instead of resuming an enclosing call, take
+   the next pending item off the stack.
+
+The `reversed` is the classic fine point: a stack pops last-pushed-first, so
+children must be pushed *backwards* to come out forwards.
+
+What you gain and what you pay: this stack lives on the heap and can grow to
+millions of entries, so the depth limit disappears — but the elegant shape of
+the recursion is gone.
 
 ## Tail recursion, honestly
 
@@ -191,12 +215,13 @@ def countdown(n):
 print(countdown(100_000))
 ```
 
-`RecursionError`, long before 100 000. (CPython leaves tail calls
-unoptimized deliberately: collapsing frames would destroy the clean
-tracebacks that make Python errors debuggable.) The honest rule: in Python
-and Java, if a recursion can be deep *and* is tail-shaped, it wanted to be a
-loop all along — the conversion is mechanical, replace the call with an
-update to the variables:
+`RecursionError`, long before 100 000. (CPython leaves tail calls unoptimized
+deliberately: collapsing frames would destroy the clean tracebacks that make
+Python errors debuggable.)
+
+The honest rule: **in Python and Java, a recursion that can go deep *and* is
+tail-shaped wanted to be a loop all along.** The conversion is mechanical —
+replace the call with an update to the variables:
 
 ```python
 def countdown(n):

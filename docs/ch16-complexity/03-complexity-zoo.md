@@ -26,6 +26,17 @@ Read the third column twice — it is the doubling experiment of
 rows are unbridgeable by faster hardware: a machine 100× faster moves an
 $O(2^n)$ algorithm's feasible $n$ up by less than 7.
 
+!!! info "Why the sorting row stops at $O(n \log n)$"
+    Merge sort sits in the $O(n \log n)$ row, and from here on this handbook
+    treats that as the floor for sorting. The floor is a *theorem*, not a
+    habit: any algorithm that learns about its data only by comparing pairs
+    of items must make at least about $n \log n$ comparisons in the worst
+    case, and [Section 38.1](../ch38-linear-sorting/01-lower-bound.md) proves
+    it by counting the leaves of a decision tree.
+    [Section 38.2](../ch38-linear-sorting/02-counting-radix-bucket.md) then
+    slips out of the theorem the only way anyone can — by sorting without
+    comparing.
+
 ## One picture, two scales
 
 Plotting all six on ordinary axes is almost comic: $2^n$ leaves the frame
@@ -63,13 +74,16 @@ for ax in (ax1, ax2):
 fig.tight_layout()
 ```
 
-Left panel: by $n = 14$, $O(2^n)$ has already burst through a ceiling that
-$O(n \log n)$ won't reach until $n$ is in the dozens. Right panel: on a log
-axis each family settles into its own lane — equal vertical steps mean
-"×10 more work", and the exponential is a *straight line upward*, gaining
-a ×10 every few units of $n$. Families below $O(n \log n)$ hug the floor
-so closely they are hard to tell apart — which matches practice: the great
-divide is quadratic-and-above versus everything below.
+- **Left panel (linear scale).** By $n = 14$, $O(2^n)$ has already burst
+  through a ceiling that $O(n \log n)$ won't reach until $n$ is in the
+  dozens.
+- **Right panel (log scale).** Each family settles into its own lane. Equal
+  vertical steps mean "×10 more work", so the exponential becomes a
+  *straight line upward*, gaining a ×10 every few units of $n$.
+
+Families below $O(n \log n)$ hug the floor so closely they are hard to tell
+apart — which matches practice: the great divide is quadratic-and-above
+versus everything below.
 
 ## How big can $n$ be?
 
@@ -116,11 +130,13 @@ Rounded to memorable figures:
 | $O(n^2)$ | $\sim 10^4$ (ten thousand) |
 | $O(2^n)$ | $\sim 26$ |
 
-This table answers real questions instantly. Sorting a million records
-with an $O(n \log n)$ sort? Comfortable. A nested-loop comparison over
-100,000 records? That is $10^{10}$ steps — minutes, not seconds; redesign.
-Anything exponential beyond $n \approx 30$? Not on any computer that will
-ever be built for large $n$ — the family, not the hardware, is the verdict.
+This table answers real questions instantly:
+
+- **Sorting a million records with an $O(n \log n)$ sort?** Comfortable.
+- **A nested-loop comparison over 100,000 records?** That is $10^{10}$ steps
+  — minutes, not seconds. Redesign.
+- **Anything exponential beyond $n \approx 30$?** Not on any computer that
+  will ever be built. The family, not the hardware, is the verdict.
 
 To see the exponential wall from inside, count the calls made by the naive
 recursive Fibonacci (you will meet it properly in
@@ -148,12 +164,13 @@ Same five-line function — the family does the damage.
 
 ## Amortized cost: the honest story of `append`
 
-One entry in every cost table needs an asterisk. `list.append` is listed
-as $O(1)$, yet a Python list stores its elements in one contiguous block
-of memory — and when the block fills, the list must allocate a bigger
-block and copy *everything* across: an $O(n)$ event. How can `append` be
-called constant-time? Watch how often that event actually happens, by
-probing the list's allocated size as it grows:
+One entry in every cost table needs an asterisk. `list.append` is listed as
+$O(1)$, yet a Python list stores its elements in one contiguous block of
+memory — and when the block fills, the list must allocate a bigger block and
+copy *everything* across, an $O(n)$ event.
+
+So how can `append` be called constant-time? Watch how often that expensive
+event actually happens, by probing the list's allocated size as it grows:
 
 ```python
 import sys
@@ -169,16 +186,23 @@ for i in range(2_000):
         last_size = size
 ```
 
-The byte counts jump, and the jumps get *rarer* as the list grows — the
-gaps between reallocations widen. That is the trick: whenever the block
-fills, the list over-allocates **proportionally to its current size**.
-The textbook version of the scheme doubles the capacity each time; grow
-from 1 to $n$ by doubling and the total elements ever copied is
-$1 + 2 + 4 + \cdots + n/2 < n$ — so $n$ appends cost $O(n)$ *in total*,
-which averages to $O(1)$ per append. (CPython's real growth factor is
-smaller than 2 — roughly 12.5% headroom — which trades a little more
-copying for less wasted memory; the principle and the conclusion are the
-same.)
+The byte counts jump, and the jumps get *rarer* as the list grows — the gaps
+between reallocations widen. That is the trick: whenever the block fills, the
+list over-allocates **proportionally to its current size**.
+
+Follow the arithmetic for the textbook version of the scheme, which doubles
+the capacity each time:
+
+1. Growing from 1 to $n$ by doubling means reallocating at sizes
+   $1, 2, 4, \ldots, n/2$.
+2. The total number of elements ever copied is therefore
+   $1 + 2 + 4 + \cdots + n/2 < n$.
+3. So $n$ appends cost $O(n)$ *in total*, which averages to $O(1)$ per
+   append.
+
+(CPython's real growth factor is smaller than 2 — roughly 12.5% headroom —
+which trades a little more copying for less wasted memory. The principle and
+the conclusion are the same.)
 
 This averaged guarantee is called **amortized** $O(1)$: any *individual*
 append might trigger an expensive copy, but spread over the whole sequence
@@ -201,14 +225,16 @@ Average-case costs, Python and its Java counterparts side by side:
 | Dict/map insert | `d[k] = v` | `map.put(k, v)` | $O(1)$ average, amortized |
 | Sort | `lst.sort()` | `Collections.sort(list)` | $O(n \log n)$ |
 
-Two rows deserve a highlight. `x in lst` versus `x in s` is the same
-one-character expression with a factor-of-$n$ difference — the single most
-profitable optimisation in everyday Python is replacing repeated list
-membership tests with a set, exactly as the collections tour in
-[Chapter 14](../ch14-beyond/01-collections-tour.md) promised. And
-`insert(0, x)` hiding an $O(n)$ shift inside an innocent-looking call is
-the seed of many accidental quadratic loops — one awaits you in the
-[exercises](exercises.md).
+Two rows deserve a highlight:
+
+- **`x in lst` versus `x in s`** — the same one-character expression with a
+  factor-of-$n$ difference. The single most profitable optimisation in
+  everyday Python is replacing repeated list membership tests with a set,
+  exactly as the collections tour in
+  [Chapter 14](../ch14-beyond/01-collections-tour.md) promised.
+- **`insert(0, x)`** — an $O(n)$ shift hiding inside an innocent-looking
+  call, and the seed of many accidental quadratic loops. One awaits you in
+  the [exercises](exercises.md).
 
 !!! warning "Common mistakes"
 

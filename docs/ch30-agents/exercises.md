@@ -1,5 +1,67 @@
 # Chapter 30 · Exercises
 
+## The chapter in brief
+
+- An **agent** is a loop in which the *model* decides what runs next — the
+  difference from a chain or a workflow is who owns the control flow
+  ([30.1](01-agent-loop-react.md)).
+- Every agent is six parts — goal, model, tools, memory, loop, stopping
+  condition — and memory and the stopping condition are the load-bearing ones.
+- **ReAct** interleaves `Thought` / `Action` / `Action Input`, and *your
+  program*, never the model, writes the `Observation` lines.
+- Four failure modes have four mechanical fixes: a **step budget** for the loop
+  that never ends, a **loop guard** on `(tool, normalised input)` for the
+  repeated failed action, a **membership check** before `tools[name]` for
+  hallucinated tools, and summarisation for a transcript whose total cost grows
+  **quadratically** in steps.
+- Tool *descriptions* usually decide tool choice more than model size does —
+  name the units, the format and the failure mode in each one.
+- Reliability compounds as $p^{\,n}$, so a 95%-per-step agent finishes a
+  20-step task about a third of the time; the fix is fewer and checkable steps,
+  not a better model ([30.2](02-planning-reflection.md)).
+- **Plan-execute-replan** makes the plan an artifact you can inspect and
+  repair — with a replan cap, and a retry of the *same* slot after a fix.
+- A plan is a DAG: **Kahn's topological sort** orders it into parallel waves and
+  its leftover list is a free cycle detector.
+- Reflection is only honest when a **verifier** scores the draft; self-
+  consistency needs *comparable* answers; beam search is bounded by its value
+  function, not its width.
+- A team is a distributed system: pick a **topology** (start with supervisor),
+  fix a message schema, and guard against runaway, ping-pong and deadlock
+  ([30.3](03-multi-agent.md)).
+- Add a second agent only when you can name what it has that the first does not
+  — its own tools, corpus, context window or genuinely independent judgement.
+- Frameworks package the loop you wrote plus persistence, retries, tracing and
+  connectors; **checkpointing is the piece genuinely worth not writing
+  yourself** ([30.4](04-frameworks.md)).
+- Production means caps at every level, timeouts, backoff **with jitter**,
+  **idempotency keys** for every side effect, sandboxed execution, and
+  structural defences against **prompt injection** — which no prompt can fix.
+
+### Key terms
+
+| Term | One-line reminder |
+| --- | --- |
+| [agent](../appendix/E-ai-glossary.md#a) | a loop where the model chooses the next action until done or out of budget |
+| [ReAct](../appendix/E-ai-glossary.md#r) | the Thought / Action / Observation transcript format |
+| [tool call](../appendix/E-ai-glossary.md#t) | the model naming a function and its arguments; your program runs it |
+| loop guard | refuse to re-run an identical `(tool, input)` and say so in the transcript |
+| step budget | `max_steps` — the only thing that guarantees the loop ends |
+| compounding reliability | $p^{\,n}$: per-step accuracy raised to the number of steps |
+| plan-execute-replan | plan first, run each step, revise the plan when a step fails |
+| topological sort | order dependent subtasks into waves; a leftover means a cycle |
+| verifier | a deterministic scorer, which is what makes [reflection](../appendix/E-ai-glossary.md#r) honest |
+| self-consistency | sample $N$ answers, take the majority — needs comparable answers |
+| beam search | keep the best $k$ states per depth; bounded by the value function |
+| [multi-agent](../appendix/E-ai-glossary.md#m) | several agents collaborating — a distributed system, with those bugs |
+| supervisor topology | every message routes through one agent; easiest to debug |
+| deadlock / ping-pong | no messages in flight, or the same messages forever |
+| span / trace | one timed operation, and the tree of them for a request |
+| idempotency key | a request-derived key so a retried side effect happens once |
+| [prompt injection](../appendix/E-ai-glossary.md#p) | fetched text acting as instructions; only permissions and approvals constrain it |
+
+Now the drills — build the loop, break it, then make it survive production.
+
 Eight problems on agent loops, planning, teams and production plumbing. They
 build on [30.1](01-agent-loop-react.md), [30.2](02-planning-reflection.md),
 [30.3](03-multi-agent.md) and [30.4](04-frameworks.md), and every solution runs

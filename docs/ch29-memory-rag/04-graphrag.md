@@ -1,16 +1,18 @@
 # 29.4 Knowledge graphs and GraphRAG
 
 Vector search answers one shape of question extremely well: *which passage
-talks about this?* It answers two other shapes badly. The first is the
-**connection** question — "who is affected if this database goes down?" —
-where the answer is never written in any single passage but is assembled from
-several, chained together. The second is the **global** question — "what are
-the main parts of this system?" — where the answer summarizes the whole corpus
-and no top-$k$ of it will do. This section builds the standard fix: extract a
-graph of entities and relations from the text, then *traverse* it. You already
-know how to store and search a graph from
-[Chapter 37](../ch37-graphs/index.md); the new part is where the graph comes
-from and how it plugs into a RAG pipeline.
+talks about this?* It answers two other shapes badly:
+
+- **The connection question** — "who is affected if this database goes down?" —
+  where the answer is never written in any single passage but is assembled from
+  several, chained together.
+- **The global question** — "what are the main parts of this system?" — where
+  the answer summarizes the whole corpus and no top-$k$ of it will do.
+
+This section builds the standard fix: extract a graph of entities and relations
+from the text, then *traverse* it. You already know how to store and search a
+graph from [Chapter 37](../ch37-graphs/index.md); the new part is where the
+graph comes from and how it plugs into a RAG pipeline.
 
 ## The question top-$k$ cannot answer
 
@@ -74,13 +76,19 @@ print("\npeople named anywhere in those four notes:", sorted(found))
 
 Vector search does its job perfectly and still fails the task. All three
 Postgres sentences come back — they are genuinely the most similar passages —
-and exactly one person appears among them: **Sam**, the administrator. But
-Rosa's Atlas service writes into the vector store, which runs on that cluster;
-Ivan's Cinder job reads from the cluster directly. Both need warning, and
-neither of their notes contains the word "Postgres". Raise $k$ and you
-eventually scrape them in alongside every unrelated note, with no way to tell
-which of them mattered or why. The information is not missing from the corpus.
-It is *distributed across sentences*, and similarity search cannot chain.
+and exactly one person appears among them: **Sam**, the administrator.
+
+But two more people need warning, and neither of their notes contains the word
+"Postgres":
+
+- **Rosa's** Atlas service writes into the vector store, which runs on that
+  cluster.
+- **Ivan's** Cinder job reads from the cluster directly.
+
+Raise $k$ and you eventually scrape them in alongside every unrelated note,
+with no way to tell which of them mattered or why. **The information is not
+missing from the corpus. It is *distributed across sentences*, and similarity
+search cannot chain.**
 
 ## Entities, relations, triples
 
@@ -90,7 +98,9 @@ A **knowledge graph** stores exactly the structure the sentences imply:
 - **Relations** are labelled, directed edges: `maintains`, `writes_to`,
   `runs_on`.
 - A **triple** is one edge written out — `(subject, relation, object)` — the
-  atomic unit of every knowledge-graph system there has ever been.
+  atomic unit of every triple store and the building block of every
+  knowledge-graph system. (Property graphs such as Neo4j hang extra attributes
+  off nodes and edges, but the edge is still the unit.)
 
 ```mermaid
 graph LR
@@ -179,22 +189,23 @@ print(f"\nrules on {HARD!r} -> {extract([HARD])}")
 ```
 
 Thirteen notes give thirteen triples and fourteen entities — and then the last
-line shows the wall. `"ownership of Cinder passed from Rosa to Ivan"` states a
-relation every human reads instantly, and the rule table returns `[]`, because
-nobody wrote a pattern for *that* phrasing. English has an unbounded number of
-ways to say "Ivan maintains Cinder", which is precisely the problem language
-models are good at.
+line shows the wall.
 
-Note also `ALIAS`. "Atlas ingestion service" and "Atlas" are the same thing,
-and something has to decide that. This is **entity resolution**, it is the
-hardest part of building a real knowledge graph, and hand-writing the table is
-only viable at this scale.
+`"ownership of Cinder passed from Rosa to Ivan"` states a relation every human
+reads instantly, and the rule table returns `[]`, because nobody wrote a pattern
+for *that* phrasing. English has an unbounded number of ways to say "Ivan
+maintains Cinder", which is precisely the problem language models are good at.
+
+Note also `ALIAS`. "Atlas ingestion service" and "Atlas" are the same thing, and
+something has to decide that. This is **entity resolution**, it is the hardest
+part of building a real knowledge graph, and hand-writing the table is only
+viable at this scale.
 
 ### Extracting triples with a model
 
 Real systems ask a model. The prompt is roughly "read this text and return
 JSON triples using only these relation types", the output is parsed and merged
-into the graph. Our `FakeLLM` is scripted, as everywhere in this chapter, but
+into the graph. Our `FakeLLMExtractor` is scripted, as everywhere in this chapter, but
 it stands in exactly where the API call would go.
 
 ```python
@@ -228,15 +239,17 @@ for sentence in ["After last month's outage, ownership of Cinder passed from Ros
     print(f"{sentence[:52]:<54} -> {extractor(sentence)}")
 ```
 
-Two things in that class are not decoration. **`ALLOWED`** is a closed relation
-vocabulary: without one, a model will invent `owns`, `is_owned_by`,
-`maintained_by`, and `looks_after` for the same relationship, and your graph
-will have four edge types that mean one thing. Constrain the schema and
-validate the output, exactly as
-[Section 28.2](../ch28-tools-mcp/02-structured-output.md) did for tool
-arguments. And the third example returning `[]` matters just as much: an
-extractor that always finds something will happily manufacture relations from
-sentences that have none.
+Two things in that class are not decoration:
+
+- **`ALLOWED` is a closed relation vocabulary.** Without one, a model will
+  invent `owns`, `is_owned_by`, `maintained_by`, and `looks_after` for the same
+  relationship, and your graph will have four edge types that mean one thing.
+  Constrain the schema and validate the output, exactly as
+  [Section 28.2](../ch28-tools-mcp/02-structured-output.md) did for tool
+  arguments.
+- **The third example returns `[]`.** An extractor that always finds something
+  will happily manufacture relations from sentences that have none, and those
+  false edges are indistinguishable from real ones later.
 
 !!! note "Be honest about which one you would ship"
 
@@ -250,11 +263,14 @@ sentences that have none.
 
 The representation is the one from
 [Section 37.1](../ch37-graphs/01-representations.md): an **adjacency map**, a
-dictionary from each node to a list of its edges. Two of them, in fact — one
-for outgoing edges and one for incoming — because a knowledge graph is
-directed but almost every interesting question ignores direction. Each edge
-also carries the id of the note it came from, which is what will make the
-answer citable.
+dictionary from each node to a list of its edges. Three details:
+
+- **Two maps, not one.** One for outgoing edges and one for incoming, because a
+  knowledge graph is directed but almost every interesting question ignores
+  direction.
+- **Each edge carries its relation label**, so the reasoning can be printed.
+- **Each edge carries the id of the note it came from**, which is what will
+  make the answer citable.
 
 ```python
 # continues
@@ -275,21 +291,26 @@ print("\nbusiest nodes:", [(e, degree(e))
 ```
 
 A dictionary of lists costs $O(V + E)$ memory and answers "who are this node's
-neighbours?" in time proportional to the number of neighbours — the right
+neighbours?" in time proportional to the number of neighbours. That is the right
 trade for a sparse graph, and the reason nobody stores a knowledge graph as an
-adjacency matrix. The degree count is the first thing worth looking at in any
-new graph: here five nodes tie at degree 3 — the three services, the vector
-store and the Postgres cluster — so this graph has no dramatic hub. On a real
-service map the degree ranking tells you immediately which entities everything
-depends on, and those are exactly the entities outage questions are about.
+adjacency matrix.
+
+The degree count is the first thing worth looking at in any new graph. Here five
+nodes tie at degree 3 — the three services, the vector store and the Postgres
+cluster — so this graph has no dramatic hub. On a real service map the degree
+ranking tells you immediately which entities everything depends on, and those
+are exactly the entities outage questions are about.
 
 ## Traversal: the answer, and the trail that justifies it
 
-Now answer the opening question. Walk outwards from `Postgres cluster` in
-breadth-first order, ignoring edge direction, and stop at people. Because BFS
-explores in rings, the first time it reaches a person it has found the
-*shortest* chain of reasoning — and because every edge remembers its source
-note, that chain doubles as a citation trail.
+Now answer the opening question, in four steps:
+
+1. **Start** at `Postgres cluster`.
+2. **Walk outwards in breadth-first order**, ignoring edge direction.
+3. **Stop at people.** Because BFS explores in rings, the first time it reaches
+   a person it has found the *shortest* chain of reasoning.
+4. **Print the chain.** Every edge remembers its source note, so the chain
+   doubles as a citation trail.
 
 ```python
 # continues
@@ -328,17 +349,24 @@ for node, path in bfs_paths("Postgres cluster", max_hops=3):
         print(f"         sources: {cites}")
 ```
 
-Four people, each with the reasoning printed. **Sam** at one hop because he
-administers the cluster. **Ivan** at two, because Cinder reads from the cluster
-and Ivan maintains Cinder. **Rosa** and **Priya** at three, through the vector
-store. Vector search found only Sam.
+Four people, each with the reasoning printed:
+
+| Person | Hops | Why |
+| --- | --- | --- |
+| **Sam** | 1 | he administers the cluster |
+| **Ivan** | 2 | Cinder reads from the cluster, and Ivan maintains Cinder |
+| **Rosa** | 3 | through the vector store, which runs on the cluster |
+| **Priya** | 3 | also through the vector store |
+
+Vector search found only Sam.
 
 Look at what the traversal gives you that a similarity score never does: the
 `sources` list on each line is the set of original notes whose text produced
 those edges. You can show a user *"Rosa, because note 3 says the vector store
 runs on the Postgres cluster, note 1 says Atlas writes to the vector store, and
-note 0 says Rosa maintains Atlas."* That is an explanation, not a ranking, and
-it is auditable.
+note 0 says Rosa maintains Atlas."*
+
+**That is an explanation, not a ranking, and it is auditable.**
 
 !!! warning "Hops are expensive, and mostly noise"
 
@@ -354,13 +382,16 @@ The second failure of vector search is the *global* question: "what are the
 main parts of this system?" No note answers it. No top-$k$ answers it either,
 because the answer is a property of the whole graph.
 
-GraphRAG's idea — introduced by Microsoft Research — is to partition the graph
-into **communities** of densely connected entities, summarize each community
-with a model, then answer global questions from the summaries instead of from
-the raw text. Real implementations use the Leiden algorithm, a
-modularity-optimizing method that also produces a *hierarchy* of communities.
-We will build the simplest honest version: first connected components (which
-we will see is too coarse), then label propagation.
+GraphRAG's idea — introduced by Microsoft Research — is three steps:
+
+1. **Partition** the graph into **communities** of densely connected entities.
+2. **Summarize** each community with a model, producing a community report.
+3. **Answer** global questions from the reports instead of from the raw text.
+
+Real implementations use the Leiden algorithm, a modularity-optimizing method
+that also produces a *hierarchy* of communities. We will build the simplest
+honest version: first connected components (which we will see is too coarse),
+then label propagation.
 
 ```python
 # continues
@@ -419,17 +450,23 @@ for i, community in enumerate(COMMUNITIES):
 ```
 
 Connected components returns **1**: everything is reachable from everything,
-because the Postgres cluster touches all of it. Connectivity is not community.
+because the Postgres cluster touches all of it. **Connectivity is not
+community.**
+
 Label propagation, which lets each node repeatedly adopt its neighbours'
 commonest label, splits the same graph into three groups that a human would
 recognize — ingestion-and-infrastructure, billing-and-docs, and search.
 
 The seed sweep prints the honest caveat: `{0: 3, 1: 3, 2: 3, 3: 1, 4: 3, 5: 2}`.
 Label propagation depends on the order nodes are updated in, and at seed 3 it
-collapses into a single community. That instability is exactly why production
-GraphRAG uses Leiden, which optimizes an explicit objective (modularity) and
-yields a stable hierarchy. The *idea* — partition, summarize, answer globally
-from the summaries — is what we are after here.
+collapses into a single community.
+
+That instability is exactly why production GraphRAG uses Leiden, which optimizes
+an explicit objective (modularity), is far less order-sensitive, and guarantees
+that every community it returns is internally connected. It is still randomized
+and still only finds a local optimum — modularity maximization is NP-hard — but
+it yields a hierarchy you can actually rely on. The *idea* — partition,
+summarize, answer globally from the summaries — is what we are after here.
 
 ### Community summaries, and the global answer
 
@@ -466,21 +503,25 @@ print(f"\ncommunity reports: {sum(len(r) for r in REPORTS)} characters; "
 
 Three reports, covering every entity in the corpus, in fewer characters than
 the notes themselves — and at this toy scale the saving is small, which is the
-point worth stating plainly. The technique earns its keep when the corpus is
-ten thousand documents and the community reports are a few hundred: then a
-global question that no top-$k$ could ever cover is answered from a summary
-layer that *does* cover everything. That layering — leaves, community reports,
-global report — is the same hierarchy as the summary tree in
-[Section 29.3](03-agent-memory.md), built over a graph instead of a
-conversation.
+point worth stating plainly.
+
+The technique earns its keep when the corpus is ten thousand documents and the
+community reports are a few hundred. Then a global question that no top-$k$
+could ever cover is answered from a summary layer that *does* cover everything.
+
+That layering — leaves, community reports, global report — is the same hierarchy
+as the summary tree in [Section 29.3](03-agent-memory.md), built over a graph
+instead of a conversation.
 
 ## Combining graph and vector
 
 In practice you run both and merge, exactly as hybrid search merged BM25 and
-vectors in [Section 29.1](01-embeddings-vector-search.md). Vector retrieval
-finds passages that *talk about* the query; graph expansion finds passages
-*connected to* the entities in the query. Reciprocal rank fusion merges the
-two ranked lists without needing their scores to be comparable.
+vectors in [Section 29.1](01-embeddings-vector-search.md):
+
+- **Vector retrieval** finds passages that *talk about* the query.
+- **Graph expansion** finds passages *connected to* the entities in the query.
+- **Reciprocal rank fusion** merges the two ranked lists without needing their
+  scores to be comparable.
 
 ```python
 # continues
@@ -520,16 +561,20 @@ for note_id in order[:10]:
     print(f"  {score[note_id]:.4f} [{tags}]  {NOTES[note_id]}")
 ```
 
-Read the `[VG]` tags. The three Postgres notes are found by *both* retrievers
-and take the top three places, which is what agreement should buy you. Below
-them sit notes only the graph produced, marked `[-G]` — including
-*"Atlas writes to the vector store"* and, last in this listing,
-*"Rosa maintains the Atlas ingestion service"*: the two links that put Rosa in
-the answer at all, and neither of which similarity search would ever have
-returned for a question about Postgres. The fused list contains everything
-needed to answer the question *and* everything needed to justify it, which is
-what you hand to the prompt template of
-[Section 29.2](02-rag-pipeline.md).
+Read the `[VG]` tags top to bottom:
+
+- **Both retrievers agree** on the three Postgres notes, and they take the top
+  three places. That is what agreement should buy you.
+- **Two more notes found by both** follow.
+- **Then the graph-only notes**, marked `[-G]` — including *"Atlas writes to the
+  vector store"* and, last in this listing, *"Rosa maintains the Atlas ingestion
+  service"*. Those two links are the only reason Rosa is in the answer at all,
+  and neither would ever be returned by similarity search for a question about
+  Postgres.
+
+The fused list contains everything needed to answer the question *and*
+everything needed to justify it, which is what you hand to the prompt template
+of [Section 29.2](02-rag-pipeline.md).
 
 ## What it costs, honestly
 

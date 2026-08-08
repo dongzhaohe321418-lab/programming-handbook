@@ -140,19 +140,21 @@ print("distinct BST shapes on 7 keys:", math.comb(14, 7) // 8)
 ```
 
 ```text
-insert [4, 2, 6, 1, 3, 5, 7]  height 2  in-order [1, 2, 3, 4, 5, 6, 7]
-insert [1, 2, 3, 4, 5, 6, 7]  height 6  in-order [1, 2, 3, 4, 5, 6, 7]
-insert [7, 6, 5, 4, 3, 2, 1]  height 6  in-order [1, 2, 3, 4, 5, 6, 7]
-insert [2, 1, 4, 3, 6, 5, 7]  height 3  in-order [1, 2, 3, 4, 5, 6, 7]
+insert [4, 2, 6, 1, 3, 5, 7]    height 2  in-order [1, 2, 3, 4, 5, 6, 7]
+insert [1, 2, 3, 4, 5, 6, 7]    height 6  in-order [1, 2, 3, 4, 5, 6, 7]
+insert [7, 6, 5, 4, 3, 2, 1]    height 6  in-order [1, 2, 3, 4, 5, 6, 7]
+insert [2, 1, 4, 3, 6, 5, 7]    height 3  in-order [1, 2, 3, 4, 5, 6, 7]
 distinct BST shapes on 7 keys: 429
 ```
 
-Four different heights, one identical in-order sequence. There are 429
-legal shapes for these seven keys (the Catalan number $C_7$), and only the
-first is optimal. So the repair job is not "fix the data" but "move from a
-bad shape to a good one" — and we may do that *at any time*, because the
-reader of the tree cannot tell which shape we chose. The only requirement
-is that each reshaping step keeps the invariant intact.
+Four different heights, one identical in-order sequence. There are 429 legal
+shapes for these seven keys (the Catalan number $C_7$), and only the first is
+optimal.
+
+So the repair job is not "fix the data" but "move from a bad shape to a good
+one". We may do that *at any time*, because a reader of the tree cannot tell
+which shape we chose. The only requirement is that each reshaping step keeps
+the invariant intact.
 
 !!! note "The proof obligation for this page"
 
@@ -285,10 +287,11 @@ is again the one that changes parents — this time from `y.left` to
 `x.right`, the only slot that still means "bigger than `x`, smaller
 than `y`".
 
-`rotate_left` and `rotate_right` undo each other: rotating left at `x`
-then right at the resulting root gives back the original tree. Now write
-both, plus the two checkers that make this page's claim testable — an
-in-order comparison and a full BST-invariant validator — and run them over
+`rotate_left` and `rotate_right` undo each other: rotating left at `x` then
+right at the resulting root gives back the original tree.
+
+Now write both, plus the two checkers that make this page's claim testable —
+an in-order comparison and a full BST-invariant validator. Then run them over
 hundreds of random trees and random rotation sites:
 
 ```python
@@ -362,8 +365,14 @@ trials where the height actually changed: 141
 Four hundred random trees, four hundred random rotations, four hundred
 unchanged traversals. Meanwhile 141 of those rotations moved the height —
 proof that the operation really does reshape, and not merely shuffle
-pointers around to no effect. **Rotation changes shape and preserves
-order.** That is the licence the rest of this chapter spends.
+pointers around to no effect.
+
+!!! note "The rotation invariant"
+
+    A rotation changes the tree's **shape** and leaves its **in-order
+    traversal** exactly as it was.
+
+That is the licence the rest of this chapter spends.
 
 ## Double rotations
 
@@ -564,11 +573,13 @@ pointer writes never changed.
 
 This is what makes self-balancing affordable. An insert already walks a
 root-to-leaf path, which is $O(h)$ work. If repairing the balance costs a
-handful of $O(1)$ rotations on the way back up that same path, the repair
-is *free* in Big-O terms: $O(h)$ to descend plus $O(h)$ of bookkeeping
-plus $O(1)$ rotations is still $O(h)$ — and the whole point of the repair
-is that it keeps $h$ at $O(\log n)$. Cheap local fixes, global guarantee.
-[Section 35.2](02-avl.md) turns that sentence into a working tree.
+handful of $O(1)$ rotations on the way back up that same path, the repair is
+*free* in Big-O terms: $O(h)$ to descend, plus $O(h)$ of bookkeeping, plus
+$O(1)$ rotations, is still $O(h)$.
+
+And the whole point of the repair is that it keeps $h$ at $O(\log n)$. Cheap
+local fixes, global guarantee. [Section 35.2](02-avl.md) turns that sentence
+into a working tree.
 
 !!! warning "Common mistakes"
 

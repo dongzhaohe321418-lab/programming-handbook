@@ -2,22 +2,27 @@
 
 In [Chapter 1](../ch01-tools/03-git.md) you learned Git as a personal time
 machine: `add`, `commit`, and a history you could rewind. That is Git at
-maybe a tenth of its purpose. Git was built so that *many people can change
-the same code at the same time without destroying each other's work* — and
-the moment you join any team, internship, or open-source project, that is
-the Git you will be living in. This section is the missing nine tenths:
-branches, merges, conflicts, pull requests, and the surprisingly important
-craft of describing your own changes.
+maybe a tenth of its purpose.
+
+Git was built so that *many people can change the same code at the same time
+without destroying each other's work* — and the moment you join any team,
+internship, or open-source project, that is the Git you will be living in.
+
+This section is the missing nine tenths: branches, merges, conflicts, pull
+requests, and the surprisingly important craft of describing your own
+changes.
 
 ## Branches: parallel universes for code
 
-A **branch** is an independent line of development — a movable label
-pointing at a chain of commits. The default branch (usually `main`) holds
-the version everyone trusts. When you start a piece of work, you create a
-branch off `main`, commit freely there, and `main` never sees your
-half-finished state. When the work is done and reviewed, your branch is
-**merged** back. Here is a week of a small project, drawn the way Git
-thinks of it:
+A **branch** is an independent line of development — a movable label pointing
+at a chain of commits. The default branch (usually `main`) holds the version
+everyone trusts.
+
+When you start a piece of work, you create a branch off `main`, commit freely
+there, and `main` never sees your half-finished state. When the work is done
+and reviewed, your branch is **merged** back.
+
+Here is a week of a small project, drawn the way Git thinks of it:
 
 ```mermaid
 gitGraph
@@ -38,9 +43,10 @@ gitGraph
 
 Read the diagram: while the search feature was being built (two commits on
 `feature-search`), someone else fixed a typo on their own branch and merged
-it — and neither party waited for, or trampled, the other. Branches are
-cheap (creating one is instant and takes almost no space), so the norm is
-*one branch per task*, deleted after merging.
+it — and neither party waited for, or trampled, the other.
+
+Branches are cheap: creating one is instant and takes almost no space. So the
+norm is *one branch per task*, deleted after merging.
 
 ## The daily loop
 
@@ -59,33 +65,41 @@ $ git push -u origin add-empty-cart-check   # 3. publish your branch
 ```
 
 Then, on the hosting site (GitHub, GitLab, …), you open a **pull request**
-(PR): a request that your branch be pulled into `main`. A PR is not a Git
-command — it is a conversation attached to your branch: teammates see the
-**diff** (every changed line), comment on it, request changes, and finally
-approve. Automated checks — the test suite from
-[Section 24.2](02-testing.md), style checks from
-[Section 24.3](03-style-review.md) — run on every push. When all is green
-and approved, the branch is merged, and the loop starts again.
+(PR): a request that your branch be pulled into `main`.
 
-Two habits make the loop pleasant. **Pull before you branch**, so you build
-on the newest code and minimize later surprises. **Commit small** — one
-logical change per commit — so that reviews are readable and any single
-step can be undone without collateral damage.
+A PR is not a Git command — it is a conversation attached to your branch.
+Teammates see the **diff** (every changed line), comment on it, request
+changes, and finally approve. Automated checks run on every push: the test
+suite from [Section 24.2](02-testing.md), the style checks from
+[Section 24.3](03-style-review.md). When all is green and approved, the branch
+is merged, and the loop starts again.
+
+Two habits make the loop pleasant:
+
+- **Pull before you branch,** so you build on the newest code and minimize
+  later surprises.
+- **Commit small** — one logical change per commit — so reviews stay readable
+  and any single step can be undone without collateral damage.
 
 ## Merge conflicts, demystified
 
 Sooner or later, two branches edit *the same lines* of the same file, and
 when the second one merges, Git refuses to guess. This is a **merge
-conflict**, and it terrifies beginners mostly because of how it looks. It
-should not: a conflict is Git being *careful*, not Git being broken.
+conflict**, and it terrifies beginners mostly because of how it looks.
 
-First, appreciate how much Git merges silently. A merge is three-way: Git
+!!! note "A conflict is Git being careful, not Git being broken"
+    Git only ever stops when a human decision is genuinely required.
+
+First, appreciate how much Git merges silently. A merge is **three-way**: Git
 compares your version and their version against the common **base** commit
-you both started from. Any line changed by only one side is taken
-automatically. Only lines changed by *both* sides — differently — become
-conflicts. The logic is simple enough to fit in a code block; here it is,
-run on a file where you rewrote the greeting while a teammate both reworded
-it *and* changed the return line:
+you both started from.
+
+- A line changed by **only one side** is taken automatically.
+- A line changed by **both sides, differently**, becomes a conflict.
+
+The logic is simple enough to fit in a code block. Here it is, run on a file
+where you rewrote the greeting while a teammate both reworded it *and*
+changed the return line:
 
 ```python
 base   = ["def greet(name):",
@@ -116,9 +130,10 @@ for b, y, t in zip(base, yours, theirs):
 print("\n".join(merged))
 ```
 
-Line 3 merged itself — only they touched it. Line 2 is the conflict, and
-the output shows exactly what Git writes into your file. Anatomy of the
-markers:
+Line 3 merged itself — only they touched it. Line 2 is the conflict, and the
+output shows exactly what Git writes into your file.
+
+### Anatomy of the markers
 
 - `<<<<<<< HEAD` — everything from here to `=======` is **your** side
   (`HEAD` is where you stand — your current branch).
@@ -126,9 +141,18 @@ markers:
 - `>>>>>>> their branch` — everything from the divider to here is the
   **incoming** side.
 
-Resolving is editing, nothing more. Open the file, decide what the line
-*should* say — yours, theirs, or a blend that honors both intents — delete
-the three marker lines, and tell Git you are done:
+### Resolving one, in four steps
+
+Resolving is editing, nothing more:
+
+1. **Open the conflicted file** and find the marker block.
+2. **Decide what the line *should* say** — yours, theirs, or a blend that
+   honors both intents.
+3. **Delete all three marker lines.**
+4. **`git add` the file** to mark it resolved, then `git commit` to complete
+   the merge.
+
+In a terminal that looks like this:
 
 ```console
 $ git merge feature-rewording
@@ -140,11 +164,13 @@ $ git add greet.py     # mark the file as resolved
 $ git commit           # completes the merge
 ```
 
-The one real danger is absent-mindedness: committing a file with marker
-lines still in it (Python will greet `<<<<<<< HEAD` with a `SyntaxError`,
-which is at least honest). Always search for `<<<` before committing, and
-always rerun the tests after resolving — the merged whole can be wrong even
-when both halves were right.
+The one real danger is absent-mindedness: committing a file with marker lines
+still in it. (Python will greet `<<<<<<< HEAD` with a `SyntaxError`, which is
+at least honest.)
+
+So two rules, every time: **search for `<<<` before committing**, and **rerun
+the tests after resolving** — the merged whole can be wrong even when both
+halves were right.
 
 ## Commit messages your future self will thank you for
 
@@ -172,8 +198,8 @@ GOOD: Reject checkout when the cart is empty
       in one place instead of guarding every downstream function.
 ```
 
-The rules are mechanical enough that you can lint them — which is exactly
-what many teams' hooks do:
+The subject-line rules are mechanical enough that you can lint them — which
+is exactly what many teams' commit hooks do:
 
 ```python
 def check_subject(subject):
@@ -205,10 +231,12 @@ Only the third subject passes — and notice it would still read correctly in
 
 ## Code review: the practice around the PR
 
-A pull request review is not a gate where experts judge you; it is the
-single highest-value habit teams have for sharing knowledge and catching
-bugs while they are cheap. Knowing what reviewers look for makes you both a
-better author and a better reviewer:
+A pull request review is not a gate where experts judge you. It is the single
+highest-value habit teams have for sharing knowledge and catching bugs while
+they are cheap.
+
+Knowing what reviewers look for makes you both a better author and a better
+reviewer:
 
 - **Correctness**: does the change do what the PR says? Are edge cases
   (empty, boundary, invalid — see [Section 24.2](02-testing.md)) handled
@@ -220,14 +248,19 @@ better author and a better reviewer:
 - **Tests**: does the new behavior come with tests that would fail without
   the fix?
 
-Receiving comments has its own skill. Review comments are about the code,
-not about you — the correct responses are "good catch, fixed", "I did it
-this way because X — should I still change it?", and the occasional
-"disagree, here's why", delivered with the same courtesy you'd want back.
-The authors of graceful replies are the people everyone wants on their
-team. And as a reviewer: ask questions rather than issue verdicts
-("could this be `max(0, total)`?" lands better than "wrong"), and say what
-you *like*, too — reviews teach in both directions.
+Receiving comments has its own skill. Review comments are about the code, not
+about you, and there are really only three good replies:
+
+- "Good catch, fixed."
+- "I did it this way because X — should I still change it?"
+- The occasional "disagree, here's why", delivered with the same courtesy
+  you'd want back.
+
+The authors of graceful replies are the people everyone wants on their team.
+
+And as a reviewer: ask questions rather than issue verdicts ("could this be
+`max(0, total)`?" lands better than "wrong"), and say what you *like*, too —
+reviews teach in both directions.
 
 ## Repository hygiene: .gitignore
 
@@ -246,18 +279,33 @@ dist/               # build outputs
 secrets.env         # NEVER commit credentials
 ```
 
-The rule of thumb: commit what humans write; ignore what machines can
-regenerate. A useful check is `git status` before committing — if generated
-files show up as "untracked", extend `.gitignore` instead of `git add`-ing
-around them. And treat a leaked secret as compromised the moment it is
-pushed: rotate the key; deleting the file in a later commit does not remove
-it from history.
+!!! tip "The rule of thumb"
+    Commit what humans write; ignore what machines can regenerate.
 
-Finally, **tags**: when `main` reaches a state you ship, mark that exact
-commit with an immutable name — `git tag v1.1.0` — and push the tag.
-Releases on GitHub are built on tags; version numbers in bug reports
-("broken since v1.1.0") become checkoutable points in history. A branch
-moves with every commit; a tag is a pin that never does.
+A useful check is `git status` before committing: if generated files show up
+as "untracked", extend `.gitignore` instead of `git add`-ing around them.
+
+And treat a leaked secret as compromised the moment it is pushed. Rotate the
+key — deleting the file in a later commit does *not* remove it from history.
+
+Finally, **tags**. When `main` reaches a state you ship, mark that exact
+commit with an immutable name — `git tag v1.1.0` — and push the tag. Releases
+on GitHub are built on tags, and version numbers in bug reports ("broken since
+v1.1.0") become checkoutable points in history. A branch moves with every
+commit; a tag is a pin that never does.
+
+!!! tip "The machinery around the workflow"
+    Branching and reviewing is half of a professional setup; the other half
+    is the tooling it runs on.
+    [Section 40.2](../ch40-toolchain/02-ssh-remote.md) covers SSH keys —
+    which is also how you stop typing a password on every `git push` — plus
+    working on a remote machine with `ssh`, `rsync`, and `tmux`.
+    [Section 40.3](../ch40-toolchain/03-make.md) covers Make, whose
+    dependency graph decides what actually has to be rebuilt after you pull
+    someone else's commits. And
+    [Appendix F](../appendix/F-toolchain-reference.md) collects the Git
+    commands of this section on one page, grouped by task, for looking up
+    later.
 
 !!! warning "Common mistakes"
 

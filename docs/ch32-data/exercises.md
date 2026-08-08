@@ -1,5 +1,64 @@
 # Chapter 32 · Exercises
 
+## The chapter in brief
+
+What you now know, in the order the chapter taught it.
+
+- **At a fixed compute budget the corpus sets the ceiling** — a model cannot
+  learn a behaviour nothing demonstrates, it copies the corpus's errors as
+  faithfully as its truths, and every token spent on one domain is spent
+  nowhere else ([32.1](01-why-data.md)).
+- **Training data arrives as four record types** — pretraining text, SFT pairs,
+  preference pairs, trajectories — the loss lands on a different part of each,
+  and a schema validator run *before* training is what keeps a broken one out.
+- **Mixture weights are the cheapest lever you have**, and the epochs column
+  tells you which small domain is about to be memorised instead of generalised.
+- **Decontamination and PII scrubbing are floors, not guarantees**: n-gram
+  overlap catches copying but never paraphrase, and a phone-number regex both
+  misses obfuscated formats and shreds innocent order numbers.
+- **Synthetic data moves the human from author to inspector**, which is a real
+  saving — but the audit, not the generation, is most of the remaining bill
+  ([32.2](02-synthetic-data.md)).
+- **Self-Instruct's similarity filter is the method rather than an
+  optimisation**, and near-duplicate rejection grows from irrelevant to dominant
+  as the pool saturates.
+- **Evol-Instruct buys difficulty, and its four elimination checks are what stop
+  it buying unanswerable garbage** — two of our four eliminations were triggered
+  by the length of the parent, not by the operator.
+- **Volume is not quality**: measure distinct-$n$ at matched length, and know
+  that refitting on your own outputs shrinks spread predictably and kills rare
+  categories abruptly and permanently.
+- **A trajectory is one attempt at one task plus a verdict the *environment*
+  computed**, which is why the environment has to be deterministic, resettable,
+  verifiable and graded by difficulty ([32.3](03-trajectories.md)).
+- **One trajectory corpus yields three products** — SFT on the successes,
+  preference pairs across the same `task_id`, and step-level PRM labels
+  estimated by Monte-Carlo rollouts from a prefix.
+- **Filters run cheapest-first, and every family has a blind spot the next one
+  covers**: exact dedup misses one changed word, MinHash misses a paraphrase, a
+  lexical quality model is a topic model in disguise, and only a verifier
+  catches a confident, well-formatted, wrong answer ([32.4](04-filtering.md)).
+- **Stage removals are not additive**, so the artefacts you ship with a corpus
+  are a per-stage funnel report and a dataset card carrying the config hash, the
+  seed, and an honest list of what is wrong with it.
+
+### Key terms
+
+| Term | One-clause reminder |
+| --- | --- |
+| **[synthetic data](../appendix/E-ai-glossary.md#s)** | records written by a model rather than a person, and audited by one |
+| **[Self-Instruct and Evol-Instruct](../appendix/E-ai-glossary.md#s)** | bootstrap breadth from a seed pool; rewrite for difficulty |
+| **[model collapse](../appendix/E-ai-glossary.md#m)** | what happens when each generation trains only on the last one's output |
+| **[trajectory](../appendix/E-ai-glossary.md#t)** | one episode: thought, action, observation, repeated, plus the outcome |
+| **[environment](../appendix/E-ai-glossary.md#e)** | the seeded, resettable world an agent acts in and is graded by |
+| **[deduplication](../appendix/E-ai-glossary.md#d)** | removing exact and near-identical records before they get memorised |
+| **[MinHash and LSH](../appendix/E-ai-glossary.md#m)** | signature-based near-duplicate search that avoids the $O(n^2)$ scan |
+| **[contamination](../appendix/E-ai-glossary.md#c)** | eval items that leaked into training, so the benchmark measures recall |
+| **funnel report** | the per-stage table of how many records each filter removed ([32.4](04-filtering.md)) |
+| **dataset card** | what the data is, how it was built, and what is known to be wrong with it ([32.4](04-filtering.md)) |
+
+Now put all of it to work.
+
 Eight problems on the data pipeline, easiest first. They build on
 [32.1](01-why-data.md), [32.2](02-synthetic-data.md), [32.3](03-trajectories.md)
 and [32.4](04-filtering.md), and every solution runs in the browser on the
@@ -273,12 +332,13 @@ how many hash functions you need before the estimate is trustworthy.
 
     The estimator is unbiased but noisy, and the noise shrinks like
     $1/\sqrt{N}$: every observed error sits inside its row's $1/\sqrt{N}$
-    column, and 16 hashes is genuinely useless (0.375 against a true 0.571). The
+    column — which is a generous yardstick, since the true standard error is
+    $\sqrt{J(1-J)/N}$, at most half of it — and 16 hashes is genuinely useless (0.375 against a true 0.571). The
     errors do not fall monotonically — 256 hashes did worse than 64 here — which
     is what "unbiased with variance" means in practice. You are choosing a
     *distribution* of errors, not a guarantee, so pick $N$ from the error you can
-    tolerate: at $N = 126$ (the setting used in [32.4](04-filtering.md)) an
-    error around 0.09 is typical, which is fine for a 0.7 drop threshold and
+    tolerate: at $N = 126$ (the setting used in [32.4](04-filtering.md)) and
+    $J$ near a half, an error around 0.04 is typical, which is fine for a 0.7 drop threshold and
     hopeless for distinguishing 0.68 from 0.72.
 
 ---
@@ -418,7 +478,7 @@ tr-a (success)                       tr-b (failure)
 ### Exercise 32.5 — Design a verifiable environment (●●)
 
 Build an environment for the task *"insert exactly N cents into a vending
-machine that accepts at most five coins"*. It must have `reset`, `step`,
+machine that accepts at most three coins"*. It must have `reset`, `step`,
 `is_done` and a `success()` that the environment computes itself, plus a
 difficulty knob. Then run a greedy policy across difficulties and read the
 success table.
@@ -432,7 +492,7 @@ success table.
         """Insert exactly `target` cents, using at most MAX_COINS coins.
 
         difficulty = how many distinct coin denominations go into the target,
-        so higher difficulty needs more coins and strains the five-coin limit.
+        so higher difficulty needs more coins and strains the three-coin limit.
         """
         COINS = (1, 5, 10, 25)
         MAX_COINS = 3
@@ -853,7 +913,7 @@ it changed about the *responses*.
     rewording.
 
     *The responses carry more information.* Mean response length went from 5.0
-    words to 13.0, and — the part that matters more than length — 4 of 4
+    words to 12.5, and — the part that matters more than length — 4 of 4
     responses name a specific failing input. A model trained on these sees
     worked *contrasts* between a correct and an incorrect approach, which the
     seed corpus never contained.

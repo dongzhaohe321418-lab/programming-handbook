@@ -167,18 +167,33 @@ once:
     }
     ```
 
-Run as `java Add 3 4`, Java's `args` is `{"3", "4"}` — the program's name
-is *not* included, so everything shifts down one index compared with
-Python. Both languages agree on the important part: arguments arrive as
-strings (`String[]`), and `Integer.parseInt` is Java's `int()`.
+Run as `java Add 3 4`, Java's `args` is `{"3", "4"}` — the program's name is
+*not* included, so every index shifts down one compared with Python:
+
+| | Python `sys.argv` | Java `String[] args` |
+| --- | --- | --- |
+| index 0 holds | the script's own name | the *first* real argument |
+| the first user argument is | `sys.argv[1]` | `args[0]` |
+| the elements are | `str` | `String` |
+| convert to a number with | `int(...)` / `float(...)` | `Integer.parseInt(...)` |
+| count the arguments with | `len(sys.argv) - 1` | `args.length` |
+
+Both languages agree on the important part: arguments arrive as text, and it
+is your job to convert them.
 
 ## Worked example: a unit-converting mini-tool
 
-Here is a complete tool, `convert.py`, that converts between kilometres
-and miles: `python convert.py 42 km` prints the distance in miles. It
-checks the argument count, validates the unit, converts the number, and
-formats the answer — the full life of a small command-line program. Edit
-the `argv` line to try `mi`, a wrong unit, or a missing argument:
+Here is a complete tool, `convert.py`, that converts between kilometres and
+miles: `python convert.py 42 km` prints the distance in miles. It walks
+through the full life of a small command-line program, in four steps:
+
+1. **Check the argument count** — and print a usage line if it is wrong.
+2. **Convert the number** from text with `float`.
+3. **Validate the unit** — `km` or `mi`, and complain politely about
+   anything else.
+4. **Format the answer** to two decimal places.
+
+Edit the `argv` line to try `mi`, a wrong unit, or a missing argument:
 
 ```python
 argv = ["convert.py", "42", "km"]   # what sys.argv would contain

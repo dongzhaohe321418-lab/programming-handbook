@@ -13,10 +13,18 @@ replaced.
 A **string literal** is text written directly in your code, wrapped in
 matching quotes. Python accepts single `'...'` or double `"..."` quotes —
 they mean exactly the same thing, which is handy when your text itself
-contains a quote character. For characters you cannot type directly, an
-**escape sequence** — a backslash followed by a code letter — stands in:
-`\n` is a newline, `\t` a tab, `\\` a literal backslash, and `\"` a quote
-mark inside a double-quoted string.
+contains a quote character.
+
+For characters you cannot type directly, an **escape sequence** — a backslash
+followed by a code letter — stands in:
+
+| Escape | What the string actually contains |
+| --- | --- |
+| `\n` | a newline (one character, not two) |
+| `\t` | a tab |
+| `\\` | a single literal backslash |
+| `\"` | a double quote, inside a double-quoted literal |
+| `\'` | a single quote, inside a single-quoted literal |
 
 ```python
 single = 'He said, "amazing!"'      # double quotes inside single quotes
@@ -62,10 +70,11 @@ PYTHON
 python
 ```
 
-Calling a string method and ignoring its result therefore does nothing at
-all; the idiom you want is *reassignment* — `word = word.upper()` — which
-points the variable at the new string. And if you try to edit a string in
-place, Python refuses outright:
+!!! note "The consequence, and the idiom that follows from it"
+    Calling a string method and ignoring its result does **nothing at all**.
+    Capture the new string instead: `word = word.upper()`.
+
+And if you try to edit a string in place, Python refuses outright:
 
 ```python
 # raises TypeError
@@ -147,11 +156,13 @@ pormig
 gnimmargorp
 ```
 
-Two things to internalise. First, `stop` is **excluded** — a half-open
-range, so `word[0:3]` has exactly $3 - 0 = 3$ characters and
-`word[:k] + word[k:]` always reassembles the original. Second, slicing is
-forgiving where indexing is strict: `word[8:1000]` quietly returns `"ing"`
-instead of raising `IndexError`.
+Two things to internalise:
+
+- **`stop` is excluded** — the range is half-open. So `word[0:3]` has exactly
+  $3 - 0 = 3$ characters, and `word[:k] + word[k:]` always reassembles the
+  original string.
+- **Slicing is forgiving where indexing is strict.** `word[8:1000]` quietly
+  returns `"ing"` rather than raising `IndexError`.
 
 ## The method tour
 
@@ -204,10 +215,14 @@ True
 False
 ```
 
-Choose deliberately: `find` reports failure with the sentinel `-1`, which
-your code must remember to check; `index` raises `ValueError` immediately —
-safer when "not found" would be a bug. For a plain yes/no answer, `in` is
-clearest of all.
+Choose deliberately — the three searches differ only in how they report
+failure:
+
+| What you need | Use | If it is not found |
+| --- | --- | --- |
+| the position, and you will check the result | `line.find(sub)` | returns `-1` |
+| the position, and absence would be a bug | `line.index(sub)` | raises `ValueError` |
+| a plain yes or no | `sub in line` | evaluates to `False` |
 
 ### Cleaning up
 
@@ -233,10 +248,11 @@ print("[" + raw.rstrip() + "]")    # right end only
 
 `split` cuts a string into a **list** of pieces — lists get their full
 treatment in [Chapter 7](../ch07-arrays/index.md); for now, you can `print`
-one and pick items out with `[0]`, `[1]`, `[-1]`. With no argument, `split`
-cuts on any run of whitespace; given a separator, on exactly that. `join` is
-its inverse — it glues a list of strings together with the separator you
-call it on:
+one and pick items out with `[0]`, `[1]`, `[-1]`.
+
+With no argument, `split` cuts on any run of whitespace; given a separator,
+it cuts on exactly that. `join` is its inverse — it glues a list of strings
+together with the separator you call it on:
 
 ```python
 sentence = "the quick brown fox"
@@ -335,8 +351,13 @@ own trap — see
 
 Directories and citation lists often store names as `"Last, First"` — with
 unpredictable spacing. Let's turn `"  Lovelace ,  Ada  "` into a clean
-`Ada Lovelace`. The plan: find the comma, slice off each side, strip the
-mess.
+`Ada Lovelace`. Three steps:
+
+1. **Locate the separator** with `find(",")`, which gives its index.
+2. **Slice each side** of that index — before it is the last name, after it
+   the first.
+3. **Strip each piece** to remove the stray spaces, then reassemble in the
+   order you want.
 
 ```python
 entry = "  Lovelace ,  Ada  "

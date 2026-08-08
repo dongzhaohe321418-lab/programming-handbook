@@ -1,5 +1,50 @@
 # Exercises
 
+## The chapter in brief
+
+- A variable is a **name bound to an object** on the heap, not a box holding
+  a value ([9.1](01-references.md)).
+- `b = a` copies the *reference*, so both names are aliases of one object and
+  a mutation through either is visible through both.
+- `==` asks whether contents are equal; `is` asks whether there is only one
+  object — and `is` on numbers or strings reports caching, not logic.
+- A slice, `list(...)`, or `.copy()` makes a **shallow** copy: a new outer
+  list whose elements are still shared, which is why nested data needs
+  `copy.deepcopy`.
+- Python has no primitives; integers merely *feel* like values because they
+  are immutable, so the sharing can never be observed.
+- Argument passing is assignment, so a function can mutate the caller's list,
+  while rebinding the parameter name changes nothing outside.
+- A dynamic list — Python's `list`, Java's `ArrayList` — grows itself by
+  quietly replacing a hidden over-allocated array ([9.2](02-dynamic-lists.md)).
+- Every `ArrayList` method has a Python equivalent, with one honest
+  difference: a missing value makes `indexOf` return `-1` but makes `index()`
+  raise `ValueError`.
+- `remove(x)` deletes by *value* and `pop(i)` by *index* — two jobs that Java
+  packs into one overloaded name.
+- Appending is cheap, while inserting near the front shifts every later
+  element, which is why front-heavy work eventually wants a linked structure.
+- Stack frames hold names and the heap holds objects, so several frames can
+  point at one object at once ([9.3](03-objects-in-memory.md)).
+- Every object has an **external view** (the method menu you may rely on) and
+  an **internal view** (the state and code its author may rewrite freely).
+
+### Key terms
+
+| Term | Reminder |
+| --- | --- |
+| [reference](../concept-index.md) | the tie from a name to an object living on the heap |
+| [aliasing](../concept-index.md) | two or more names bound to one object |
+| [identity](../concept-index.md) | what `is` compares — same object, not merely equal contents |
+| [copy, shallow vs deep](../concept-index.md) | shallow duplicates the outer container only; deep duplicates every level |
+| immutability | no operation changes the object in place, which is what hides an `int`'s sharing |
+| [primitive vs reference type](../concept-index.md) | Java's two-world split; Python has references only |
+| [`ArrayList`](../concept-index.md) | Java's growable list, method-for-method Python's `list` |
+| [stack frame](../concept-index.md) | one call's names — frames hold names, the heap holds objects |
+| external vs internal view | the promises a user relies on, versus the mechanism its author may rewrite |
+
+Now put the model to the test.
+
 Aliasing predictions are the heart of this chapter: for every "predict"
 exercise, write down the exact output *before* running anything — the gap
 between your prediction and reality is where the reference model gets

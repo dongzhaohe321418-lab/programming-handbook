@@ -10,11 +10,15 @@ trap into a tool.
 ## `and` / `or` stop early — short-circuit evaluation
 
 You know from [Chapter 4](../ch04-branching/01-booleans-logic.md) what `and`
-and `or` answer. Here is *how* they work: lazily. `and` already knows the
-answer is false the moment its left side is false, so it **never evaluates the
-right side**; `or` skips the right side when the left is already true. This is
-called **short-circuit evaluation**, and we can prove it with a function that
-announces every time it runs:
+and `or` answer. Here is *how* they answer: lazily.
+
+- **`and` stops at a false left side.** The result is already `False`, so the
+  right side is **never evaluated**.
+- **`or` stops at a true left side.** The result is already `True`, so again
+  the right side never runs.
+
+This is called **short-circuit evaluation**, and we can prove it with a
+function that announces every time it runs:
 
 ```python
 def check(label, value):
@@ -80,8 +84,14 @@ if 1 / x > 0.5 and x != 0:      # guard is too late — 1/x runs first!
 ```
 
 Same two conditions, opposite order, and the program dies with
-`ZeroDivisionError: division by zero`. The rule: **the guard goes first**. The
-same idiom protects any "check before you touch" situation — `n != 0 and
+`ZeroDivisionError: division by zero`.
+
+!!! tip "The guard goes first"
+    Put the cheap safety check on the **left** of `and` and the dangerous
+    expression on the right. Short-circuiting then guarantees the dangerous
+    half never runs unless the check has already passed.
+
+The same idiom protects any "check before you touch" situation — `n != 0 and
 total / n > 90`, or (once you know lists) checking a list is non-empty before
 reading its first element.
 
@@ -109,14 +119,15 @@ score //= 4     # 9  (39 // 4 floors to 9)
 print(score)
 ```
 
-This prints `9`. Read `x += 5` exactly as `x = x + 1` reads: *evaluate the
+This prints `9`. Read `x += 5` exactly as you read `x = x + 1`: *evaluate the
 whole right-hand side first, then bind the name to the result.* That is why
 `x = x + 1` is not a paradox — the `x + 1` on the right uses the *old* value,
 finishes computing, and only then does the name `x` move to the new value.
-(For numbers and strings, `x += 1` and `x = x + 1` behave identically. For
+
+For numbers and strings, `x += 1` and `x = x + 1` behave identically. For
 lists there is a genuinely subtle difference, which needs the memory picture
 of the [next section](03-stack-heap.md) and is settled properly in
-[Chapter 9](../ch09-collections/01-references.md).)
+[Chapter 9](../ch09-collections/01-references.md).
 
 ## Python has no `++` — and `++x` is a trap
 
@@ -178,10 +189,12 @@ the code *looks* like it does one thing and *compiles* as another:
 
 In the Java version, the indentation says the `else` belongs to `if (a > 0)`.
 The compiler disagrees: **an `else` binds to the nearest unmatched `if`**, so
-it actually pairs with `if (b > 0)`. With `a = -1`, the outer condition is
-false, the entire inner `if`/`else` is skipped, and the program prints
-*nothing at all* — while the programmer confidently expects
-`a is not positive`. The Java fix is to always write braces `{ }`.
+it actually pairs with `if (b > 0)`.
+
+Follow that through with `a = -1`. The outer condition is false, so the entire
+inner `if`/`else` is skipped, and the program prints *nothing at all* — while
+the programmer confidently expects `a is not positive`. The Java fix is to
+always write braces `{ }`.
 
 Run the Python version: it prints `a is not positive`, exactly what it looks
 like. Python has no dangling else *because indentation is the syntax* — the
@@ -225,12 +238,20 @@ small
     String label = (n % 2 == 0) ? "even" : "odd";
     ```
 
-Note the different word orders: Java reads *condition ? then : else*, while
-Python reads *value-if-true `if` condition `else` value-if-false* — the happy
-path first, like the English sentence "coffee, if it's morning, else tea."
-Both short-circuit: only the chosen branch is evaluated. Use conditional
-expressions for short, simple choices of a value; the moment you feel tempted
-to nest one inside another, switch back to an honest `if` statement.
+Note the different word orders:
+
+| Language | Word order |
+| -------- | ---------- |
+| Java     | `condition ? value-if-true : value-if-false` |
+| Python   | `value-if-true if condition else value-if-false` |
+
+Python puts the happy path first, like the English sentence "coffee, if it's
+morning, else tea." Both languages short-circuit: only the chosen branch is
+evaluated.
+
+Use conditional expressions for short, simple choices of a value. The moment
+you feel tempted to nest one inside another, switch back to an honest `if`
+statement.
 
 !!! warning "Common mistakes"
     - **Putting the guard on the wrong side**: `1/x > 0.5 and x != 0` crashes

@@ -1,5 +1,61 @@
 # Exercises
 
+## The chapter in brief
+
+- A grid is just a list of lists, read `grid[row][col]` one bracket at a time —
+  row first, column second, with `len(grid)` rows and `len(grid[0])` columns
+  ([8.1](01-2d-arrays.md)).
+- Swapping those two indexes is *the* classic grid bug: it crashes on a
+  rectangular grid and silently mirrors your data on a square one.
+- Build grids with nested loops or `[[0] * cols for _ in range(rows)]` — never
+  `[[0] * cols] * rows`, which makes every "row" the same aliased list.
+- Row sums are easy because each row *is* a list; column sums need the
+  inverted loop, `c` outside and `r` inside, still reading `grid[r][c]`.
+- Rows may be **ragged**, so careful code asks `len(grid[r])` instead of
+  assuming `len(grid[0])` fits all — and NumPy's 2-D arrays give up that
+  freedom in exchange for `shape`, `grid[r, c]`, and `sum(axis=...)`.
+- A list argument is passed as a **reference**, so mutating it reaches the
+  caller while rebinding it never does — and Java behaves identically, because
+  it passes *references by value*: the arrow is copied, the object is shared
+  ([8.2](02-arrays-functions.md)).
+- The library convention is worth adopting: an in-place function returns
+  `None`, and a function that returns a useful list left its argument
+  untouched. Say which in the docstring.
+- Linear search checks each element from the front, reports the *first* match,
+  and keeps its "not found" answer *after* the loop; the worst case costs $n$
+  comparisons ([8.3](03-first-algorithms.md)).
+- Selection sort maintains an **invariant** — after pass $i$ the first $i+1$
+  slots hold their final values — and always makes $n(n-1)/2$ comparisons,
+  which is why it is $O(n^2)$ whatever the input.
+- Insertion sort has the same worst case but exploits nearly sorted data; in
+  real programs you call `sorted()` for a new list or `.sort()` to sort in
+  place.
+- A unit test is one `assert` about one fact, named for what it checks and
+  building its own fresh data — and the **edges** come first: empty, single
+  element, duplicates, already sorted ([8.4](04-unit-testing.md)).
+- pytest and JUnit automate discovery and reporting, and test-first means red
+  before green: a test you have never seen fail is decoration, not protection.
+
+### Key terms
+
+| Term | One-line reminder |
+| --- | --- |
+| [two-dimensional array](../concept-index.md#t) | a grid stored as a list (or array) whose elements are rows |
+| row-major order | visiting cells top to bottom, left to right — rows on the outer loop |
+| ragged grid | a grid whose rows do not all have the same length |
+| [mutation vs rebinding](../concept-index.md#m) | changing the object at the end of the arrow vs re-aiming the arrow itself |
+| pass references by value | the callee gets a copy of the arrow; the object itself is shared |
+| [linear search](../concept-index.md#l) | check each element from the front, stopping at the first match |
+| [selection sort](../concept-index.md#s) | repeatedly swap the smallest remaining value to the front |
+| [insertion sort](../concept-index.md#i) | slide each new value left into place among the already-sorted ones |
+| [invariant](../concept-index.md#i) | a statement true every time you check it, such as "the first $i+1$ slots are final" |
+| [`assert` statement](../concept-index.md#a) | the testing atom: silent when true, `AssertionError` when false |
+| [unit test](../concept-index.md#u) | one automated check of one fact about one function |
+| edge case | the empty, single-element, duplicate, or already-sorted input where bugs live |
+| regression | working behaviour that a later change silently breaks |
+
+## The exercises
+
 These exercises rehearse the whole chapter: grids, reference behaviour,
 the first algorithms, and testing. Exercises 8.1 and 8.6 ask for
 *predictions* — write your answer down before running anything, then

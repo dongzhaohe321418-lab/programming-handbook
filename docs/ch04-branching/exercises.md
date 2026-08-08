@@ -1,5 +1,58 @@
 # Exercises
 
+## The chapter in brief
+
+- A **Boolean** is a value that is only ever `True` or `False`, and every
+  decision a program makes comes down to one
+  ([4.1](01-booleans-logic.md)).
+- The six comparison operators *produce* Booleans, and on strings they compare
+  character by character — which is why `"10" < "9"` is `True`.
+- `and`, `or`, and `not` combine Booleans, binding in that order of tightness
+  (`not` grabs the least, `or` the most), and De Morgan's laws let you push a
+  `not` inside parentheses by swapping `and` for `or`.
+- Any value can stand in for a Boolean — zero and empty things are falsy,
+  everything else truthy — and `0 <= x < 10` chains two comparisons into one
+  test.
+- `if`/`elif`/`else` runs the *first* true branch and skips the rest, with
+  indentation, not braces, marking each block
+  ([4.2](02-if-else.md)).
+- Order an `elif` chain so a general test never starves a specific one, and
+  never use separate `if`s for cases that are meant to be exclusive.
+- Deep nesting flattens two ways: combine the conditions with `and`, or use the
+  guard pattern — check each failure first, `return` at once, leave the happy
+  path unindented.
+- `==` asks "equal value?" while `is` asks "same object?", so `is` belongs in
+  `None` checks and nowhere near numbers or strings
+  ([4.3](03-equality-identity.md)).
+- Assignment copies a reference, never an object, so `c = a` gives you two
+  names for one list — an alias, not a copy.
+- `match`/`case` tests one subject against literal patterns with no
+  fallthrough, but a dictionary wins whenever the decision is pure
+  key → value data ([4.4](04-switch-style-debug.md)).
+- When a branch misbehaves, print a trace inside each branch or split the
+  condition into named Booleans, and suspect the three classics: `=` for
+  `==`, misordered `elif`s, and a gap between two ranges.
+- Readable branches prefer positive conditions, contain no empty `pass`
+  branches, and stay within about two levels of nesting.
+
+### Key terms
+
+| Term | One-line reminder |
+| --- | --- |
+| [Boolean](../concept-index.md#b) | a value that is only ever `True` or `False` |
+| comparison operator | `==`, `!=`, `<`, `<=`, `>`, `>=` — each answers a question with a Boolean |
+| truthiness | the rule that lets any value stand in for a Boolean: zero and empty are false |
+| De Morgan's laws | `not (a and b)` equals `(not a) or (not b)`, and the mirror image |
+| chained comparison | `0 <= x < 10` — Python's spelling of a mathematical interval |
+| [indentation as syntax](../concept-index.md#i) | in Python the indent *is* the block, where Java uses braces |
+| guard pattern | one early `return` per failure case, leaving the happy path unindented |
+| [equality vs identity](../concept-index.md#e) | `==` compares values, `is` compares which object you have |
+| [aliasing](../concept-index.md#a) | two names for one object, so a change through either is seen by both |
+| [`match` statement](../concept-index.md#m) | compare one subject against `case` patterns, with no fallthrough |
+| dispatch table | a dictionary whose values are functions, replacing a long branch chain |
+
+## The exercises
+
 Work through these in order — they start with pure logic and end with bug
 hunts in realistic code. Try each one before opening the solution, and use
 the Run button to check yourself: for the *predict* exercises, write your

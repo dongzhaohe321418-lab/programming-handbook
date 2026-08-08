@@ -1,5 +1,67 @@
 # Chapter 40 · Exercises
 
+## The chapter in brief
+
+- A shell script is a program: a shebang line says which interpreter runs it,
+  `chmod +x` makes it executable, and `./name.sh` is how you invoke it
+  ([40.1](01-bash.md)).
+- **Quoting every expansion is the single habit that prevents most bash
+  bugs**, because bash splits an expanded variable on whitespace before
+  running anything.
+- All shell control flow is built on **exit status**: `0` is success, and
+  `&&`, `||`, and `if` all branch on that number rather than on a boolean.
+- `set -euo pipefail` at the top of a script turns three dangerous defaults
+  off — but `set -e` is a seatbelt, not an airbag, and does not fire inside
+  `if` conditions or `&&` chains.
+- Redirection is applied left to right, which is why `> file 2>&1` and
+  `2>&1 > file` do different things, and `|` connects one process's stdout
+  straight to the next process's stdin.
+- SSH gives you an encrypted channel **and** authentication in both
+  directions: the server proves itself with a host key, and you prove yourself
+  by signing a fresh challenge with a private key that never leaves your
+  machine ([40.2](02-ssh-remote.md)).
+- The remote workflow is five commands — `ssh-keygen`, `ssh-copy-id`,
+  `~/.ssh/config`, `ssh-agent`, `rsync` — plus `tmux`, so a dropped connection
+  cannot kill a long job.
+- Unix permission bits are binary in groups of three, which is why `600` is
+  `rw-------` and why SSH refuses a private key that is `644`.
+- A build is a **directed acyclic graph**, and `make` needs only two ideas: a
+  topological order, and "rebuild if the target is missing or older than a
+  prerequisite" ([40.3](03-make.md)).
+- Because a Makefile encodes constraints rather than an order, `make -j` can
+  build independent targets at once — and will expose any prerequisite you
+  forgot to declare.
+- A test framework adds six things to a bare `assert`: discovery, isolation,
+  fixtures, reporting, parameterization, and diagnostics
+  ([40.4](04-junit.md)).
+- JUnit builds a fresh instance of the test class for every method for one
+  reason — **shared mutable state is what makes tests flaky**, and no
+  framework can save a suite that has it.
+
+### Key terms
+
+| Term | One-clause reminder |
+|---|---|
+| Shebang (`#!`) | the first line, telling the OS which interpreter runs the file |
+| [Word splitting](../concept-index.md#q) | bash splits an unquoted expansion on whitespace, changing the argument list |
+| Exit status (`$?`) | `0` means success; every shell conditional reads this number |
+| `set -euo pipefail` | stop on error, error on an unset variable, fail a pipeline on any stage |
+| File descriptor | 0 stdin, 1 stdout, 2 stderr — the numbers redirection operates on |
+| Host key | the server's own key pair, checked against `~/.ssh/known_hosts` |
+| `authorized_keys` | the server-side file holding the **public** keys allowed in |
+| `ssh-agent` | holds the decrypted private key in memory and signs on request |
+| Port forwarding (`-L`) | a local port tunnelled to a service only the server can reach |
+| Octal mode | three bits per digit — `7` is `rwx`, `6` is `rw-`, `4` is `r--` |
+| Target, prerequisite, recipe | the three parts of a `make` rule |
+| Staleness | a target is stale if it is missing or older than a prerequisite |
+| Phony target | a `make` target that names a command rather than a file |
+| Fixture | declared setup and teardown, run around each test |
+| Test double | a stub, fake, or mock standing in for a real dependency |
+| Flaky test | one whose verdict depends on order, timing, or leftover state |
+
+Every command named above is tabulated in
+[Appendix F](../appendix/F-toolchain-reference.md). Now put it to work.
+
 Toolchain exercises are different from algorithm exercises: the skill being
 practised is *reading* — reading a script and spotting the quoting bug,
 reading a pipeline and predicting its output, reading a dependency graph and
@@ -164,7 +226,7 @@ $ grep -v '^#' votes.txt | cut -d, -f2 | sort | uniq -c | sort -rn | head -2
 
     Two traps to notice. Removing the `sort` stage would break `uniq -c`
     completely — it only collapses *adjacent* duplicates, so it would report
-    `ada` three separate times with no error. And `sort -rn` sorts
+    `ada` four separate times with no error. And `sort -rn` sorts
     numerically; without `-n` it would sort the counts as text, where `10`
     comes before `4`.
 

@@ -41,11 +41,13 @@ for label, text in zip(labels, samples):
 One in six. The failures are not random noise, though — they are a short,
 stable list, which means most of them are *repairable*.
 
-Two of these deserve naming. The trailing comma is legal in JavaScript and
-in Python but illegal in JSON, so models trained on code emit it constantly.
-The truncated reply is different in kind: it is what a hit token limit looks
-like. No cleverness recovers the missing half of a message that was never
-generated, and pretending otherwise silently invents data.
+Two of these deserve naming:
+
+- **The trailing comma** is legal in JavaScript and in Python but illegal in
+  JSON, so models trained on code emit it constantly.
+- **The truncated reply** is different in kind: it is what a hit token limit
+  looks like. No cleverness recovers the missing half of a message that was
+  never generated, and pretending otherwise silently invents data.
 
 ## A repair function that knows what it cannot fix
 
@@ -118,10 +120,11 @@ for label, text in zip(labels, samples):
         print(f"{label:16} -> REJECTED ({exc})")
 ```
 
-Five recovered, one honestly refused. That last line is the important one:
-a repair function that *guesses* at truncated data is worse than no repair
-function, because it turns a loud failure into a quiet wrong answer. Repair
-syntax, never semantics.
+Five recovered, one honestly refused. That last line is the important one: a
+repair function that *guesses* at truncated data is worse than no repair
+function, because it turns a loud failure into a quiet wrong answer.
+
+**Repair syntax, never semantics.**
 
 ```python
 # raises JSONDecodeError
@@ -131,11 +134,18 @@ import json
 json.loads('{"city": "Oslo", "temp_c":')
 ```
 
-Prompting can reduce the rate of all this — say "output only JSON, no
-prose", include one example of the exact output you want, set a stop
-sequence, and (with APIs that allow it) *prefill* the assistant's turn with
-a `{` so the model resumes inside an object. None of it is a guarantee.
-For a guarantee you have to go a level down, into sampling.
+Prompting can reduce the rate of all this. Four things help:
+
+- **Say "output only JSON, no prose"** in the instruction.
+- **Include one example** of the exact output you want.
+- **Set a stop sequence** so the model cannot ramble past the closing brace.
+- **Pre-fill the start of the assistant's reply with a `{`** (on APIs that
+  allow it) so the model resumes inside an object. That is an assistant
+  prefix, not the prefill *phase* of
+  [27.1](../ch27-inference/01-kv-cache.md).
+
+None of it is a guarantee. For a guarantee you have to go a level down, into
+sampling.
 
 ## Constrained decoding: masking the logits
 
@@ -243,13 +253,15 @@ print("constrained  :", text)
 print("  json.loads ->", json.loads(text))
 ```
 
-Look at what happened. The *model* did not change — same weights, same
-random stream, same scores. All that changed is which tokens were reachable
-at each step, and the output went from unparseable noise to a JSON object
-that `json.loads` accepts on the first try. At step 1 exactly one token out
-of fourteen is legal, so the model has no choice at all; at the value step
-it picks freely between two legal values. That is the whole trick, and it
-is why structured output can be *guaranteed* rather than hoped for.
+Look at what happened. The *model* did not change — same weights, same random
+stream, same scores. All that changed is which tokens were reachable at each
+step, and the output went from unparseable noise to a JSON object that
+`json.loads` accepts on the first try.
+
+Watch how the freedom varies. At step 1 exactly one token out of fourteen is
+legal, so the model has no choice at all; at the value step it picks freely
+between two legal values. That is the whole trick, and it is why structured
+output can be *guaranteed* rather than hoped for.
 
 Real implementations differ from ours in scale, not in kind:
 
@@ -264,12 +276,14 @@ Real implementations differ from ours in scale, not in kind:
 - the mask has to be recomputed every step, which costs a little latency;
   good implementations cache masks per state so the cost is near zero.
 
-The general idea covers more than JSON. A regex like
-`[0-9]{4}-[0-9]{2}-[0-9]{2}` constrains output to an ISO date; a
-context-free grammar can constrain output to valid SQL, valid Python, or a
-domain-specific format of your own; a JSON Schema is compiled down to the
-same machinery, with `enum` becoming a literal alternation and `"type":
-"integer"` becoming a digit loop.
+The general idea covers more than JSON:
+
+- **A regex** like `[0-9]{4}-[0-9]{2}-[0-9]{2}` constrains output to an ISO
+  date.
+- **A context-free grammar** can constrain output to valid SQL, valid Python,
+  or a domain-specific format of your own.
+- **A JSON Schema** compiles down to the same machinery, with `enum` becoming
+  a literal alternation and `"type": "integer"` becoming a digit loop.
 
 ## The library landscape
 
@@ -316,26 +330,42 @@ complaint attached.
 
 ## Tradeoffs: constraints are not free
 
-Constrained decoding guarantees *syntax*, never *sense*. A schema-valid
+**Constrained decoding guarantees *syntax*, never *sense*.** A schema-valid
 `{"city": "Oslo", "temp_c": 900}` is still wrong, and a model that does not
 know the answer will now produce a confidently well-formed wrong answer
 instead of an obviously broken one. Validation of values — ranges, enums,
 cross-field consistency — remains your job.
 
-It can also cost quality. If the schema fights the model's natural output,
-you are forcing tokens the model considers unlikely, and accuracy drops. The
-classic case: demanding a bare `{"answer": ...}` denies the model any room
-to reason, and on multi-step problems that is a measurable loss. The fix is
-to put the reasoning *inside* the schema — a `"reasoning": {"type":
-"string"}` field declared **before** `"answer"`, since JSON is generated in
-order and the model can attend to what it already wrote. Other sharp edges:
-grammars that permit unbounded whitespace let a model stall, and overly
-rigid schemas can make a model that wanted to say "I don't know" fabricate a
-value instead. Where it matters, allow a `null` or an explicit
-`"unknown"` enum value.
+It can also cost quality, because a schema that fights the model's natural
+output forces tokens the model considers unlikely. The classic case: demanding
+a bare `{"answer": ...}` denies the model any room to reason, and on
+multi-step problems that is a measurable loss. The fix is to put the reasoning
+*inside* the schema — a `"reasoning": {"type": "string"}` field declared
+**before** `"answer"`, since JSON is generated in order and the model can
+attend to what it already wrote.
 
-The simpler alternative works with every provider and needs no
-infrastructure: **validate and retry**, feeding the error back as feedback.
+Two more sharp edges:
+
+- **Unbounded whitespace in a grammar lets a model stall**, emitting spaces
+  forever without ever violating the rules.
+- **An overly rigid schema can force a fabrication.** A model that wanted to
+  say "I don't know" now has to invent a value; where that matters, allow a
+  `null` or an explicit `"unknown"` enum member.
+
+### The three ways to get structured output
+
+| Approach | Guarantee | Needs | Catches bad *values*? |
+| --- | --- | --- | --- |
+| **Prompt only** ("reply in JSON") | none — it is a request | nothing | no |
+| **Constrained decoding** | syntax is guaranteed by construction | a local model or a provider that supports it | no |
+| **Validate and retry** | none per attempt, high over a few | nothing | **yes** — any check you can write |
+
+They are complementary, not rivals. Most production systems use native
+structured outputs for the shape and validation-with-retry for everything the
+shape cannot express.
+
+The retry approach works with every provider and needs no infrastructure:
+**validate and retry**, feeding the error back as feedback.
 
 ```python
 import json
@@ -390,13 +420,13 @@ def ask_for_json(llm, prompt, attempts=4):
 print("result:", ask_for_json(FakeLLM(), "Weather in Oslo? Reply as JSON."))
 ```
 
-Three attempts, one valid object, and the loop is twenty lines. Retry is
-strictly weaker than constrained decoding — it can fail, and each failure
-costs a full round trip — but it works against any API, it catches semantic
-problems that a grammar cannot, and the feedback string is doing real
-teaching. In practice most production systems use both: native structured
-outputs for the shape, validation-with-retry for everything the shape cannot
-express.
+Three attempts, one valid object, and the loop is twenty lines.
+
+Retry is strictly weaker than constrained decoding: it can fail, and each
+failure costs a full round trip. But it works against any API, it catches
+semantic problems a grammar cannot, and **the feedback string is doing real
+teaching** — attaching the validation error is what makes attempt 2 different
+from attempt 1.
 
 !!! warning "Common mistakes"
 

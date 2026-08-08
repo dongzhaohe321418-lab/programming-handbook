@@ -114,21 +114,46 @@ flowchart TB
     S -. "the index" .-> R
 ```
 
-Two properties of this picture are worth fixing in your head now. First, the
-model is *one box near the end*: most of RAG is not machine learning at all,
-it is data plumbing, and most RAG failures happen before the model is reached.
-Second, the embed step appears on both sides and **must be the same model** —
-a query embedded by model A cannot be compared with chunks embedded by model
-B, as [Section 29.1](01-embeddings-vector-search.md) explained.
+Written out as procedures, they are:
+
+**Ingest — offline, once per document.**
+
+1. **Load.** Pull the raw bytes out of a PDF, HTML page, wiki export or
+   database row, and get plain text.
+2. **Chunk.** Split that text into passages small enough to embed usefully.
+3. **Embed.** One vector per chunk, from your chosen embedding model.
+4. **Store.** Vector, chunk text, and metadata (source, heading, position)
+   together, so a retrieved vector can be turned back into citable text.
+
+**Query — on every request, in tens of milliseconds.**
+
+1. **Embed the question** — with the *same* model that embedded the chunks.
+2. **Retrieve** the top-$k$ chunks by cosine similarity.
+3. **Rerank** those candidates by scoring each (query, chunk) pair jointly.
+4. **Assemble** a prompt: numbered context, then the question.
+5. **Generate** the answer.
+6. **Cite and verify** — check every citation against what you actually
+   supplied.
+
+Two properties of this picture are worth fixing in your head now.
+
+**The model is one box near the end.** Most of RAG is not machine learning at
+all, it is data plumbing, and most RAG failures happen before the model is
+reached.
+
+**The embed step appears on both sides and must be the same model.** A query
+embedded by model A cannot be compared with chunks embedded by model B, as
+[Section 29.1](01-embeddings-vector-search.md) explained.
 
 ## Chunking is the whole ballgame
 
 You cannot embed a 400-page manual as one vector: a single vector averaging
 400 pages points in the direction of nothing in particular. So documents are
-split into **chunks**, and the chunk is the unit of everything downstream — the
-unit you embed, the unit you retrieve, the unit you paste into the prompt, the
-unit you cite. Choose the boundaries badly and no amount of model quality
-recovers.
+split into **chunks**.
+
+The chunk is then the unit of everything downstream — the unit you embed, the
+unit you retrieve, the unit you paste into the prompt, the unit you cite.
+**Choose the boundaries badly and no amount of model quality recovers.**
 
 Here is the failure, in its purest form.
 
@@ -166,11 +191,13 @@ print("  ", repr(good[2][:78]))
 
 Chunk 1 ends `'es, and the maximum batch size is '` and chunk 2 begins
 `'64 documents; larger batches are r'`. The number has been amputated from its
-subject. Now imagine the retriever doing its job: a user asks "what is the
-maximum batch size?", the query matches chunk 1 almost perfectly — it contains
-every query word — and the model is handed a passage that says the maximum
-batch size is, and then stops. There is no number to read. The model either
-says it does not know, or fills the gap itself.
+subject.
+
+Now imagine the retriever doing its job. A user asks "what is the maximum batch
+size?". The query matches chunk 1 almost perfectly — it contains every query
+word — and the model is handed a passage that says the maximum batch size is,
+and then stops. There is no number to read. The model either says it does not
+know, or fills the gap itself.
 
 And this is not a cherry-picked chunk size: **59 of the 141 sizes** between 60
 and 200 characters split that one sentence. Fixed-size character chunking is
@@ -180,11 +207,12 @@ a coin flip performed once per fact in your corpus.
 
 `overlap` restarts each chunk a little before the previous one ended, so every
 boundary appears in the middle of some other chunk. With `size=89, overlap=30`
-the fact lands intact inside chunk 2. You pay for it in duplication: with
-overlap 30 out of 89, roughly a third of your text is stored twice, so the
-index grows by about half. A conventional starting point is an overlap of
-10–20% of the chunk size, and the honest way to choose is to measure recall
-(later on this page) at two or three settings.
+the fact lands intact inside chunk 2.
+
+You pay for it in duplication. With overlap 30 out of 89, roughly a third of
+your text is stored twice, so the index grows by about half. A conventional
+starting point is an overlap of 10–20% of the chunk size, and the honest way to
+choose is to measure recall (later on this page) at two or three settings.
 
 ### Four strategies, in increasing order of respect for the text
 
@@ -285,10 +313,11 @@ what they respect:
 
 Our `semantic` splitter uses a bag-of-words cosine as its similarity, which is
 exactly the machinery of [Section 29.1](01-embeddings-vector-search.md); real
-implementations swap in an embedding model and keep the loop. Note also what
-none of them do: preserve the *document* the chunk came from. Always store the
-source, the section heading, and the position alongside the text — that is the
-metadata your citations and filters will need.
+implementations swap in an embedding model and keep the loop.
+
+Note also what none of them do: **preserve the *document* the chunk came
+from.** Always store the source, the section heading, and the position
+alongside the text — that is the metadata your citations and filters will need.
 
 ## Retrieval: choosing $k$, and where in the prompt things go
 
@@ -368,14 +397,20 @@ for k in (1, 2, 3, 5, 10):
     print(f"{k:>3} {np.mean(rec):>9.3f} {np.mean(toks):>15.1f}")
 ```
 
-That table is the $k$ decision, and it is not subtle: recall climbs from 0.667
-at $k=1$ to 1.000 at $k=5$, while the context grows from 23.5 tokens to 132.8
-and then to 241.0 at $k=10$ — for **no further recall**. Tokens are money
-([Section 29.3](03-agent-memory.md) does the arithmetic) and they are also
-latency, since every context token must be prefilled
-([Section 27.1](../ch27-inference/01-kv-cache.md)). Typical production values
-are $k$ between 3 and 10; the way to pick yours is to build a labelled set like
-`LABELLED`, print this table, and stop where recall flattens.
+That table is the $k$ decision, and it is not subtle:
+
+- **Recall climbs and then stops.** 0.667 at $k=1$, 1.000 at $k=5$, and
+  1.000 again at $k=10$.
+- **Context keeps growing regardless.** 23.5 tokens at $k=1$, 132.8 at $k=5$,
+  241.0 at $k=10$ — for **no further recall**.
+- **Tokens cost twice.** They are money
+  ([Section 29.3](03-agent-memory.md) does the arithmetic) and they are
+  latency, since every context token must be prefilled
+  ([Section 27.1](../ch27-inference/01-kv-cache.md)).
+
+Typical production values are $k$ between 3 and 10. The way to pick yours is to
+build a labelled set like `LABELLED`, print this table, and stop where recall
+flattens.
 
 ### Lost in the middle
 
@@ -414,19 +449,31 @@ in the middle.
 ## Reranking: two encoders, two costs
 
 Retrieval embedded the query and every chunk *separately*, then compared
-vectors. That is a **bi-encoder**, and its enormous advantage is that all the
-chunk vectors can be computed once, offline — which is the only reason
-searching millions of documents is possible at all. Its disadvantage is
-structural: each chunk was compressed into a vector *before anyone knew what
-the question would be*, so anything the question would have made important is
-already gone.
+vectors. That is a **bi-encoder**.
 
-A **cross-encoder** scores the pair jointly: it takes `(query, chunk)` as one
+Its enormous advantage is that all the chunk vectors can be computed once,
+offline — which is the only reason searching millions of documents is possible
+at all. Its disadvantage is structural: each chunk was compressed into a vector
+*before anyone knew what the question would be*, so anything the question would
+have made important is already gone.
+
+A **cross-encoder** scores the pair jointly. It takes `(query, chunk)` as one
 input and produces one relevance number, so every word of the query can attend
-to every word of the chunk. It is far more accurate and far too slow to run
-over a whole corpus. Hence the standard two-stage design: a bi-encoder
-retrieves a cheap top-50, a cross-encoder reranks those 50 down to the best 5.
-Retrieve wide, rerank narrow.
+to every word of the chunk. It is far more accurate — and far too slow to run
+over a whole corpus.
+
+| | Bi-encoder (retrieval) | Cross-encoder (reranking) |
+| --- | --- | --- |
+| **Input** | query and chunk, separately | the `(query, chunk)` pair, together |
+| **Output** | one vector each, compared by cosine | one relevance score |
+| **When is the chunk encoded?** | offline, at insert time | at query time, for every candidate |
+| **Cost per query** | one matrix multiply over the index | one model call *per candidate* |
+| **Scales to** | millions of chunks | tens of chunks |
+| **Knows the question while reading the chunk?** | no | yes — that is the whole difference |
+
+Hence the standard two-stage design: **a bi-encoder retrieves a cheap top-50, a
+cross-encoder reranks those 50 down to the best 5.** Retrieve wide, rerank
+narrow.
 
 Our toy reranker is not a neural network — it is a scoring function over the
 pair, using two signals a pooled vector has already thrown away: *which* rare
@@ -459,14 +506,16 @@ print(f"top-1 correct, after rerank  : {rerank_hits}/{len(LABELLED)}")
 ```
 
 Retrieval alone puts the right chunk first 4 times out of 6; reranking makes it
-5. Look at the first row to see why. For *"what is the Atlas batch size
-limit?"* the bi-encoder ranks chunk 3 (*"Operators change the Atlas batch
-size…"*) above chunk 1 (*"…the maximum batch size is 64 documents"*): both
-share the same words, and once each was squashed into a vector there was
-nothing left to separate them. The reranker sees that chunk 1 opens with
-"Atlas" at token 0 while chunk 3 makes you wait, and flips them.
+5. Two rows explain both the win and the limit.
 
-Look at the second row to stay honest: *"what happens when an Atlas batch keeps
+**Row 1 — why reranking wins.** For *"what is the Atlas batch size limit?"* the
+bi-encoder ranks chunk 3 (*"Operators change the Atlas batch size…"*) above
+chunk 1 (*"…the maximum batch size is 64 documents"*). Both share the same
+words, and once each was squashed into a vector there was nothing left to
+separate them. The reranker sees that chunk 1 opens with "Atlas" at token 0
+while chunk 3 makes you wait, and flips them.
+
+**Row 2 — where it stops.** *"What happens when an Atlas batch keeps
 failing?"* is wrong before and after. The answer chunk talks about *retries*
 and a *dead-letter queue*; the question says *keeps failing*. No lexical method
 bridges that, and no reranker built out of word overlap ever will. A real
@@ -496,21 +545,26 @@ chosen = rerank(question, retrieve(question, 3))
 print(build_prompt(question, chosen))
 ```
 
-Three details in that template are doing real work. "Using ONLY the context"
-tells the model to prefer the retrieved text over its own weights. "Cite every
-claim with the bracketed number" gives you a machine-checkable trail. "If the
-context does not answer, say so" gives the model a licence to fail, which it
-will not take unless offered.
+Three details in that template are doing real work:
+
+- **"Answer using ONLY the context below."** Tells the model to prefer the
+  retrieved text over its own weights.
+- **"Cite every claim with the bracketed number."** Gives you a
+  machine-checkable trail.
+- **"If the context does not answer the question, say so."** Gives the model a
+  licence to fail, which it will not take unless offered.
 
 Numbering the chunks `[1] [2] [3]` — rather than pasting their database ids —
-matters too: the model only has to emit small integers it can see in front of
+matters too. The model only has to emit small integers it can see in front of
 it, and your code maps those back to real documents. That mapping is what makes
 verification trivial.
 
 ```python
 # continues
 class FakeLLM:
-    """Scripted stand-in: answers by quoting the best-overlapping chunk.
+    """A second scripted stand-in, replacing the one above for this section.
+
+    It answers by quoting the best-overlapping chunk.
 
     `sloppy=True` makes it cite a chunk number that was never in the prompt —
     the hallucinated-citation failure, which is common and easy to catch.
@@ -557,29 +611,37 @@ print("out-of-scope question ->", answer)
 print("                        ", verify_citations(answer, len(ids)))
 ```
 
-The careful model cites `[1]`, which exists, and passes. The sloppy model cites
-`[9]` when only three chunks were supplied — `invalid: [9]` — and your code can
-reject the answer, retry, or strip the claim *before a user ever sees it*.
-This is one of the few genuinely mechanical anti-hallucination techniques
-available: you cannot check whether a sentence is true, but you can absolutely
-check whether its citation points at a document you supplied. Extend it by also
-verifying that the cited chunk's text actually contains the numbers the answer
-quotes.
+Three cases, three outcomes:
 
-The out-of-scope query is the third case that matters. Nothing in the knowledge
-base mentions refunds, the model says so, and `uncited_claim` is `True` — which
-is the correct signal here (an answer with no citations *and* no evidence) and
-exactly what you want your monitoring to count.
+- **The careful model** cites `[1]`, which exists, and passes.
+- **The sloppy model** cites `[9]` when only three chunks were supplied —
+  `invalid: [9]` — and your code can reject the answer, retry, or strip the
+  claim *before a user ever sees it*.
+- **The out-of-scope query** ("what is the refund policy?") finds nothing in
+  the knowledge base, the model says so, and `uncited_claim` is `True`. That is
+  the *correct* signal here — an answer with no citations *and* no evidence —
+  and exactly what you want your monitoring to count.
+
+!!! tip "The one anti-hallucination check that is purely mechanical"
+
+    You cannot check whether a sentence is true. You *can* always check whether
+    its citation points at a document you actually supplied — and that check is
+    a regular expression and a range test. Extend it by also verifying that the
+    cited chunk's text contains the numbers the answer quotes.
 
 ## Evaluating RAG: two scoreboards, not one
 
 RAG has two failure surfaces and you must measure them separately, because the
-fixes are unrelated. If retrieval never found the chunk, no prompt engineering
-saves you; if retrieval found it and the answer is still wrong, the retriever
-is not your problem.
+fixes are unrelated:
 
-**Retrieval metrics** need only a labelled set: questions paired with the ids
-of the chunks that answer them. Two standard ones:
+- **If retrieval never found the chunk**, no prompt engineering saves you.
+- **If retrieval found it and the answer is still wrong**, the retriever is not
+  your problem.
+
+### Retrieval metrics
+
+These need only a labelled set: questions paired with the ids of the chunks
+that answer them. Two are standard.
 
 $$
 \text{recall@}k = \frac{|\text{retrieved top-}k \cap \text{relevant}|}{|\text{relevant}|},
@@ -587,9 +649,16 @@ $$
 \text{MRR} = \frac{1}{|Q|}\sum_{q \in Q} \frac{1}{\text{rank of the first relevant hit}}
 $$
 
-Recall@k asks *did we get it into the context at all*. MRR asks *how near the
-top* — it is 1.0 if the first result is always right, 0.5 if it is always
-second, and it is the metric that moves when you add a reranker.
+In words:
+
+- **Recall@k** asks *did we get it into the context at all* — what fraction of
+  the chunks that should have been retrieved were in the top $k$.
+- **MRR** (mean reciprocal rank) asks *how near the top*. It averages one over
+  the rank of the first correct hit: 1.0 if the first result is always right,
+  0.5 if it is always second. **This is the metric that moves when you add a
+  reranker.**
+
+$Q$ is the set of labelled questions; $|Q|$ is how many there are.
 
 ```python
 # continues
@@ -618,13 +687,16 @@ print(f"MRR, top-4 reranked : {mrr(reranked_ranking):.3f}")
 ```
 
 Recall@5 is 1.000 — every answer is somewhere in the top five — but MRR is only
-0.792, meaning the right chunk is often *not* first. Reranking the top 4 lifts
-MRR to 0.917 without changing recall at all, which is precisely what a reranker
-is supposed to do: it cannot find what retrieval missed, it can only reorder
-what retrieval found. Those two numbers together tell you where to spend your
-next hour.
+0.792, meaning the right chunk is often *not* first.
 
-**Generation metrics** are harder because there is no key. The two that matter:
+Reranking the top 4 lifts MRR to 0.917 without changing recall at all, which is
+precisely what a reranker is supposed to do: **it cannot find what retrieval
+missed, it can only reorder what retrieval found.** Those two numbers together
+tell you where to spend your next hour.
+
+### Generation metrics
+
+These are harder, because there is no key. The two that matter:
 
 - **Faithfulness** (also called groundedness): is every claim in the answer
   supported by the retrieved context? Our citation verifier is the cheap
@@ -635,9 +707,10 @@ next hour.
   as opposed to being a true statement about something else?
 
 Both are typically scored by a judge model, which means your evaluation
-inherits that model's biases and drifts when it is updated. Keep a small
-human-labelled set as ground truth and check the judge against it periodically.
-Never report a judged score without saying which judge produced it.
+inherits that model's biases and drifts when it is updated. Two habits follow:
+keep a small human-labelled set as ground truth and check the judge against it
+periodically, and **never report a judged score without saying which judge
+produced it.**
 
 ## Failure modes and what to do about them
 

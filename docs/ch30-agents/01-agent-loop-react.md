@@ -4,11 +4,12 @@ You can already make a model call a tool
 ([28.1](../ch28-tools-mcp/01-function-calling.md)) and give it something to
 remember ([Chapter 29](../ch29-memory-rag/index.md)). An **agent** is what you
 get when you put those two capabilities inside a `while` loop and hand the
-loop's steering wheel to the model. That single structural change — the model
-decides what happens next, not you — is the whole idea, and it is also the
-source of every failure mode in this chapter. By the end of this page you will
-have written a complete agent in about ninety lines, and then broken it four
-different ways on purpose.
+loop's steering wheel to the model.
+
+That single structural change — **the model decides what happens next, not
+you** — is the whole idea, and it is also the source of every failure mode in
+this chapter. By the end of this page you will have written a complete agent in
+about ninety lines, and then broken it four different ways on purpose.
 
 ## Definition first: an agent is a loop
 
@@ -104,9 +105,10 @@ load-bearing, and half of this page is about what happens when they are weak.
 ## ReAct: reason, then act
 
 The dominant text format for agent loops comes from **ReAct** (Yao et al.,
-*ReAct: Synergizing Reasoning and Acting in Language Models*, ICLR 2023). The
-idea in one sentence: instead of asking the model *either* to reason ("think
-step by step") *or* to act (call a tool), interleave the two, so that each
+*ReAct: Synergizing Reasoning and Acting in Language Models*, ICLR 2023).
+
+The idea in one sentence: instead of asking the model *either* to reason ("think
+step by step") *or* to act (call a tool), **interleave the two** — so that each
 thought is informed by a real observation and each action is justified by a
 thought.
 
@@ -126,10 +128,18 @@ Thought: I have everything I need.
 Final Answer: about 1082.68 feet.
 ```
 
-Crucially, the model writes only `Thought`, `Action` and `Action Input`.
-**Your program writes the `Observation` lines** — it parses the action, runs
-the real Python function, and appends the result. The transcript *is* the
-memory: on the next turn the whole thing is fed back in as the prompt.
+The division of labour is the part to get right:
+
+| Line | Written by |
+| --- | --- |
+| `Thought:` | the model |
+| `Action:` | the model |
+| `Action Input:` | the model |
+| `Observation:` | **your program** — it parses the action, runs the real Python function, and appends the result |
+| `Final Answer:` | the model, when it decides it is done |
+
+The transcript *is* the memory: on the next turn the whole thing is fed back in
+as the prompt.
 
 !!! note "Why the reasoning line earns its place"
 
@@ -140,19 +150,27 @@ memory: on the next turn the whole thing is fed back in as the prompt.
 
 ## Building a complete ReAct agent
 
-Here is the whole thing: three real tools, a rule-based model stand-in, a
-parser with a repair path, and the loop with a budget. Read it once top to
-bottom before you run it.
+Here is the whole thing, in four numbered parts you will see marked in the
+source:
 
-Our model is a `FakeLLM` — a small, deterministic, rule-based **policy** that
-reads the transcript and decides what is still missing. It stands in for a
-real chat model so that the trace is identical on every machine and every run,
-with no API key and no network. Its contract is deliberately the same contract
-a chat API offers: **text in, text out**. Each rule fires on the *absence* of
-something from the transcript (`"Height:" not in transcript`), which is what
-makes it genuinely react to whatever the tools return rather than replay a
-fixed script. Swapping it for a real model is a one-line change, and we show
-that line immediately after the code.
+1. **Tools** — three ordinary Python functions, string in, string out.
+2. **The model stand-in** — a rule-based policy.
+3. **The parser** — model text into a decision dict, with a repair path.
+4. **The loop** — with a step budget.
+
+Read it once top to bottom before you run it.
+
+Our model is a `FakeLLM`: a small, deterministic, rule-based **policy** that
+reads the transcript and decides what is still missing. It stands in for a real
+chat model so that the trace is identical on every machine and every run, with
+no API key and no network. Its contract is deliberately the same contract a chat
+API offers: **text in, text out**.
+
+Each rule fires on the *absence* of something from the transcript
+(`"Height:" not in transcript`), which is what makes it genuinely react to
+whatever the tools return rather than replay a fixed script. Swapping it for a
+real model is a one-line change, and we show that line immediately after the
+code.
 
 ```python
 """A complete ReAct agent: three tools, a policy, a parser, and the loop."""
@@ -294,8 +312,8 @@ Thought: I have the height in feet and the division.
 Final Answer: The Eiffel Tower is about 1082.68 ft tall, which is 10.8268 hundreds of feet.
 ```
 
-Three tools, three steps, one answer — and nowhere in the source did we write
-"first look it up, then convert, then divide". That ordering was *chosen*, one
+Three tools, three steps, one answer — and **nowhere in the source did we write
+"first look it up, then convert, then divide"**. That ordering was *chosen*, one
 step at a time, from what came back. Change the encyclopedia entry to give the
 height in feet already and the policy skips step 2 without a code change.
 
@@ -341,10 +359,12 @@ run_react(StubbornLLM(), "How tall is the Eiffel Tower?", TOOLS, max_steps=3)
 ```
 
 Three identical steps, then
-`--- budget exhausted after 3 steps, no answer ---`. The budget is not a
-nicety; it is the difference between a slow answer and a process you have to
-kill. Real agents burn money per step, so production budgets are usually a
-pair: max steps **and** max tokens or dollars (see [30.4](04-frameworks.md)).
+`--- budget exhausted after 3 steps, no answer ---`.
+
+**The budget is not a nicety; it is the difference between a slow answer and a
+process you have to kill.** Real agents burn money per step, so production
+budgets are usually a pair: max steps **and** max tokens or dollars (see
+[30.4](04-frameworks.md)).
 
 ## Failure mode 2: repeating a failed action
 
@@ -390,12 +410,19 @@ class TypoLLM:
 run_guarded(TypoLLM(), "How tall is the Eiffel Tower?", TOOLS)
 ```
 
-Step 1 misspells and gets `No article titled 'Eifel Tower'. Known titles: …`.
-Step 2 repeats the identical call — and the guard, not the encyclopedia,
-answers. At step 3 the policy reads `LOOP GUARD` in the transcript and changes
-its input; step 4 finishes with `FINAL -> 330 m.` The guard turned an infinite
-rut into a two-step detour, and it did so by **writing into the transcript** —
-the only channel you have to the model's next decision.
+Follow the four steps:
+
+1. **Step 1** misspells the title and gets
+   `No article titled 'Eifel Tower'. Known titles: …`.
+2. **Step 2** repeats the identical call — and the guard, not the encyclopedia,
+   answers.
+3. **Step 3**: the policy reads `LOOP GUARD` in the transcript and changes its
+   input.
+4. **Step 4** finishes with `FINAL -> 330 m.`
+
+The guard turned an infinite rut into a two-step detour, and it did so by
+**writing into the transcript** — the only channel you have to the model's next
+decision.
 
 ## Failure mode 3: hallucinated tool names
 
@@ -423,10 +450,16 @@ run_react(HallucinatingLLM(), "How tall is the Eiffel Tower?", TOOLS, max_steps=
 
 Step 1's observation is
 `TOOL ERROR: no tool named 'web_search'. Available tools: wiki, calc, convert.`
+
 Notice that it **lists the real tools**. An error message that merely says
 "unknown tool" teaches the model nothing; one that names the alternatives is a
-free correction, and the agent recovers on step 2. Treat every error string an
-agent can see as a prompt, because that is exactly what it is.
+free correction, and the agent recovers on step 2.
+
+!!! tip "Every error string an agent can see is a prompt"
+
+    Because that is literally what it is — text appended to the transcript that
+    the model reads before its next decision. Write your tool errors the way you
+    would write an instruction, not the way you would write a log line.
 
 ## Failure mode 4: the transcript grows every step
 
@@ -462,26 +495,32 @@ print(f"total sent, 30 steps: {per_step * 30 * 31 / 2:.0f} tokens")
 
 The table shows the prompt going 21 → 63 → 96 → 126 tokens over four steps,
 with 306 tokens sent in total. Extrapolating the average growth of 32
-tokens/step: a 30-step run would send a 945-token prompt on its last call and
-about 14,600 tokens over the whole run. Four steps is nothing. Thirty steps of
-a *real* agent, with search results and file contents as observations, is tens
-of thousands of tokens per call and hundreds of thousands over the run — and
-eventually it simply does not fit in the context window.
+tokens/step, a 30-step run would send a 945-token prompt on its last call and
+about 14,600 tokens over the whole run.
+
+Four steps is nothing. Thirty steps of a *real* agent, with search results and
+file contents as observations, is tens of thousands of tokens per call and
+hundreds of thousands over the run — and eventually it simply does not fit in
+the context window.
 
 Every technique from
 [29.3 Agent memory and context management](../ch29-memory-rag/03-agent-memory.md)
-applies here directly: summarise old steps, keep only the last $k$ observations
-verbatim, and store long tool outputs in a scratchpad, passing a short handle
-to the model instead of the text.
+applies here directly:
+
+- **Summarise old steps** once they are no longer being reasoned about.
+- **Keep only the last $k$ observations verbatim.**
+- **Store long tool outputs in a scratchpad**, and pass the model a short handle
+  instead of the text.
 
 ## Tool descriptions matter more than model size
 
-Beginners assume tool choice is a property of the model. Mostly it is a
-property of your **descriptions**. The model sees only the tool names and the
-description strings; if two tools are described as "Searches." and
-"Converts.", there is nothing to choose between them. Here is a policy crude
-enough that you can see exactly why — it scores each tool by how many content
-words its description shares with the question:
+Beginners assume tool choice is a property of the model. **Mostly it is a
+property of your descriptions.**
+
+The model sees only the tool names and the description strings. If two tools are
+described as "Searches." and "Converts.", there is nothing to choose between
+them. Here is a policy crude enough that you can see exactly why — it scores
+each tool by how many content words its description shares with the question:
 
 ```python
 STOP_WORDS = {"a", "an", "the", "of", "or", "and", "to", "is", "in", "how",
@@ -513,11 +552,13 @@ for label, tools in (("vague", vague), ("precise", precise)):
     print(f"{label:>7} descriptions -> chose {choice:<8} scores={scores}")
 ```
 
-The vague set scores `0` for every tool and the tie-break picks `wiki` — the
-wrong tool, chosen by an accident of alphabetical order. The precise set gives
-`convert` a score of 2 (it names both *miles* and *kilometres*), `calc` a score
-of 1, and `wiki` nothing. Same question, same "model", different
-documentation, different answer.
+- **Vague descriptions:** every tool scores `0`, and the tie-break picks `wiki`
+  — the wrong tool, chosen by an accident of `reverse=True`, which sorts the
+  alphabetically *last* name to the front.
+- **Precise descriptions:** `convert` scores 2 (it names both *miles* and
+  *kilometres*), `calc` scores 1, `wiki` nothing.
+
+Same question, same "model", different documentation, different answer.
 
 The practical rules that follow:
 
@@ -533,28 +574,33 @@ The practical rules that follow:
 
 Our agent asks the model to *type* `Action: wiki` and then parses that text.
 That is how ReAct was originally done, and it still works with any model that
-can produce text at all. But it is brittle in a specific way: the model can
-misformat the reply, which is why `parse` has an `"unparsed"` branch and the
-loop feeds a `PARSE ERROR` observation back.
+can produce text at all.
+
+But it is brittle in a specific way: the model can misformat the reply. That is
+why `parse` has an `"unparsed"` branch and the loop feeds a `PARSE ERROR`
+observation back.
 
 Modern APIs offer the alternative you met in
 [28.1 Function calling and JSON Schema](../ch28-tools-mcp/01-function-calling.md):
-you send tool *schemas*, and the model returns a structured tool call the
-provider has already validated against the schema.
+you send tool *schemas*, and the model returns a structured tool call with typed
+arguments. Some providers additionally offer a strict mode that constrains
+decoding to your schema — but the arguments still arrive as untrusted input, so
+you validate at your own boundary exactly as 28.1 does.
 
 | | Text-parsing (ReAct-style) | Native function calling |
 | --- | --- | --- |
 | Model output | free text with labelled lines | a structured call with typed arguments |
-| Argument validity | you validate, and repair | provider validates against JSON Schema |
+| Argument validity | you validate, and repair | shape is usually right, and a strict mode can constrain it — you still validate ([28.1](../ch28-tools-mcp/01-function-calling.md)) |
 | Works with | any text model, including small local ones | models trained for tool use |
 | Parallel calls | awkward — one action per turn | usually supported natively |
 | Debuggability | excellent: the trace is readable prose | good, but reasoning may be hidden |
 | What still fails | malformed text | well-typed arguments to the wrong tool |
 
 They are the same loop; only the encoding of "what the model chose" differs.
-Note the last row: schemas eliminate *syntax* errors, not *judgement* errors. A
-perfectly typed call to the wrong tool with the wrong argument is still wrong,
-which is why the previous section matters regardless of encoding.
+
+Note the last row. **Schemas eliminate *syntax* errors, not *judgement*
+errors.** A perfectly typed call to the wrong tool with the wrong argument is
+still wrong, which is why the previous section matters regardless of encoding.
 
 !!! warning "Common mistakes"
 

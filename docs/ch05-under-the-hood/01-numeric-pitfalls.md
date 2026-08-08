@@ -13,10 +13,14 @@ that keep your programs on the right side of them.
 Inside the processor, a number lives in a **register**: a row of physical
 circuits, each holding one bit. The row has a fixed length — typically 32 or
 64 bits — because the adder and multiplier circuits are literally wired for
-that many inputs. Fixed width is what makes arithmetic so fast: adding two
-64-bit numbers takes about one clock cycle, no matter what the numbers are,
-and a million of them stored in a row occupy exactly 8 million bytes, so the
-machine always knows where number 500,001 starts.
+that many inputs.
+
+Fixed width is what makes arithmetic so fast, and it buys two things at once:
+
+- **Every operation costs the same.** Adding two 64-bit numbers takes about
+  one clock cycle, no matter what the numbers are.
+- **Storage is predictable.** A million of them in a row occupy exactly
+  8 million bytes, so the machine always knows where number 500,001 starts.
 
 The price of a fixed-size box is a biggest value that fits in it. With 32 bits
 and the usual **two's complement** encoding (met in
@@ -54,9 +58,11 @@ no error, no warning, just a wrong answer:
 Run the Python version: `big + 1` is simply `2147483648`. Python's `int` is
 not a fixed-size register value. It is an object that grows extra digits as
 needed, so **Python integers never overflow** — `2**100` prints all 31 digits
-of $2^{100}$ happily. The trade-off is speed: flexible ints cost more memory
-and more time per operation than raw hardware integers. Java made the opposite
-trade, which is why its `int` is fast *and* dangerous.
+of $2^{100}$ happily.
+
+The trade-off is speed: flexible ints cost more memory and more time per
+operation than raw hardware integers. Java made the opposite trade, which is
+why its `int` is fast *and* dangerous.
 
 !!! info "Java corner"
     Java's `long` is the same idea with 64 bits: it wraps at
@@ -133,12 +139,20 @@ behave all the time. The fix is to choose a wider box up front, for example
 
 Fractional numbers use a different fixed-width format: **IEEE-754 double
 precision**, the near-universal standard behind Python's `float`, Java's
-`double`, and your GPU. A double is 64 bits — 1 sign bit, 11 exponent bits,
-52 fraction bits — storing a number as *binary* scientific notation:
-$\pm\, 1.\text{fraction} \times 2^{\text{exponent}}$. Sixty-four bits can
-represent only finitely many numbers, so almost every decimal you type gets
-rounded to the *nearest representable* double. That single fact explains the
-most famous line in programming:
+`double`, and your GPU. A double spends its 64 bits like this:
+
+| Field    | Bits | Its job                            |
+| -------- | ---- | ---------------------------------- |
+| sign     | 1    | positive or negative               |
+| exponent | 11   | which power of two to scale by     |
+| fraction | 52   | the digits of the number itself    |
+
+Together they store a number as *binary* scientific notation,
+$\pm\, 1.\text{fraction} \times 2^{\text{exponent}}$.
+
+Sixty-four bits can represent only finitely many numbers, so almost every
+decimal you type gets rounded to the *nearest representable* double. That
+single fact explains the most famous line in programming:
 
 ```python
 print(0.1 + 0.2)
@@ -238,13 +252,17 @@ True
 0.1000000000000000055511151231257827021181583404541015625
 ```
 
-That last line is the exact value of the double `0.1` — `Decimal(0.1)`
+That last line is the exact value of the double `0.1`. `Decimal(0.1)`
 faithfully imports the float's error, while `Decimal("0.1")` means the decimal
-you wrote. (The other industrial-strength option: keep money as an integer
-number of *cents* and format on output. Java programmers use `BigDecimal` for
-the same job.) The cost of `decimal` is speed — hardware has no decimal
-circuits — which is why it is the exception for money and measurement, not the
-default for all arithmetic.
+you actually wrote.
+
+There are two other industrial-strength options worth knowing. Keep money as
+an integer number of *cents* and format it only on output. And if you are in
+Java, `BigDecimal` does the same job as Python's `decimal`.
+
+The cost of `decimal` is speed — hardware has no decimal circuits — which is
+why it is the exception for money and measurement, not the default for all
+arithmetic.
 
 ## Infinity and NaN
 
@@ -285,10 +303,13 @@ by decree of the IEEE-754 standard (any comparison with NaN answers "false",
 signalling that the value is meaningless). So `x == float("nan")` can never
 succeed — use `math.isnan(x)`.
 
-So Python offers three integer-and-float personalities, and now you can name
-them: `int` **grows** (never overflows), NumPy/Java integers **wrap**
-(silently, or with a scalar warning), and floats **saturate** to `inf` while
-quietly rounding everything else.
+So Python offers three numeric personalities, and now you can name all three:
+
+| Number type | At the limit it … | So watch for … |
+| --- | --- | --- |
+| plain `int` | **grows** — it never overflows | more memory and time per operation than a hardware int |
+| NumPy / Java / C integer | **wraps** silently (a scalar add may warn) | choosing a wider type *before* the values get big |
+| `float` (IEEE-754 double) | **saturates** to `inf` | the quiet rounding of nearly every decimal below that |
 
 !!! warning "Common mistakes"
     - **Comparing computed floats with `==`** — `0.1 + 0.2 == 0.3` is `False`.

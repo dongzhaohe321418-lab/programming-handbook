@@ -19,10 +19,11 @@ runs your code on exactly one thread and cannot afford to let you block it.
 | JavaScript | what it **does** | `.js` files, executed with the DOM in hand |
 
 Load a script with `<script src="app.js" defer></script>` in the `<head>`.
-`defer` tells the browser "download this now, run it after the HTML is parsed",
-which is what you want: a script that runs before the document exists finds an
-empty tree and `null` everywhere. (The old advice — put `<script>` at the
-bottom of `<body>` — solves the same problem less tidily.)
+
+`defer` tells the browser "download this now, run it after the HTML is
+parsed", which is what you want: **a script that runs before the document
+exists finds an empty tree and `null` everywhere.** (The old advice — put
+`<script>` at the bottom of `<body>` — solves the same problem less tidily.)
 
 ## JavaScript for a Python programmer
 
@@ -92,8 +93,8 @@ for (const [k, v] of Object.entries(tea)) console.log(k, "=", v);
 ```
 
 `.map`, `.filter`, and `.reduce` are the same higher-order functions
-[Chapter 39](../ch39-streams/02-map-filter-reduce.md) built in Python and Java —
-JavaScript puts them directly on arrays, and they are used constantly.
+[Chapter 39](../ch39-streams/02-map-filter-reduce.md) built in Python and
+Java. JavaScript puts them directly on arrays, and they are used constantly.
 
 !!! warning "Two JavaScript traps with no Python equivalent"
 
@@ -114,6 +115,10 @@ JavaScript puts them directly on arrays, and they are used constantly.
 Your script receives the tree from [42.1](01-html-css.md) as a live object
 called `document`. Everything below is a method on it, and the selectors are
 the CSS selectors you already know.
+
+The listing covers five jobs in order: **finding** elements, **reading and
+writing** their text, changing their **classes and attributes**, **creating and
+inserting** new ones, and **reading form values**.
 
 ```javascript
 // --- finding elements (CSS selectors, the same ones you wrote in 42.1)
@@ -164,10 +169,14 @@ console.log(email, agreed);
     ```
 
     That is **cross-site scripting**, and it is the most common serious web
-    vulnerability there is. The rule is small: `textContent` for text,
-    `createElement` plus `append` for structure, and `innerHTML` only for
-    strings you built yourself. If you truly must render user HTML, run it
-    through a maintained sanitiser — never a regex, for the reasons
+    vulnerability there is. The rule is small:
+
+    - **`textContent`** for text;
+    - **`createElement` plus `append`** for structure;
+    - **`innerHTML`** only for strings you built yourself.
+
+    If you truly must render user HTML, run it through a maintained sanitiser —
+    never a regex, for the reasons
     [41.2](../ch41-regex/02-groups-parsing.md) gave. And note the payload above
     reads `document.cookie`: a session cookie marked `HttpOnly`
     ([42.2](02-http-server.md)) would have been invisible to it. Defences
@@ -199,7 +208,9 @@ form.addEventListener("submit", (event) => {
 link.addEventListener("click", (e) => e.preventDefault());  // do not follow the href
 ```
 
-**Bubbling** is the rule that decides who hears an event: it fires on the
+### Bubbling, and event delegation
+
+**Bubbling** is the rule that decides who hears an event. It fires on the
 deepest element under the pointer, then on its parent, then *its* parent, all
 the way to `document`. That is what makes this work:
 
@@ -214,15 +225,22 @@ document.querySelector("ul.notes").addEventListener("click", (event) => {
 
 Instead of attaching a handler to every `<li>` — and remembering to attach one
 to each new `<li>` you create — you attach a single handler to the parent and
-use `event.target` to find out what was actually clicked. `event.stopPropagation()`
-halts the climb; use it sparingly, because a handler that swallows events
-breaks other people's delegation.
+use `event.target` to find out what was actually clicked.
+
+`event.stopPropagation()` halts the climb. Use it sparingly, because a handler
+that swallows events breaks other people's delegation.
 
 ## A complete page: HTML, CSS, and JavaScript together
 
-Save this as `todo.html` and open it in a browser. It is one file so you can
-run it with no server; in a real project the CSS and JS would be separate
-files, exactly as in [42.1](01-html-css.md).
+!!! tip "Save this file and open it in a browser"
+
+    Save the whole block below as **`todo.html`** and **double-click it**. It
+    is deliberately one file, so it needs no server and no build step — type
+    something into the box and watch the list respond.
+
+    In a real project the CSS and the JavaScript would be separate files,
+    exactly as in [42.1](01-html-css.md). Reading the code is not the same as
+    clicking the buttons.
 
 ```html
 <!DOCTYPE html>
@@ -320,22 +338,29 @@ files, exactly as in [42.1](01-html-css.md).
 </html>
 ```
 
-The shape of that script is worth more than its features. **State lives in one
-place** (`items`), **`render()` turns state into DOM**, and **handlers change
-state and call `render()`** — they never poke at the DOM directly. That
-one-way flow is the idea every framework on the last page of this section
-automates, and it is why the code stays comprehensible as it grows. The
-alternative — each handler surgically editing whichever elements it thinks are
-affected — works for ten minutes and then produces the bug where the counter
-disagrees with the list.
+The shape of that script is worth more than its features. It is three rules:
+
+1. **State lives in one place** — the `items` array, and nowhere else.
+2. **`render()` turns state into DOM**, rebuilding the list from scratch.
+3. **Handlers change state and call `render()`** — they never poke at the DOM
+   directly.
+
+That one-way flow is the idea every framework on the last page of this section
+automates, and it is why the code stays comprehensible as it grows.
+
+The alternative — each handler surgically editing whichever elements it thinks
+are affected — works for ten minutes and then produces the bug where the
+counter disagrees with the list.
 
 ## The single thread, and why blocking is fatal
 
 A browser tab runs your JavaScript on **one thread**, and that same thread also
 does layout, painting, and event dispatch. So while your function is running,
 nothing else in the tab can happen: no click is handled, no animation advances,
-no scroll moves, nothing repaints. Run this and the page is a brick for three
-seconds — the browser will eventually offer to kill it:
+no scroll moves, nothing repaints.
+
+Run this and the page is a brick for three seconds — the browser will
+eventually offer to kill it:
 
 ```javascript
 // DO NOT do this. The tab is frozen for the whole loop.
@@ -351,10 +376,11 @@ for your purposes, one runnable thread of JavaScript. The operating system will
 happily switch to other processes; it cannot make your single thread be in two
 places at once.
 
-The escape is not threads — it is **not blocking in the first place**. Anything
-slow (a network request, a timer, reading a file the user picked) is handed to
-the browser, which does it elsewhere and puts a *callback* in a queue when it
-is finished. Your function returns immediately, the thread goes back to
+The escape is not threads — it is **not blocking in the first place**.
+
+Anything slow (a network request, a timer, reading a file the user picked) is
+handed to the browser, which does it elsewhere and puts a *callback* in a queue
+when it is finished. Your function returns immediately, the thread goes back to
 handling clicks, and your callback runs later.
 
 ```mermaid
@@ -381,7 +407,8 @@ will ever meet:
 
 ## Callbacks, promises, `async`/`await`
 
-The same operation, written three ways, twenty years apart.
+The same operation, written three ways, twenty years apart — and each
+generation exists to fix the previous one's error handling.
 
 ```javascript
 // 1. Callbacks (1995–2014). Nesting is what "callback hell" means.
@@ -415,7 +442,7 @@ async function show(id) {
 }
 ```
 
-`await` does **not** block the thread. It returns from the function
+**`await` does not block the thread.** It returns from the function
 immediately, registering the rest of the body as a microtask to run when the
 promise settles — which is why the page stays responsive while a request is in
 flight, and why `await` is only legal inside an `async` function.
@@ -476,10 +503,12 @@ document.querySelector("#add-form").addEventListener("submit", async (event) => 
 });
 ```
 
-The comment about `response.ok` is the mistake everyone makes once: `fetch`
-rejects only when the request could not be made at all — no network, DNS
-failure, blocked by CORS. A `404` arrived successfully; it is your job to look
-at `response.status`, the codes tabulated in [42.2](02-http-server.md).
+The comment about `response.ok` is the mistake everyone makes once. **`fetch`
+rejects only when the request could not be made at all** — no network, DNS
+failure, blocked by CORS.
+
+A `404` arrived successfully. It is your job to look at `response.status`, the
+codes tabulated in [42.2](02-http-server.md).
 
 ## Modules, and where a build step comes from
 
@@ -500,18 +529,25 @@ import NoteList, { summarise, MAX } from "./notes.js";
 ```
 
 `type="module"` is required, and modules are deferred and run in strict mode
-automatically. This works with no tools at all — which is where to start.
+automatically. **This works with no tools at all — which is where to start.**
 
-A **build step** appears when the browser cannot run your source directly.
-The usual reasons: you import from npm packages (bare specifiers like
-`import React from "react"` are not URLs); you write TypeScript or JSX, which
-no browser understands; you want one small file instead of two hundred small
-requests; you want minification, cache-busting file names, and old-browser
-transpilation. A **bundler** — Vite is the common modern choice, with webpack,
-Rollup, and esbuild also in wide use — reads your entry file, follows every
-import, and emits a handful of optimised files. This is the same idea as the
-build tools in any compiled language: a step that turns source into an
-artefact.
+### Why a build step appears
+
+A build step appears when the browser cannot run your source directly. Four
+usual reasons:
+
+1. **You import from npm packages.** A bare specifier like
+   `import React from "react"` is not a URL, and the browser has nowhere to
+   fetch it from.
+2. **You write TypeScript or JSX**, which no browser understands.
+3. **You want one small file** instead of two hundred small requests.
+4. **You want minification, cache-busting file names, and transpilation** for
+   older browsers.
+
+A **bundler** — Vite is the common modern choice, with webpack, Rollup, and
+esbuild also in wide use — reads your entry file, follows every import, and
+emits a handful of optimised files. This is the same idea as the build tools in
+any compiled language: a step that turns source into an artefact.
 
 ## Frameworks, honestly
 
@@ -535,21 +571,28 @@ artefact.
   the ecosystem is the smallest of the three.
 
 All three solve the same problem the todo page solved by hand: keeping the DOM
-in agreement with state without hand-written update code. And that is the
-argument for learning the hand-written version first. If you understand
-`querySelector`, `addEventListener`, one-way data flow, and the event loop, a
-framework is a labour-saving device you can evaluate. If you do not, it is a
-box of incantations, and you will be stuck the first time it behaves unusually.
+in agreement with state without hand-written update code.
+
+And that is the argument for learning the hand-written version first. If you
+understand `querySelector`, `addEventListener`, one-way data flow, and the
+event loop, a framework is a labour-saving device you can evaluate. If you do
+not, it is a box of incantations, and you will be stuck the first time it
+behaves unusually.
+
 **Write one real page in vanilla JavaScript before you pick a framework.**
 
 ## Runnable: model the event loop in Python
 
-Now the promised runnable part. The event loop is not exotic machinery — it is a
-priority queue of timers, a plain queue of microtasks, and about fifteen lines
-of scheduling policy. Written out in Python, it *predicts the exact output* of
-the JavaScript ordering puzzle that every interview asks about.
+Now the promised runnable part. The event loop is not exotic machinery — it is
+three pieces:
 
-The puzzle is this, and the answer is not the order the lines are written:
+- a **priority queue of timers**, ordered by when they are due;
+- a **plain queue of microtasks**;
+- about fifteen lines of **scheduling policy** tying them together.
+
+Written out in Python, it *predicts the exact output* of the JavaScript
+ordering puzzle that every interview asks about. The puzzle is this, and the
+answer is not the order the lines are written:
 
 ```javascript
 console.log("script start");
@@ -649,15 +692,19 @@ log order: ['script start', 'script end', 'promise1', 'promise2', 'setTimeout']
 ```
 
 That is the real answer, and now it is not a fact to memorise but a consequence
-of three lines of code. **`script end` before `promise1`**, because synchronous
-code runs to completion first. **`promise1` and `promise2` before `setTimeout`**,
-because `drain_microtasks` empties the whole microtask queue — including the
-`.then` chained *during* the drain — before the loop ever looks at a timer.
-`setTimeout(..., 0)` does not mean "now"; it means "as a task, and no sooner
-than 0 ms from now", which puts it behind every pending microtask.
+of three lines of code:
 
-And here is the other half of the story: what a slow handler does to that
-schedule.
+- **`script end` comes before `promise1`**, because synchronous code runs to
+  completion first.
+- **`promise1` and `promise2` come before `setTimeout`**, because
+  `drain_microtasks` empties the whole microtask queue — including the `.then`
+  chained *during* the drain — before the loop ever looks at a timer.
+- **`setTimeout(..., 0)` does not mean "now".** It means "as a task, and no
+  sooner than 0 ms from now", which puts it behind every pending microtask.
+
+### What a slow handler does to that schedule
+
+The other half of the story, measured:
 
 ```python
 # continues
@@ -708,13 +755,17 @@ quick.run(script3)
 
 The first run is the frozen page, measured: an animation frame due at 10 ms did
 not run until 500 ms, because the loop could not take the next task while the
-previous one was still on the stack. At 60 frames per second that is
-**29 dropped frames** from one handler. The second run does the same total
-amount of work and the frame lands on time, because the expensive part was
-handed off (in a browser: to a `Worker`, or to the network, or split across
-several tasks) and its completion arrived as an ordinary task. Notice that the
-final result still appears at 500 ms — moving work off the thread does not make
-it faster, it makes the *interface* stay alive while it happens.
+previous one was still on the stack. At 60 frames per second that is **29
+dropped frames** from one handler.
+
+The second run does the same total amount of work and the frame lands on time,
+because the expensive part was handed off — in a browser, to a `Worker`, or to
+the network, or split across several tasks — and its completion arrived as an
+ordinary task.
+
+Notice that the final result still appears at 500 ms. **Moving work off the
+thread does not make it faster; it makes the interface stay alive while it
+happens.**
 
 !!! warning "Common mistakes"
 

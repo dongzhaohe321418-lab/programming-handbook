@@ -1,8 +1,52 @@
 # Exercises
 
-Work the predictions on paper *before* pressing Run — the entire value of a
-comparison-count exercise evaporates if the computer answers first. The
-binary search exercise has a special rule: you get one attempt.
+## The chapter in brief
+
+- Counting **comparisons** is a steadier instrument than timing runs, and
+  every algorithm in the chapter carries a counter
+  ([22.1](01-elementary-sorts.md)).
+- **Selection sort is oblivious**: exactly $n(n-1)/2$ comparisons on every
+  input, sorted or shuffled or reversed.
+- **Insertion sort is adaptive**: $O(n)$ on sorted input, about $n^2/4$ on
+  random input, $n(n-1)/2$ only when reversed.
+- The two sorts' **loop invariants** differ: selection sort's prefix is
+  final, insertion sort's prefix is merely sorted so far.
+- A sort is **stable** if equal keys keep their input order — insertion sort
+  and merge sort are, selection sort and quicksort are not.
+- **Merging** two sorted lists is a linear two-finger walk costing at most
+  $n - 1$ comparisons ([22.2](02-merge-quick.md)).
+- **Merge sort** is $O(n)$ work per level times $\log n$ levels — so
+  $O(n \log n)$ on *every* input, at the cost of an $O(n)$ buffer.
+- **Quicksort** partitions around a pivot that lands in its final position,
+  sorts in place, and is usually faster — but degrades to $O(n^2)$ on
+  extreme pivots, which is what sorted input hands a first-element pivot.
+- Randomising the pivot moves the danger from the data to the dice.
+- **Binary search** halves the live region each probe: $O(\log n)$, about 20
+  probes for a million elements ([22.3](03-searching.md)).
+- Its classic bugs are a bug museum: bounds that keep `mid` alive, the wrong
+  loop condition, and Java's `(lo + hi) / 2` overflow.
+- Sorting first pays for itself only after enough searches — here, from
+  about the mid-thirties on.
+
+### Key terms
+
+| Term | What it means |
+| --- | --- |
+| comparison count | the currency every sort in this chapter spends |
+| [loop invariant](../concept-index.md#i) | a promise that holds at the top of every loop pass |
+| [stability](../concept-index.md#s) | equal keys come out in their input order |
+| adaptive sort | one that does less work when the input is nearly sorted |
+| [merge sort](../concept-index.md#m) | split to singletons, then merge back up — always $O(n \log n)$ |
+| [quicksort](../concept-index.md#q) | partition around a pivot, then recurse on both sides, in place |
+| [pivot](../concept-index.md#p) | the element quicksort partitions around; extremes are the bad case |
+| Timsort | Python's real sort: merge sort plus insertion sort on runs, stable |
+| [binary search](../concept-index.md#b) | halve a *sorted* region until the target is found or the region empties |
+| `bisect` | the standard library's binary search — reports where a value *belongs* |
+
+Now the practice. Work the predictions on paper *before* pressing Run — the
+entire value of a comparison-count exercise evaporates if the computer
+answers first. The binary search exercise has a special rule: you get one
+attempt.
 
 ### Exercise 22.1 — Predict the passes ●
 

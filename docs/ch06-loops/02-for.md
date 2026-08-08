@@ -2,10 +2,12 @@
 
 Most loops in real programs are not "keep going while…" but "do this once
 for *each* of these" — each number from 1 to 100, each character in a string,
-each score in a list. Python's `for` loop expresses that directly, and it
-removes the three chores that make `while` loops fragile: you no longer
-initialize, test, or update the loop variable yourself, so the three classic
-ways to get them wrong disappear with them.
+each score in a list.
+
+Python's `for` loop expresses that directly, and it removes the three chores
+that make `while` loops fragile. You no longer initialize, test, or update the
+loop variable yourself — so the three classic ways of getting them wrong
+disappear along with them.
 
 ## for and range: counting without the bookkeeping
 
@@ -216,14 +218,20 @@ whenever you catch yourself writing `range(len(...))` just to look up
 
 The rule of thumb is one sentence: **if you can say how many passes there
 will be before the loop starts, use `for`; if you can only recognise the
-stopping moment when it arrives, use `while`.** Counting, tables, and
-"for each element" jobs are `for` loops; sentinels, retry-until-valid, and
-"until it converges" jobs are `while` loops.
+stopping moment when it arrives, use `while`.**
 
-One `while` shape deserves a name: the **loop-and-a-half**, where you must
-*fetch* a value before you can *test* it, and process it only after the test
-passes. Forcing that into a plain `while` header duplicates the fetch line;
-letting the exit test sit in the middle of the body is cleaner:
+| Reach for a `for` loop when… | Reach for a `while` loop when… |
+| --- | --- |
+| you are counting a known number of passes | you are reading until a sentinel appears |
+| you are building a table, grid, or pattern | you are retrying until the input is valid |
+| you are visiting "each element" of a sequence | you are repeating until a result converges |
+
+### The loop-and-a-half
+
+One `while` shape deserves a name of its own: the **loop-and-a-half**, where
+you must *fetch* a value before you can *test* it, and process it only after
+the test passes. Forcing that into a plain `while` header duplicates the fetch
+line; letting the exit test sit in the middle of the body is cleaner:
 
 ```python
 readings = [12, 15, 9, -999, 20]   # -999 marks the end of input

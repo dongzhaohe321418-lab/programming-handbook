@@ -1,8 +1,9 @@
 # 30.3 Multi-agent systems
 
 Everything so far has been one model in one loop. The obvious next move is to
-run several — a researcher, a writer, a critic — and let them collaborate. That
-move is real and sometimes decisive, and it is also the single most
+run several — a researcher, a writer, a critic — and let them collaborate.
+
+That move is real and sometimes decisive. It is also the single most
 over-recommended idea in agent engineering, because the moment you have more
 than one agent you have a *distributed system*, with all the routing,
 termination and shared-state bugs that implies. This page builds a working
@@ -10,7 +11,9 @@ three-agent team by hand, and is equally careful about when not to.
 
 ## Why more than one agent
 
-Four honest reasons, each of which you can test:
+### Four honest reasons for
+
+Each of these you can actually test:
 
 - **Specialization.** A prompt that is excellent at "find and quote sources"
   is a different prompt from one that is excellent at "write 60 clear words".
@@ -27,7 +30,7 @@ Four honest reasons, each of which you can test:
   cost in it. This is why review works for humans, and it is the multi-agent
   version of the verifier lesson from 30.2.
 
-And the counterweight, which is just as real:
+### Three counterweights, just as real
 
 - **Cost multiplies.** Three agents exchanging six messages is six model calls
   plus whatever each of them does internally. A team is rarely 3× the cost of
@@ -124,12 +127,16 @@ passes through one place, and it is the pattern almost every framework in
 ## Message passing: envelopes, mailboxes, a router
 
 Before agents can collaborate, you need a way for them to talk. The whole
-mechanism is three small pieces: a `Message` type, a mailbox per agent, and a
-router that moves messages between them. Ours is deliberately
-**concurrency-free** — no threads, no async, no clock. A single driver loop
-takes one message at a time, in a fixed order, so the transcript is identical
-on every run. That is exactly how you want to debug a multi-agent system, and
-it is how you should build your first one.
+mechanism is three small pieces:
+
+1. **A `Message` type** — the envelope: who, to whom, what kind, what content.
+2. **A mailbox per agent** — a queue the router appends to.
+3. **A router** — moves messages between mailboxes and keeps the full log.
+
+Ours is deliberately **concurrency-free**: no threads, no async, no clock. A
+single driver loop takes one message at a time, in a fixed order, so the
+transcript is identical on every run. That is exactly how you want to debug a
+multi-agent system, and it is how you should build your first one.
 
 ```python
 """Messages, mailboxes and a router. Deterministic and thread-free."""
@@ -199,15 +206,21 @@ Three design choices worth copying:
 
 ## The centrepiece: an orchestrator–worker team
 
-Now the real thing. Three specialized `FakeLLM` workers — a researcher with a
-corpus, a writer with a composition rule, and a critic with a *real
-deterministic checklist* — coordinated by an orchestrator that owns the goal,
-the routing and the budget. As always, each `handle` method is a rule-based
-stand-in for one model call; swapping any of them for a real API call is the
-one-line change from [30.1](01-agent-loop-react.md).
+Now the real thing — four agents:
 
-Watch the shape: workers never talk to each other. Every message goes through
-the orchestrator, which is what makes the log readable and the system
+| Agent | What it has that the others do not |
+| --- | --- |
+| **Researcher** | the corpus, and an honest "error" reply when it has nothing |
+| **Writer** | a composition rule, and the ability to react to a critique |
+| **Critic** | a *real deterministic checklist*, so its approval means something |
+| **Orchestrator** | the goal, the routing decisions and the budget |
+
+As always, each `handle` method is a rule-based stand-in for one model call;
+swapping any of them for a real API call is the one-line change from
+[30.1](01-agent-loop-react.md).
+
+Watch the shape: **workers never talk to each other.** Every message goes
+through the orchestrator, which is what makes the log readable and the system
 debuggable.
 
 ```python
@@ -350,17 +363,21 @@ MESSAGE LOG
   t10       critic -> orchestrator done     score=4/4; missing=[]
 ```
 
-Read `t6`: the critic scored the first draft **3/4** and named the missing
-requirement. `t7` is the orchestrator turning that critique into a fresh
-writing request, and by `t10` the draft scores 4/4 and the critic emits `done`,
-which is what actually stops the loop. The final artifact is a short briefing
-carrying all three facts, produced in one revision.
+Four lines of that log carry the whole collaboration:
 
-Notice what the critic is *not*: it is not a model asked "is this good?" It
-runs `CHECKS`, a list of deterministic predicates. That is the difference
-between a review step that measurably improves the artifact and one that
-politely says "looks great!" — the same point 30.2 made about reflection, now
-enforced by a separate agent.
+- **`t6`** — the critic scored the first draft **3/4** and *named* the missing
+  requirement.
+- **`t7`** — the orchestrator turns that critique into a fresh writing request.
+- **`t10`** — the draft scores 4/4 and the critic emits `done`, which is what
+  actually stops the loop.
+- **The final artifact** is a short briefing carrying all three facts, produced
+  in one revision.
+
+Notice what the critic is *not*: it is not a model asked "is this good?" It runs
+`CHECKS`, a list of deterministic predicates. That is the difference between a
+review step that measurably improves the artifact and one that politely says
+"looks great!" — the same point 30.2 made about reflection, now enforced by a
+separate agent.
 
 ## Shared state versus message passing
 
@@ -388,10 +405,12 @@ print("researcher list:", researcher_view)
 ```
 
 The writer sees the researcher's private working note without asking, because
-`researcher_view` and `writer_view` are the same list object. In a one-file
-demo that is a curiosity. In a system where the "agents" are prompts built from
-that list, it means one agent's scratch note silently becomes another agent's
-input — and there is nothing in the log to tell you it happened.
+`researcher_view` and `writer_view` are the same list object.
+
+In a one-file demo that is a curiosity. In a system where the "agents" are
+prompts built from that list, **one agent's scratch note silently becomes
+another agent's input — and there is nothing in the log to tell you it
+happened.**
 
 | | Message passing | Shared state (blackboard) |
 | --- | --- | --- |
@@ -401,10 +420,14 @@ input — and there is nothing in the log to tell you it happened.
 | Cost | the same data may be re-sent | written once, read many |
 | Good for | small teams, auditability, most first systems | many agents over one large artifact |
 
-If you do use shared state, take three precautions: give each entry a
-**writer's name and a turn number**, hand out **copies** on read
-(`list(...)`, `dict(...)`, or a frozen dataclass), and make the shared object
-**append-only** where you can, so nothing is ever silently overwritten.
+If you do use shared state, take three precautions:
+
+1. **Stamp every entry** with the writer's name and a turn number, so causality
+   survives.
+2. **Hand out copies on read** — `list(...)`, `dict(...)`, or a frozen
+   dataclass.
+3. **Make the shared object append-only** where you can, so nothing is ever
+   silently overwritten.
 
 ## Termination and deadlock
 
@@ -472,12 +495,13 @@ print("\nwith fingerprint detection:")
 run_pair(pair, opener, detect=True)
 ```
 
-Without the detector the pair burns all six turns and produces nothing; with
-it, the loop is caught on the third message — two model calls instead of six,
-and a log line that tells you exactly which pair is stuck. Extend the same idea
-to teams by fingerprinting `(sender, recipient, kind, body)` for every message
-and stopping when the *rate of new fingerprints* falls to zero: messages are
-still moving, but no new information is.
+Without the detector the pair burns all six turns and produces nothing. With it,
+the loop is caught on the third message — two model calls instead of six, and a
+log line that tells you exactly which pair is stuck.
+
+Extend the same idea to whole teams: fingerprint `(sender, recipient, kind,
+body)` for every message and stop when the *rate of new fingerprints* falls to
+zero. Messages are still moving; no new information is.
 
 Deadlock looks different — nothing at all happens:
 
@@ -516,9 +540,11 @@ run_pair2({"alice": WaitingBot("alice"), "bob": WaitingBot("bob")},
 
 One message is delivered, nobody answers, and at turn 2 every mailbox is empty.
 Without the `for … else` branch this loop would spin silently to its budget
-looking busy. Deadlock detection in a message system is genuinely this cheap:
-*no messages in flight and no agent has declared completion* is a bug, and you
-can check it in one line.
+looking busy.
+
+Deadlock detection in a message system is genuinely this cheap: **no messages in
+flight and no agent has declared completion is a bug**, and you can check it in
+one line.
 
 ## Should this be one agent or several?
 

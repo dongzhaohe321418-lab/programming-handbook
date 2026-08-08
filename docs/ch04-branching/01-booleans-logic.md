@@ -56,11 +56,16 @@ print(x >= 8)    # False
 
 ### Comparing strings
 
-The same six operators work on strings. Equality is what you expect —
-`"cat" == "cat"` is `True` — and the ordering operators compare
-**lexicographically**: character by character, using each character's
-underlying code number (in which every uppercase letter comes before every
-lowercase letter, and digits come before both kinds of letters).
+The same six operators work on strings. Equality is what you expect:
+`"cat" == "cat"` is `True`.
+
+The ordering operators compare **lexicographically** — character by
+character, using each character's underlying code number. Those code numbers
+have two consequences that surprise everyone at first:
+
+- **Every uppercase letter sorts before every lowercase letter.** `"Z"` comes
+  before `"a"`, so `"Zoo" < "apple"`.
+- **Digits sort before letters of either case.** `"1"` comes before `"A"`.
 
 ```python
 print("apple" < "banana")   # True  — 'a' comes before 'b'
@@ -116,15 +121,27 @@ print(age >= 65 or has_ticket)    # True  — the second part is True
 print(not has_ticket)             # False — flips True
 ```
 
-When you mix the three, `not` binds tightest, then `and`, then `or` — just
-like `*` binds tighter than `+` in arithmetic. When in doubt, add
-parentheses; they cost nothing and make the meaning obvious.
+### Precedence: not, then and, then or
+
+When you mix the three, they group in a fixed order — just as `*` binds
+tighter than `+` in arithmetic:
+
+| Binds    | Operator | What that means in practice                    |
+| -------- | -------- | ---------------------------------------------- |
+| tightest | `not`    | it grabs only the single thing on its right    |
+| middle   | `and`    | it groups before any surrounding `or`          |
+| loosest  | `or`     | it splits the expression at the top level      |
+
+When in doubt, add parentheses; they cost nothing and make the meaning
+obvious.
 
 ```python
 print(not True and False)       # False — means (not True) and False
 print(not (True and False))     # True  — parentheses change the grouping
 print(True or False and False)  # True  — and binds tighter: True or (False)
 ```
+
+### The `x == 5 or 6` trap
 
 One trap deserves its own demo. To test "x is 5 or 6", you *must* repeat the
 comparison — `or` connects two complete Boolean questions, not two
@@ -179,8 +196,10 @@ practical payoff: `not (age >= 18 and has_ticket)` can be rewritten as
 
 ## Truthiness: when non-Booleans act like Booleans
 
-Python lets *any* value stand in where a Boolean is expected. The rule:
-zero and "empty" things count as `False`; everything else counts as `True`.
+Python lets *any* value stand in where a Boolean is expected. The whole rule
+fits in one line: **zero and "empty" things count as `False`; everything else
+counts as `True`.**
+
 The `bool()` function shows you how any value converts:
 
 ```python

@@ -1,5 +1,47 @@
 # Exercises
 
+## The chapter in brief
+
+- An operating system stores files in a **tree** of directories, and a
+  **path** is simply the walk through that tree ([11.1](01-paths.md)).
+- An absolute path starts at the root and means the same thing anywhere; a
+  relative path is resolved from the **current working directory**, which is
+  why the same program can work from one folder and fail from another.
+- Always write forward slashes in paths: inside a Python string a backslash
+  begins an escape sequence such as `\n`.
+- `pathlib.Path` joins pieces with the `/` operator and answers questions
+  about itself — `name`, `suffix`, `stem`, `parent`, `exists()`.
+- A `Path` is only an address; nothing exists on disk until something is
+  actually written there.
+- `open(path, mode)` hands back a file object, and the **mode** decides the
+  fate of an existing file: `"r"` reads it, `"w"` erases it, `"a"` appends to
+  it ([11.2](02-read-write.md)).
+- The `with` statement closes the file however the block ends — Python's
+  equivalent of Java's try-with-resources.
+- Passing `encoding="utf-8"` on every open makes the same characters come
+  back on every machine.
+- `f.read()` returns the whole file as one string, while iterating the file
+  yields one line at a time — each still carrying its trailing `"\n"`.
+- The CSV template is **strip, split, convert, compute**, because everything
+  read from a text file is a string until you convert it.
+- Opening a missing file for reading raises `FileNotFoundError`, and
+  `try`/`except` turns that into a sensible default instead of a crash.
+
+### Key terms
+
+| Term | Reminder |
+| --- | --- |
+| [path (absolute and relative)](../concept-index.md) | the recorded walk to a file, from the root or from where you stand |
+| [working directory](../concept-index.md) | the "here" that every relative path is measured from |
+| `pathlib.Path` | an object that builds and inspects paths without string surgery |
+| [file mode (`"r"`, `"w"`, `"a"`)](../concept-index.md) | read, erase-then-write, or append |
+| [`with` statement](../concept-index.md) | a block whose file is closed no matter how the block ends |
+| [Unicode](../concept-index.md) | why `encoding="utf-8"` belongs on every `open` |
+| CSV | comma-separated text, one record per line — the format spreadsheets export |
+| `FileNotFoundError` | the exception raised by reading a file that is not there |
+
+Now to the keyboard.
+
 Every exercise below runs in the browser sandbox, so follow the chapter's
 convention: **create the file first, then process it** — each solution block
 is self-contained and does exactly that. Try each one yourself before opening

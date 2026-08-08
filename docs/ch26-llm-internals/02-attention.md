@@ -70,12 +70,16 @@ for w1, w2 in pairs:
     print(f"cos({w1:>6}, {w2:<6}) = {cosine(a, b):+.3f}")
 ```
 
-`cat` and `kitten` score $+0.894$ — they share the *animal* direction.
-`cat` and `chased` score exactly $0.000$: their vectors have no dimension in
-common, so they are unrelated. `the` and `a` score $+1.000$: as far as this
-tiny model is concerned they are interchangeable. That is the whole point of
-embeddings — meaning becomes geometry, and "related" becomes "points the
-same way".
+Read the three scores:
+
+- **`cat` and `kitten` score $+0.894$** — they share the *animal* direction.
+- **`cat` and `chased` score exactly $0.000$** — their vectors have no
+  dimension in common, so they are unrelated.
+- **`the` and `a` score $+1.000$** — as far as this tiny model is concerned
+  they are interchangeable.
+
+That is the whole point of embeddings: **meaning becomes geometry, and
+"related" becomes "points the same way".**
 
 ## The dot product is a similarity meter
 
@@ -110,10 +114,17 @@ $$
 \operatorname{softmax}\!\left(\frac{QK^{\top}}{\sqrt{d_k}}\right) V
 $$
 
-The idea in one sentence: **every token builds a query saying what it is
-looking for, every token builds a key advertising what it offers, we match
-queries against keys with dot products, turn the matches into weights, and
-each token's output becomes a weighted blend of the other tokens' values.**
+The idea in one sentence: **every token asks what it is looking for, every
+token advertises what it offers, and each token's output becomes a weighted
+blend of what the others offer.** Spelled out, that is five steps, and the
+five subsections below take them one at a time:
+
+1. **Project** each token into a query $Q$, a key $K$, and a value $V$.
+2. **Score** every query against every key with dot products: $QK^{\top}$.
+3. **Scale** the scores by $\sqrt{d_k}$ so the softmax does not saturate.
+4. **Normalise** each row with softmax, turning scores into weights that
+   sum to 1.
+5. **Blend** the value vectors using those weights.
 
 ### Step 1 — Q, K, V projections
 
@@ -156,11 +167,13 @@ for i, w in enumerate(vocab):
     print(f"{w:>6}" + "".join(f"{s:>9.3f}" for s in scores[i]))
 ```
 
-Read row `cat`: those five numbers are how relevant `cat` finds each token
+Read row `cat`: those five numbers are how relevant `cat` finds each token,
 including itself. They are meaningless right now (random weights), but the
-*structure* is the real thing. Notice also the cost: $n$ tokens produce
-$n^2$ scores. Double the context, quadruple this table — the reason long
-contexts are expensive.
+*structure* is the real thing.
+
+Notice also the cost. **$n$ tokens produce $n^2$ scores** — double the
+context and you quadruple this table, which is the reason long contexts are
+expensive.
 
 ### Step 3 — why divide by $\sqrt{d_k}$
 
@@ -240,10 +253,14 @@ print("hand-computed      :", np.round(manual, 3))
 print("identical:", np.allclose(out[2], manual))
 ```
 
-That is attention, complete. Input: five vectors that knew nothing about
-each other. Output: five vectors, each a mixture of the whole sequence,
-mixed according to learned relevance. Stack this operation dozens of times
-(Section 26.3) and you have a language model.
+That is attention, complete.
+
+- **Input:** five vectors that knew nothing about each other.
+- **Output:** five vectors, each a mixture of the whole sequence, blended
+  according to learned relevance.
+
+Stack this operation dozens of times (Section 26.3) and you have a language
+model.
 
 ## Seeing the pattern
 
@@ -301,10 +318,14 @@ print("first token can only see itself:", np.round(A_causal[0], 3))
 
 The result is lower-triangular: token 0 attends only to itself (weight
 1.000), token 1 to tokens 0–1, and so on. This one line of masking is what
-makes the model *causal* — and it is also what makes the **KV cache** of
-[Section 26.3](03-decoder-stack.md) possible: because token 2 never looks at
-token 3, token 2's key and value never change once computed, so they can be
-stored and reused instead of recalculated.
+makes the model *causal*.
+
+!!! note "The mask is what makes caching possible"
+    Because token 2 never looks at token 3, **token 2's key and value never
+    change once computed** — so they can be stored and reused instead of
+    recalculated. That is the entire basis of the **KV cache**, sized in
+    [Section 26.3](03-decoder-stack.md) and built in
+    [Section 27.1](../ch27-inference/01-kv-cache.md).
 
 ## Multi-head attention: several relationships at once
 
@@ -353,15 +374,20 @@ multi_out = concat @ W_o
 print("\nconcatenated heads:", concat.shape, "-> after W_o:", multi_out.shape)
 ```
 
-Same input, same layer, two completely different attention patterns. Head A
-spreads `kitten`'s attention over the two *animal* words — itself (0.38) and
-`cat` (0.26) — while the three non-animal tokens split the rest evenly at
-0.12 each. Head B ignores meaning entirely and dumps 0.47 on `chased`.
-Neither head was told to do that by a human in a real model —
-training discovers such roles, and interpretability researchers have found
-and named recurring ones ("previous-token heads", "induction heads"). The
-concatenate-then-project step is what lets the layer use both answers at
-once, and the output shape is unchanged, which is why these blocks stack.
+Same input, same layer, two completely different attention patterns:
+
+- **Head A spreads `kitten`'s attention over the two *animal* words** —
+  itself (0.38) and `cat` (0.26) — while the three non-animal tokens split
+  the rest evenly at 0.12 each.
+- **Head B ignores meaning entirely** and dumps 0.47 on `chased`.
+
+In a real model no human assigns those roles. Training discovers them, and
+interpretability researchers have found and named recurring ones
+("previous-token heads", "induction heads").
+
+The concatenate-then-project step is what lets the layer use both answers at
+once. Note that the output shape is unchanged — which is exactly why these
+blocks stack.
 
 !!! warning "Common mistakes"
     - **Thinking attention "understands" words.** It computes dot products

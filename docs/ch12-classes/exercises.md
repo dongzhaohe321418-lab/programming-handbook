@@ -1,5 +1,51 @@
 # Exercises
 
+## The chapter in brief
+
+- A **class** is a blueprint and an **instance** is one object built from it —
+  `str` is a class, `"hello"` and `"goodbye"` are two instances
+  ([12.1](01-class-anatomy.md)).
+- `__init__` runs automatically whenever an object is constructed, and stores
+  that object's state through `self`.
+- `self` is nothing but the first parameter: `rex.bark()` *is*
+  `Dog.bark(rex)`, which is why omitting it gives "takes 0 positional
+  arguments but 1 was given".
+- Every instance carries its own attributes, so ageing one dog leaves every
+  other dog untouched.
+- `__repr__` **returns** the string Python uses wherever the object is
+  displayed — `print`, error messages, and each element of a printed list.
+- Attribute lookup checks the instance first and falls back to the class,
+  which is what makes a **class attribute** shared, and shadowable by an
+  instance attribute of the same name.
+- Java's field, constructor, `this`, and `static` field map one-for-one onto
+  Python's instance attribute, `__init__`, `self`, and class attribute.
+- Classes are grown **in stages**: the smallest useful version first, run it,
+  then add the payoff methods ([12.2](02-worked-examples.md)).
+- Methods should **return** their answers rather than print them, and every
+  method should apply the same policy to the awkward empty case.
+- **Composition** is one object holding others — a `DogHouse` HAS-A list of
+  `Dog`s — and whole objects, not bare strings, are what flow between them.
+- A first draft of a design comes from the problem statement: nouns become
+  classes, verbs become methods.
+- A rule enforced inside exactly one method is a rule that costs exactly one
+  edit when the requirements change.
+
+### Key terms
+
+| Term | Reminder |
+| --- | --- |
+| [class](../concept-index.md) | the blueprint: what data an object carries and what it can do |
+| [instance](../concept-index.md) | one object built from that blueprint |
+| [constructor](../concept-index.md) | Java's name for the job `__init__` does at construction time |
+| `self` | the object the method was called on, arriving as the first parameter |
+| attribute | a variable stored on the object itself, written `self.something` |
+| [method](../concept-index.md) | a function that lives in a class and works on one instance |
+| [`__repr__`](../concept-index.md) | the self-description Python prints for your object |
+| [class attribute vs instance attribute](../concept-index.md) | one shared copy versus one copy per object |
+| [composition](../concept-index.md) | an object holding other objects — the HAS-A relationship |
+
+Now build a few of your own.
+
 Before writing any class, run the designer's checklist from the
 [worked examples](02-worked-examples.md): find the nouns (classes and
 attributes), find the verbs (methods), and decide the awkward cases up

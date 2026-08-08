@@ -1,5 +1,54 @@
 # Exercises
 
+## The chapter in brief
+
+- An **ADT** is the contract — which operations exist and what each promises;
+  a **data structure** is one concrete way to honour it
+  ([18.1](01-adts-generics.md)).
+- The same List contract can be implemented by a contiguous array or by
+  linked nodes, and their cost tables are mirror images of each other.
+- **Generics** let one collection class serve every element type; Java's are
+  enforced by the compiler, Python's type hints only by tools you choose to
+  run.
+- A **node** is a value plus a reference to the next node, and plain
+  assignment is all the linking machinery Python needs
+  ([18.2](02-singly-linked.md)).
+- The fundamental traversal is "start at `head`, follow `next` until `None`" —
+  and everything a linked list cannot index is $O(n)$ because of it.
+- `prepend` is two assignments and $O(1)$; `append` without a `tail`
+  reference must walk the whole chain and is $O(n)$.
+- Deleting a node means standing at its *predecessor* and bridging over it
+  with the single assignment `prev.next = prev.next.next`.
+- The pointer-surgery rule: **never overwrite a reference while it is the last
+  road to a node you still need** — draw the picture, number the assignments.
+- A second reference, `prev`, buys backward walks, symmetric ends, and $O(1)$
+  removal of a node you already hold ([18.3](03-doubly-linked.md)).
+- Insertion between two nodes updates four references: the new node's two
+  first, then one on each neighbour.
+- A **sentinel** — one permanent dummy node linked in a circle — makes empty,
+  front, back, and middle all the same code path.
+- In production, reach for `collections.deque` (or Java's `ArrayDeque`)
+  instead of hand-rolling any of this.
+
+### Key terms
+
+| Term | Reminder |
+| --- | --- |
+| [abstract data type](../concept-index.md) | the operations and promises, with no mention of memory |
+| data structure | a concrete memory arrangement plus algorithms that honour an ADT |
+| [generics](../concept-index.md) | one implementation parameterised by its element type |
+| type hint | Python's `list[str]`-style annotation, checked by tools and not the interpreter |
+| [node](../concept-index.md) | one value plus the reference(s) that link it to its neighbours |
+| head | the reference to the first node; lose it and the chain is garbage |
+| traversal | walking the chain by following `next` until it is `None` |
+| [pointer surgery](../concept-index.md) | re-aiming references in an order that never strands a node |
+| [singly linked list](../concept-index.md) | each node knows only its successor |
+| [doubly linked list](../concept-index.md) | each node knows both neighbours, via `next` and `prev` |
+| [sentinel](../concept-index.md) | a permanent value-less node that removes the edge cases |
+| [`deque`](../concept-index.md) | the standard library's production double-ended queue |
+
+Now pick up the scalpel.
+
 Every one of these is a pointer-surgery drill: **draw the before/after
 picture first**, number the assignments, and only then code. Exercises reuse
 this minimal setup — paste it mentally in front of every solution:

@@ -1,22 +1,94 @@
 # 25.2 Your roadmap
 
-Finishing a book is a strange moment: you know more than you ever have, and
-you can feel how much is left. This page turns that feeling into a plan.
-It is organised by *goal*, not by topic — pick the goal that matches where
-you are, start with its first step, and ignore the rest until you want it.
-Nobody does all of this at once; everybody who keeps programming does some
-of it every week.
+This page is the end of Part IV, not the end of the handbook: two further
+parts continue from here, which is why the first goal below is simply to read
+them.
+
+After that it does the job its title promises — turning "I know more than I
+ever have, and I can feel how much is left" into a plan.
+
+It is organised by *goal*, not by topic. Pick the goal that matches where you
+are, start with its first step, and ignore the rest until you want it. Nobody
+does all of this at once; everybody who keeps programming does some of it
+every week.
+
+## Goal: finish the book
+
+Seventeen chapters follow this one, in two independent parts. Both assume
+exactly what you have now — Parts I–IV — and neither assumes the other, so
+you can take them in either order or take only one.
+
+### Part VI · Programming III (Chapters 35–42)
+
+[Part VI](../part6-overview.md) is the direct sequel to Part III, on two
+tracks.
+
+The **data-structures track** closes the holes Part III left open — every
+structure [Section 25.1](01-cs400-preview.md) previewed, implemented in full:
+
+- [Chapter 35](../ch35-balanced-trees/index.md) — rotations, AVL, red-black,
+  and B-trees;
+- [Chapter 36](../ch36-hashing-tries/index.md) — hash tables built from
+  scratch, plus tries and skip lists;
+- [Chapter 37](../ch37-graphs/index.md) — graphs with BFS, DFS, Dijkstra,
+  and spanning trees;
+- [Chapter 38](../ch38-linear-sorting/index.md) — the sorts that beat
+  $O(n \log n)$ by refusing to compare.
+
+The **toolchain track** is the working equipment no earlier chapter taught:
+
+- [Chapter 39](../ch39-streams/index.md) — lambdas, streams, and generator
+  pipelines;
+- [Chapter 40](../ch40-toolchain/index.md) — bash scripting, SSH, Make, and
+  JUnit;
+- [Chapter 41](../ch41-regex/index.md) — regular expressions;
+- [Chapter 42](../ch42-web-gui/index.md) — HTML, CSS, HTTP, JavaScript, and
+  desktop GUIs.
+
+### Part V · AI Engineering (Chapters 26–34)
+
+[Part V](../part5-overview.md) goes in a different direction with the same
+prerequisites and no machine-learning background:
+
+- [Chapter 26](../ch26-llm-internals/index.md) — what a language model
+  actually computes, with attention written by hand in numpy;
+- [Chapter 27](../ch27-inference/index.md) — what it costs to serve one;
+- [Chapter 28](../ch28-tools-mcp/index.md) — tools and schemas;
+- [Chapter 29](../ch29-memory-rag/index.md) — retrieval and memory;
+- [Chapter 30](../ch30-agents/index.md) — agent architectures;
+- [Chapter 31](../ch31-rl/index.md) — the reinforcement learning behind
+  post-training;
+- [Chapter 32](../ch32-data/index.md) — datasets as engineered artefacts;
+- [Chapter 33](../ch33-eval/index.md) — evaluation;
+- [Chapter 34](../ch34-ai-career/index.md) — the career itself.
+
+### How to choose
+
+- **Want the classic Programming I → II → III sequence,** or have a
+  data-structures exam coming? Read Part VI.
+- **Is the interesting problem in front of you one with a language model in
+  it?** Read Part V.
+- **Want both?** The order genuinely does not matter; neither part depends on
+  the other.
+
+Everything below this section is for the day you run out of chapters here.
 
 ## Goal: solidify what you know
 
-Before reaching for new material, squeeze the material you have. The single
-most effective exercise: **redo the four [projects](../projects/01-number-tool/README.md)
-without looking at your old code**. If you can rebuild the number-systems
-toolkit or the data-structures library from a blank file, you own it; every
-place you get stuck is a precise map of what to re-read. Re-implementation
-feels slower than new tutorials — it is faster, because it converts
-"recognise" into "recall", and recall is the thing exams, interviews, and
-real work actually demand.
+Before reaching for new material, squeeze the material you have.
+
+The single most effective exercise: **redo the first four
+[projects](../projects/01-number-tool/README.md) without looking at your old
+code.** (Projects 1–4 are the ones reachable this far into the book; the
+later ones belong to Parts V and VI.)
+
+If you can rebuild the number-systems toolkit or the data-structures library
+from a blank file, you own it — and every place you get stuck is a precise map
+of what to re-read.
+
+Re-implementation feels slower than new tutorials. It is faster, because it
+converts "recognise" into "recall", and recall is the thing exams, interviews,
+and real work actually demand.
 
 A miniature version of the same test takes five minutes: pick any small
 function you have written this year and rebuild it cold.
@@ -88,10 +160,11 @@ plumbing, the joy of something that works because you made it.
 **Start with a command-line tool.** You already know everything required:
 [arguments](../ch10-exceptions/01-cli-programs.md),
 [files](../ch11-files/02-read-write.md), and
-[exceptions](../ch10-exceptions/02-exceptions.md). First step: pick one
-tiny chore from your real life — count words in notes, rename photos by
-date, tally hours from a log — and write the twenty-line version tonight.
-Real users (you) and real data beat any tutorial.
+[exceptions](../ch10-exceptions/02-exceptions.md).
+
+First step: pick one tiny chore from your real life — count words in notes,
+rename photos by date, tally hours from a log — and write the twenty-line
+version tonight. Real users (you) and real data beat any tutorial.
 
 ```python
 # A whole useful CLI tool. (In a real terminal, argv comes from sys.argv.)
@@ -102,16 +175,21 @@ print(f"{len(text.split())} words, {len(text)} characters")
 ```
 
 **Then a small web app.** A to-do list or flash-card site built with a
-micro-framework (Flask is the classic) teaches you requests, responses,
-and templates — the shape of most modern software. First step: follow the
-official Flask quickstart until "hello world" appears in your browser, then
-change *one thing* and reload. That edit–reload loop is the whole game.
+micro-framework (Flask is the classic) teaches you requests, responses, and
+templates — the shape of most modern software.
 
-**Then contribute to open source.** Not to be noble — because reading a
-real codebase, running its tests, and getting a review from a stranger is
-the closest thing to a free apprenticeship that exists. First step: find a
-library you already use, read its issue tracker for labels like
-`good first issue`, and start with documentation or a failing-test fix.
+First step: follow the official Flask quickstart until "hello world" appears
+in your browser, then change *one thing* and reload. That edit–reload loop is
+the whole game. If you would rather understand the framework than adopt one,
+[Section 42.2](../ch42-web-gui/02-http-server.md) has you build its brain
+first — an HTTP parser, a router, and a middleware chain in plain Python.
+
+**Then contribute to open source.** Not to be noble, but because reading a
+real codebase, running its tests, and getting a review from a stranger is the
+closest thing to a free apprenticeship that exists.
+
+First step: find a library you already use, read its issue tracker for labels
+like `good first issue`, and start with documentation or a failing-test fix.
 Your [Git workflow from Chapter 24](../ch24-practice/01-git-workflow.md) —
 branch, commit, pull request — is exactly what maintainers expect.
 
@@ -121,10 +199,14 @@ Writers read; programmers should too. The Python standard library is
 literature that ships with the interpreter — written by experts, argued
 over for decades, and sitting on your disk right now.
 
-Two recommended first reads: **`pathlib`**, to see how a clean
-object-oriented API is layered over messy operating-system reality, and
-**`heapq`**, famous for comments so good they amount to a free textbook
-chapter. You do not even need to find the file — the essay is importable:
+Two recommended first reads:
+
+- **`pathlib`** — to see how a clean object-oriented API is layered over
+  messy operating-system reality.
+- **`heapq`** — famous for comments so good they amount to a free textbook
+  chapter.
+
+You do not even need to find the file; the essay is importable:
 
 ```python
 import heapq
@@ -134,11 +216,12 @@ print(essay[:420], "...")
 print("...", len(essay.splitlines()), "more-or-less glorious lines in total")
 ```
 
-Read whichever module you just used — every module page on
-docs.python.org links its source at the top ("Source code: Lib/…"), and the
-same files live on GitHub under `cpython/Lib/`. Ask of every
-surprising line: *why this way and not the obvious way?* The answer is
-usually a bug you have not met yet.
+Read whichever module you just used. Every module page on docs.python.org
+links its source at the top ("Source code: Lib/…"), and the same files live on
+GitHub under `cpython/Lib/`.
+
+Ask of every surprising line: *why this way and not the obvious way?* The
+answer is usually a bug you have not met yet.
 
 ## Books and courses
 
@@ -147,8 +230,9 @@ live in [Appendix D](../appendix/D-reading.md), so details are not repeated
 here:
 
 - **Think Python** — the gentlest serious second pass over Part II.
-- **Sedgewick & Wayne, *Algorithms*** — the natural full meal after the
-  Part III appetizers.
+- **Sedgewick & Wayne, *Algorithms*** — the reference to grow into once
+  [Part VI](../part6-overview.md)'s structures feel comfortable; it covers
+  the same ground and then keeps going.
 - **CS:APP (Bryant & O'Hallaron)** — for the brave: Chapter 23's machinery
   at professional depth.
 - **CS50** — a free, superbly produced course if you want lectures and a
@@ -158,20 +242,25 @@ here:
 
 ## Keep this handbook on your desk
 
-You are done reading this book front to back; you are not done *using* it.
-The [Python ↔ Java cheat sheet](../appendix/A-python-java.md) earns a
-browser bookmark for as long as you run both languages side by side, the
-[Big-O reference](../appendix/B-big-o.md) answers "wait, what does `pop(0)`
-cost?" faster than a search engine, and the
-[glossary](../appendix/C-glossary.md) is there for the day "invariant"
-stops feeling obvious. Reference use is not cheating; it is what references
-are for.
+Whether you read on into Parts V and VI or stop here, the appendices are built
+for looking things up rather than reading through:
+
+- **[Python ↔ Java cheat sheet](../appendix/A-python-java.md)** — earns a
+  browser bookmark for as long as you run both languages side by side.
+- **[Big-O reference](../appendix/B-big-o.md)** — answers "wait, what does
+  `pop(0)` cost?" faster than a search engine.
+- **[Glossary](../appendix/C-glossary.md)** — there for the day "invariant"
+  stops feeling obvious.
+- **[Toolchain quick reference](../appendix/F-toolchain-reference.md)** —
+  the shell, Git, Make, and regex commands on one page.
+
+Reference use is not cheating; it is what references are for.
 
 ## The only three habits that matter
 
-Strip away every list above and three habits remain. They are boring, and
-they are the entire difference between people who learned to program once
-and people who can program.
+Strip away every list above and three habits remain. They are boring, and they
+are the entire difference between people who learned to program once and
+people who can program:
 
 1. **Code daily.** Twenty minutes counts. Contact beats intensity: the
    person who writes a little every day laps the person who binges monthly.

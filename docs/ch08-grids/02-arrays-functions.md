@@ -3,10 +3,14 @@
 Sooner or later you pass a list to a function — and discover that the
 function can change *your* list, the one back at the call site. This is
 not a bug; it is the single most important fact about how lists and
-functions interact, and misunderstanding it produces two opposite
-surprises: functions that change data you wanted left alone, and
-functions that mysteriously change nothing at all. This section builds
-the mental model that predicts both.
+functions interact.
+
+Misunderstanding it produces two opposite surprises:
+
+- functions that change data you wanted left alone;
+- functions that mysteriously change nothing at all.
+
+This section builds the mental model that predicts both.
 
 ## A list argument is a reference
 
@@ -99,20 +103,25 @@ after rebind: [1, 2, 3]
 ```
 
 The test is simple: does the line change *the object at the end of the
-arrow* (`values[0] = ...`, `values.append(...)`, `values.sort()`), or
-does it *re-aim the arrow itself* (`values = ...`)? Only the first kind
-reaches the caller. A sneaky special case: `values = values + [4]`
-builds a **new** list and rebinds (caller unaffected), while
-`values.append(4)` mutates the existing one (caller sees it) — even
-though both "add an element".
+arrow*, or does it *re-aim the arrow itself*?
+
+| The line… | Examples | Does the caller see it? |
+| --- | --- | --- |
+| **mutates** the shared object | `values[0] = ...`, `values.append(...)`, `values.sort()` | **yes** |
+| **rebinds** the local name | `values = [...]`, `values = values + [4]`, `values = sorted(values)` | **no** |
+
+The sneaky pair sits across those two rows: `values = values + [4]` and
+`values.append(4)` both "add an element", but only the second one reaches the
+caller.
 
 ## Return a new list, or mutate in place — and say which
 
 Both behaviours are legitimate tools. A function can *return a fresh
 list*, leaving its argument pristine, or *mutate in place*, saving
 memory and often matching intent ("apply the curve to these scores").
-What is not legitimate is being vague about which one you wrote. The
-convention — used throughout Python's own library — is: **an in-place
+What is not legitimate is being vague about which one you wrote.
+
+The convention, used throughout Python's own library, is: **an in-place
 function returns `None`; a function that returns a useful list did not
 touch its argument.** Document it in the docstring either way:
 

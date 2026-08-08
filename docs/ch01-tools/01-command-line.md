@@ -55,12 +55,19 @@ why the first three commands below are the ones you will use most.
 
 ## Finding your way: `pwd`, `ls`, `cd`
 
+Three commands answer the three questions you ask most: *where am I*, *what
+is here*, and *take me somewhere else*.
+
+### `pwd` — where am I?
+
 `pwd` (*print working directory*) answers "where am I?":
 
 ```console
 $ pwd
 /Users/kim/projects
 ```
+
+### `ls` — what is here?
 
 `ls` (*list*) answers "what is here?":
 
@@ -85,6 +92,8 @@ $ ls -a
 
 The `d` at the start of the `docs` line marks a directory; `.` means "this
 folder" and `..` means "the folder above". Flags can be combined: `ls -la`.
+
+### `cd` — and the two kinds of path
 
 `cd` (*change directory*) moves you. Its argument is a **path**, and paths
 come in two flavours:
@@ -178,22 +187,28 @@ The shell helps you far more than it first appears:
   running and gives you a fresh prompt.
 
 !!! note "On Windows"
-    Windows speaks the same language with an accent. Use **PowerShell**
-    (inside the *Windows Terminal* app) rather than the ancient `cmd.exe`.
-    The commands in this section — `pwd`, `ls`, `cd`, `mkdir`, `cp`, `mv`,
-    `rm`, `cat` — all work in PowerShell as aliases of its own longer
-    commands (`ls` is really `Get-ChildItem`), though some *flags* differ:
-    hidden files, for instance, appear with `ls -Force` rather than
-    `ls -a`. Paths use backslashes and drive letters
-    (`C:\Users\kim\projects`), but PowerShell accepts forward slashes too,
-    and `~` still means home. Python's `pathlib`, which you are about to
-    meet, papers over the slash difference automatically.
+    Windows speaks the same language with an accent.
+
+    - **Use PowerShell** (inside the *Windows Terminal* app) rather than the
+      ancient `cmd.exe`.
+    - **The commands carry over.** `pwd`, `ls`, `cd`, `mkdir`, `cp`, `mv`,
+      `rm`, and `cat` all work in PowerShell as aliases of its own longer
+      commands (`ls` is really `Get-ChildItem`).
+    - **Some flags differ.** Hidden files, for instance, appear with
+      `ls -Force` rather than `ls -a`.
+    - **Paths use backslashes and drive letters**
+      (`C:\Users\kim\projects`) — though PowerShell accepts forward slashes
+      too, and `~` still means home.
+    - **Python papers over the difference.** `pathlib`, which you are about
+      to meet, handles the slash question for you automatically.
 
 ## A shell simulator you can run
 
 Shell fluency is really *path* fluency, and paths you can practice right
 here. Python's `pathlib` module gives every program the same powers you just
-saw — ask where it is, list folders, build paths. First, where are we?
+saw — ask where it is, list folders, build paths.
+
+### Step 1 · Where are we?
 
 ```python
 from pathlib import Path
@@ -207,6 +222,8 @@ The answer depends on where the code runs: on your machine it would be the
 folder you started Python from; in this browser it is a private, in-memory
 file system that Pyodide creates just for you (deleting things here is
 harmless — refresh the page and it is all reset).
+
+### Step 2 · Build a tree to explore
 
 That private file system starts nearly empty, so let us *build* something to
 explore — a folder tree — and then list it, indented like a map:
@@ -238,11 +255,18 @@ photos/
 folders at once — and `rglob("*")` visits everything below `base`, like a
 recursive `ls`.
 
+### Step 3 · Drive a shell simulator
+
 Now the real exercise: a **shell simulator**. The block below walks through a
 scripted terminal session on the tree we just made — `pwd`, `ls`, `cd`, and
-`cat`, implemented in a few lines of Python each. Run it, then *edit the
-script list* at the bottom and re-run: try `cd ..`, try `ls` from other
-folders, try `cd nowhere` to see the error path.
+`cat`, implemented in a few lines of Python each.
+
+Run it, then *edit the script list* at the bottom and re-run. Three
+experiments worth trying:
+
+1. add `cd ..` and watch the working directory climb;
+2. move the `ls` commands around, so they run from other folders;
+3. try `cd nowhere` to see the error path.
 
 ```python
 # continues — builds on the practice/ tree from the previous block
@@ -293,6 +317,8 @@ Notice `cd ../../notes`: two `..` steps climb from `cats` up through
 arithmetic a relative path asks of you. The `.resolve()` call is what turns
 that dotted route into a clean absolute path.
 
+### Step 4 · See what a wrong path looks like
+
 One more thing worth seeing on purpose: what happens when a path is wrong.
 The shell says `No such file or directory`; Python raises an exception that
 says the very same thing.
@@ -310,6 +336,15 @@ that "file not found" errors — in the shell or in Python — usually mean
 *you are not in the directory you think you are in*. `pwd` first, then look
 again. Paths return in force in
 [Chapter 11 · Files](../ch11-files/01-paths.md).
+
+!!! tip "Where the shell goes from here"
+    Commands you type once can also be written down and replayed.
+    [Section 40.1](../ch40-toolchain/01-bash.md) takes exactly this material
+    and turns it into *programs*: bash scripts with variables, conditionals,
+    loops, exit codes, and pipes, so that a five-command ritual becomes one
+    file you run. And when you already know what you want and only need the
+    flag, [Appendix F](../appendix/F-toolchain-reference.md) is the lookup
+    card for every command on this page.
 
 !!! warning "Common mistakes"
     - **Typing the `$`.** The `$` (or `%`, or `>`) is the shell's prompt,

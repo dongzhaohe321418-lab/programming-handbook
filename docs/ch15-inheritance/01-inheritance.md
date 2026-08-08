@@ -33,15 +33,19 @@ class Triangle:
 ```
 
 Three near-identical method bodies — only the name differs — is a *design
-smell*, and Chapter 13 named the two pains precisely. First, a formatting
-fix to `describe` must be made three times, and forgetting one copy means
-silent inconsistency. Second, the loop over `[Circle(1), Rectangle(2, 3),
-Triangle(4, 5)]` treated the three uniformly, yet nothing in the language
-knew they were all "shapes" — no shared type existed. The fix for both is
-to say what we have been muttering all along: a circle, a rectangle, and a
-triangle *are all shapes*. Shared behaviour belongs in a **base class**
-(also called a *parent* or *superclass*) that the three specific classes
-inherit from:
+smell*. Chapter 13 named the two pains precisely:
+
+- **Every fix has to be made three times.** Improve the wording of
+  `describe` and you must change `Circle`, `Rectangle`, *and* `Triangle`.
+  Forget one copy and the program is silently inconsistent.
+- **No shared type exists.** The loop over `[Circle(1), Rectangle(2, 3),
+  Triangle(4, 5)]` treated the three uniformly, yet nothing in the language
+  knew they were all "shapes".
+
+The fix for both is to say out loud what we have been muttering all along:
+a circle, a rectangle, and a triangle *are all shapes*. Shared behaviour
+belongs in a **base class** (also called a *parent* or *superclass*) that
+the three specific classes inherit from:
 
 ```python
 import math
@@ -78,16 +82,24 @@ for shape in [Circle(1), Rectangle(2, 3), Triangle(4, 5)]:
     shape.describe()             # defined once, in Shape — works for all
 ```
 
-The output is character-for-character what Chapter 13's version printed —
+The output is character-for-character what Chapter 13's version printed:
 behaviour preserved, duplication gone. `describe` now exists in exactly one
-place (even the differing names came along, computed from the class
-itself), so both pains are cured: a formatting fix happens once, and the
-classes now share a genuine type — every one of them *is a* `Shape`, a fact
-[section 15.2](02-polymorphism.md) will cash in. Notice the trick inside
-`describe`: it calls `self.area()`, a method the *base class never
-defines* — legal because by the time `describe` runs, `self` is always a
-concrete shape that has one. This handshake — base class skeleton,
-subclass specifics — is the pattern behind most inheritance.
+place — and even the differing names came along, computed from the class
+itself.
+
+Both pains are cured. A formatting fix happens once. And the classes now
+share a genuine type: every one of them *is a* `Shape`, a fact
+[section 15.2](02-polymorphism.md) will cash in.
+
+Notice the trick inside `describe`: it calls `self.area()`, a method the
+*base class never defines*. That is legal because by the time `describe`
+runs, `self` is always a concrete shape that has one.
+
+!!! tip "The handshake behind most inheritance"
+
+    The base class supplies the **skeleton**; each subclass supplies the
+    **specifics**. `Shape.describe` is the skeleton, each `area` is a
+    specific, and the two meet at `self.area()`.
 
 Here is the hierarchy as a UML diagram, in the notation from
 [Chapter 13](../ch13-design/02-uml.md) (the hollow arrowhead points at the
@@ -150,10 +162,16 @@ child has too*.
 
 ## What is inherited — and overridden
 
-The child class receives *all* of the parent's methods — including
-`__init__` — and, through them, the parent's instance attributes. It can
-add members of its own, and if it defines a method with the *same name* as
-an inherited one, the child's version wins: that is **overriding**.
+Three things follow from writing `class Child(Parent)`:
+
+- **Everything is inherited.** The child receives *all* of the parent's
+  methods — including `__init__` — and, through them, the parent's instance
+  attributes.
+- **The child may add members of its own.** Methods and attributes the
+  parent never had.
+- **A same-named method replaces the inherited one.** If the child defines a
+  method the parent already had, the child's version wins. That is
+  **overriding**.
 
 ```python
 class Animal:
@@ -187,9 +205,14 @@ print(isinstance(rex, Animal))    # True — a Dog IS an Animal
 The lookup rule behind this is simple: for `obj.speak()`, Python searches
 `obj`'s own class first and walks up to the parent only if the name is not
 found. `Dog` defines `speak`, so its version runs; `Cat` does not, so the
-search continues up to `Animal`. And note the last line: as far as Python
-is concerned, `rex` is *both* a `Dog` and an `Animal` — inheritance
-creates a genuine "is-a" relationship, not just a code-sharing shortcut.
+search continues up to `Animal`.
+
+!!! note "Inheritance creates a real type relationship"
+
+    Look at the last line: `isinstance(rex, Animal)` is `True`. As far as
+    Python is concerned `rex` is *both* a `Dog` and an `Animal`. Inheritance
+    is not merely a code-sharing shortcut — it declares a genuine "is-a"
+    relationship, so anything written to accept an `Animal` accepts a `Dog`.
 
 !!! info "Java corner"
 
@@ -203,10 +226,11 @@ creates a genuine "is-a" relationship, not just a code-sharing shortcut.
 
 Usually a child class needs *more* attributes than its parent, so it defines
 its own `__init__`. But the parent's `__init__` still has a job to do —
-someone has to set up the parent's attributes. The child therefore calls the
-parent's constructor explicitly with `super().__init__(...)`. `super()`
-means roughly "the parent-class view of this same object". Watch the order
-in which the prints appear:
+someone has to set up the parent's attributes.
+
+The child therefore calls the parent's constructor explicitly with
+`super().__init__(...)`, where `super()` means roughly "the parent-class
+view of this same object". Watch the order in which the prints appear:
 
 ```python
 class Animal:
@@ -225,13 +249,20 @@ rex = Dog("Rex", "beagle")
 print(f"4. Done: {rex.name} the {rex.breed}")
 ```
 
-Constructors *chain*: the child starts, delegates the shared setup to the
-parent, then completes its own. Every class in the chain initialises exactly
-the attributes it declared, and nothing gets forgotten.
+Constructors *chain*, and the numbered prints show the order exactly:
 
-Unless, of course, you forget the call. Python will not remind you — the
-object is simply born half-built, and the crash happens *later*, wherever
-the missing attribute is first touched:
+1. The child's `__init__` starts and does whatever must happen first.
+2. `super().__init__(...)` hands control to the parent, which runs to
+   completion and sets up the attributes *it* declared.
+3. Control returns to the child, which finishes its own setup.
+
+Every class in the chain initialises exactly the attributes it declared, and
+nothing gets forgotten.
+
+### When you forget the call
+
+Python will not remind you. The object is simply born half-built, and the
+crash happens *later*, wherever the missing attribute is first touched:
 
 ```python
 # raises AttributeError
@@ -295,9 +326,16 @@ that is a mistake. The honest test is one sentence:
 > inheritance fits. If it sounds even slightly forced, you probably want
 > **composition** — one object *holding* another — instead.
 
-"A `Dog` is an `Animal`" — true, inherit. "A `Circle` is a `Shape`" — true,
-inherit. "A `Car` is an `Engine`" — false! A car *has* an engine, so the
-engine belongs inside the car as an attribute:
+Try the sentence on three candidate designs:
+
+| Say it out loud | Verdict | What to write |
+| --- | --- | --- |
+| "A `Dog` is an `Animal`" | obviously true | `class Dog(Animal)` |
+| "A `Circle` is a `Shape`" | obviously true | `class Circle(Shape)` |
+| "A `Car` is an `Engine`" | false — a car *has* one | composition |
+
+So the engine belongs *inside* the car as an attribute, not above it as a
+parent:
 
 ```python
 class Engine:
@@ -326,13 +364,21 @@ inheritance link is hard to undo later.
 Everything above used one parent per class — **single inheritance** — and
 that covers the vast majority of real designs. Java in fact *only* allows a
 single parent class (`extends` one class; wanting more is what interfaces
-are for, as we will see in [section 15.3](03-interfaces.md)). Python does
-permit **multiple inheritance** — `class C(A, B)` — and resolves the
-inevitable question "if both parents define the same method, whose runs?"
-with a documented rule called the **method resolution order** (MRO):
-roughly, search the class itself, then its parents left to right as written
-in the class header, each parent's own parents after it, and never the same
-class twice. You can ask any class for its MRO:
+are for, as we will see in [section 15.3](03-interfaces.md)).
+
+### Multiple inheritance and the MRO
+
+Python does permit **multiple inheritance** — `class C(A, B)` — which raises
+an inevitable question: if both parents define the same method, whose runs?
+The answer is a documented rule called the **method resolution order** (MRO).
+Roughly, Python searches:
+
+1. the class itself;
+2. then its parents, left to right as written in the class header;
+3. then each parent's own parents, after that parent;
+4. and never the same class twice.
+
+You can ask any class for its MRO:
 
 ```python
 class Swimmer:
@@ -352,11 +398,11 @@ for cls in Triathlete.__mro__:        # the exact search order Python uses
     print(cls.__name__)
 ```
 
-Multiple inheritance has legitimate uses (the standard library mixes in
-small helper classes this way), but designs built on it get confusing
-fast. Our advice, shared by most professional Python: one parent per
-class, and reach for composition or [section 15.3](03-interfaces.md)'s
-tools when that feels limiting.
+Multiple inheritance has legitimate uses — the standard library mixes in
+small helper classes this way — but designs built on it get confusing fast.
+**Our advice, shared by most professional Python: one parent per class.**
+Reach for composition or [section 15.3](03-interfaces.md)'s tools when that
+feels limiting.
 
 !!! warning "Common mistakes"
 

@@ -34,8 +34,8 @@ University -> Docks
 ```
 
 Read those four lines twice. Both routes take five roads. Both are about
-thirteen and a half kilometres. One of them takes four and a half minutes
-longer, because it never touches the motorway. "Shortest" was never one
+thirteen kilometres. One of them takes four and a third minutes longer, because
+it spends nearly six kilometres on 30 km/h streets instead of the fast corridor. "Shortest" was never one
 question.
 
 Second, the map itself, drawn with matplotlib: districts as dots, roads as
@@ -770,8 +770,8 @@ once your version runs.
     90 km/h motorway, and comes back. Dijkstra found it because it prices
     minutes; BFS could not, because it prices roads.
 
-    **The MST contains almost none of the fast roads and both motorway
-    legs.** Foundry–Docks and Docks–Airport are in it because they are short,
+    **The MST contains almost none of the fast roads and two of the three
+    motorway legs.** Foundry–Docks and Docks–Airport are in it because they are short,
     not because they are quick — and Parkside–Station, a perfectly good
     2.5 km road, is rejected because by the time Kruskal reaches it both ends
     are already connected through Cathedral.

@@ -4,10 +4,12 @@ An **algorithm** is a precise, step-by-step recipe for solving a
 problem — precise enough that a machine can follow it and you can
 *prove things* about it. This section presents your first two: linear
 search ("is this value here, and where?") and selection sort ("arrange
-these values in order"). Both are built entirely from Chapter 7's
-traversal patterns, both can be traced by hand on paper, and both teach
-the habit that separates programmers from great programmers: asking
-*how many steps does this take as the data grows?*
+these values in order").
+
+Both are built entirely from Chapter 7's traversal patterns, and both can be
+traced by hand on paper. Both also teach the habit that separates programmers
+from great programmers: asking *how many steps does this take as the data
+grows?*
 
 ## Linear search
 
@@ -54,16 +56,23 @@ branch, which wrongly gives up after the very first mismatch.
 Note also that searching for `5` returned `1`, not `3`: the recipe
 stops at the *first* occurrence.
 
-**What should "not found" look like?** Java convention says return
-`-1` — an impossible index, and exactly what Java's own
-`String.indexOf` does. Python code often prefers returning `None`,
-which reads clearly at the call site (`if result is None:`), while
-Python's `list.index` method instead *raises an error* when the target
-is absent. All three designs work; what matters is that a "not found"
-answer can never be confused with a real index, and that your docstring
-says which convention you chose.
+### What should "not found" look like?
 
-**How many steps?** In the worst case (target absent, or hiding in the
+Three designs are all in common use:
+
+- **Return `-1`** — an impossible index. This is the Java convention, and
+  exactly what Java's own `String.indexOf` does.
+- **Return `None`** — often preferred in Python, because it reads clearly at
+  the call site: `if result is None:`.
+- **Raise an error** — what Python's own `list.index` method does.
+
+All three work. What matters is that a "not found" answer can never be
+confused with a real index, and that your docstring says which convention you
+chose.
+
+### How many steps?
+
+In the worst case (target absent, or hiding in the
 last slot) linear search makes $n$ comparisons on an $n$-element list.
 Double the data, double the work — growth is proportional to $n$, and
 you cannot do better without extra knowledge about the list (a preview
@@ -204,11 +213,12 @@ print(data)
 ```
 
 This prints `[10, 13, 14, 29, 37]` — same result, different route. In
-the worst case insertion sort is $O(n^2)$ like selection sort. Its
-special talent is *nearly sorted* input: an element already in place
-costs just one comparison and zero shifts, so on almost-sorted data
-insertion sort finishes in nearly linear time, while selection sort
-grinds through its full $n(n-1)/2$ regardless:
+the worst case insertion sort is $O(n^2)$, just like selection sort.
+
+Its special talent is *nearly sorted* input. An element already in place
+costs just one comparison and zero shifts, so on almost-sorted data insertion
+sort finishes in nearly linear time — while selection sort grinds through its
+full $n(n-1)/2$ regardless:
 
 ```python
 def insertion_sort_counting(values):
@@ -234,8 +244,16 @@ nearly sorted : 1 shifts
 reverse sorted: 28 shifts
 ```
 
-One shift versus twenty-eight, on lists of the same length. *Which*
-sort wins depends on the data — your first taste of a theme that runs
+One shift versus twenty-eight, on lists of the same length. The two siblings
+side by side:
+
+| | Selection sort | Insertion sort |
+| --- | --- | --- |
+| How the sorted region grows | find the smallest remaining value, swap it to the front | slide the next value left until it lands in place |
+| Worst case | $O(n^2)$ | $O(n^2)$ |
+| Nearly sorted input | no help at all — still the full $n(n-1)/2$ comparisons | nearly linear: one comparison and no shifts per settled element |
+
+*Which* sort wins depends on the data — your first taste of a theme that runs
 through all of computer science.
 
 ## What you actually call

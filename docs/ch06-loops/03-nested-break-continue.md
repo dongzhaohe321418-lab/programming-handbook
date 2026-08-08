@@ -95,10 +95,12 @@ the repetition count."
 
 ## break: leave the loop now
 
-`break` ends the *current* loop immediately — no more passes, no finishing
-the current pass — and execution continues at the first line after the
-loop. `continue` is gentler: it abandons only the *rest of the current
-pass* and jumps straight back to the loop's next test.
+The two statements sound alike and do quite different things:
+
+| Statement  | What it ends | Where control goes next |
+| ---------- | ------------ | ----------------------- |
+| `break`    | the whole loop, immediately — no more passes, not even the rest of this one | the first line *after* the loop |
+| `continue` | only the rest of the current pass | back up to the loop's next test |
 
 ```mermaid
 flowchart TD
@@ -166,8 +168,11 @@ for r in range(3):
 
 The target is found in row 1 — yet "finished scanning row 2" still prints,
 because `break` ended only the column loop; the row loop dutifully
-continued. Two clean patterns fix this. The **found-flag** pattern lets the
-outer loop see that the inner loop succeeded:
+continued. Two clean patterns fix this.
+
+### The found-flag pattern
+
+A flag lets the outer loop see that the inner loop succeeded:
 
 ```python
 grid = [[5, 9, 2],
@@ -187,9 +192,12 @@ print("search over")
 ```
 
 Now the search stops for real: the flag is checked right after the inner
-loop, and the outer `break` fires before row 2 is ever scanned. Cleaner
-still, when the search lives in a function, is the **return pattern** —
-`return` exits *every* loop level at once:
+loop, and the outer `break` fires before row 2 is ever scanned.
+
+### The return pattern
+
+Cleaner still, when the search lives in a function: `return` exits *every*
+loop level at once.
 
 ```python
 def find(grid, target):
@@ -224,13 +232,15 @@ else:                     # no break happened: no divisor was found
     print(f"{n} is prime")
 ```
 
-Since $91 = 7 \times 13$, the `break` fires and the `else` is skipped; try
+Since $91 = 7 \times 13$, the `break` fires and the `else` is skipped. Try
 the same shape with a prime like 97 and the `else` line is the one that
-prints. This is genuinely handy for search loops — it replaces a found-flag
-— but it confuses many readers (it looks like it should mean "if the loop
-never ran", which it does not). Java has no equivalent, and plenty of
-working Python programmers avoid it; recognise it when you see it, and reach
-for it only when it makes code clearly shorter.
+prints.
+
+This is genuinely handy for search loops — it replaces a found-flag — but it
+confuses many readers, because it looks like it should mean "if the loop never
+ran", which it does not. Java has no equivalent, and plenty of working Python
+programmers avoid it. Recognise it when you see it, and reach for it only when
+it makes code clearly shorter.
 
 !!! warning "Common mistakes"
 

@@ -1,8 +1,54 @@
 # Exercises
 
-Work these in order — they are arranged easiest first. Do the "by hand"
-parts on paper *before* touching the Run button; the code is there to check
-you, not to replace you.
+## The chapter in brief
+
+- A computer is four kinds of hardware — CPU, RAM, storage, and input/output
+  — and [0.1](01-hardware.md) is the tour of each.
+- The CPU repeats one loop forever: **fetch** the next instruction,
+  **decode** it, **execute** it, with a program counter tracking where it is.
+- Instructions and data share the same memory — the von Neumann idea — which
+  is why *a program is data too*: it can be loaded, copied, and edited like
+  any other file.
+- RAM is fast and volatile; storage is slow and permanent, and "saving"
+  means copying from the first to the second.
+- Access times form a hierarchy — register, cache, RAM, SSD, disk, network —
+  where each step down is orders of magnitude slower than the one above.
+- Every value is stored as **bits**: $n$ bits give $2^n$ patterns, and 8 bits
+  make one byte ([0.2](02-binary.md)).
+- Binary becomes decimal by adding place values; decimal becomes binary by
+  repeated division by 2, reading the remainders bottom to top.
+- Hexadecimal is binary for humans: one hex digit is exactly four bits, so
+  one byte is always exactly two hex digits.
+- Negative numbers use **two's complement**, where the top bit is worth
+  $-2^{n-1}$ — and flip-every-bit-then-add-1 negates a value.
+- Text is numbers too: every character has a Unicode **code point**, reached
+  with `ord()` and returned with `chr()`.
+- A compiler translates ahead of time and an interpreter performs the code as
+  it reads it; Python quietly compiles to bytecode on every run
+  ([0.3](03-programs.md)).
+- **Tracing** — one row per line, one column per variable — lets you predict
+  a program's output before running it.
+
+### Key terms
+
+| Term | What it means |
+| --- | --- |
+| [**CPU**](../concept-index.md#c) | The chip that executes instructions, one fetch–decode–execute cycle at a time |
+| [**RAM vs storage**](../concept-index.md#r) | Fast memory that forgets at power-off, versus slow storage that remembers |
+| [**von Neumann architecture**](../concept-index.md#v) | Design in which instructions and data live in the same memory |
+| [**bit**](../concept-index.md#b) / [**byte**](../concept-index.md#b) | One 0-or-1 digit; a group of eight of them |
+| [**binary**](../concept-index.md#b) | Base 2 — the only number system the hardware has |
+| [**hexadecimal**](../concept-index.md#h) | Base 16, a compact way to write bit patterns |
+| [**two's complement**](../concept-index.md#t) | The convention that lets one adder handle negative numbers |
+| [**Unicode**](../concept-index.md#u) | The standard assigning a numeric code point to every character |
+| [**compiler**](../concept-index.md#c) | Translates a whole program ahead of time into another form |
+| [**interpreter**](../concept-index.md#i) | Reads a program and carries out its instructions as it goes |
+| [**bytecode**](../concept-index.md#b) | Instructions for a virtual machine, not for real hardware |
+| **tracing** | Running a program by hand, keeping a table of every variable |
+
+Now put all of it to work. Work these in order — they are arranged easiest
+first. Do the "by hand" parts on paper *before* touching the Run button; the
+code is there to check you, not to replace you.
 
 ### Exercise 0.1 — Binary to decimal, by hand ●
 

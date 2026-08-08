@@ -1,5 +1,56 @@
 # Exercises
 
+## The chapter in brief
+
+- One variable per value cannot scale, so a **collection** holds many values
+  in numbered slots under a single name
+  ([7.1](01-arrays-vs-lists.md)).
+- A Java array is fixed-length and single-typed; a Python list grows on demand
+  and will hold anything — though "one list, one type" remains the right
+  style.
+- An index counts *steps from the start*, so a collection of length $n$ has
+  legal indexes $0$ through $n-1$ and its last element is `xs[len(xs) - 1]`.
+- Python adds negative indexes — `xs[-1]` is the last element — while Java has
+  none; both languages raise an error rather than let you read past the end.
+- Both structures are contiguous blocks, so finding slot $i$ costs one
+  multiplication and one addition: `scores[9999]` is exactly as fast as
+  `scores[0]`.
+- A NumPy `ndarray` is Python's fixed-length, fixed-type array, with a `dtype`
+  chosen wide enough to hold every value given.
+- Pattern 1, **visit**: use a for-each loop when you want the values, and an
+  indexed loop when you want the positions
+  ([7.2](02-traversal-patterns.md)).
+- Pattern 2, **accumulate**: initialise before the loop, update inside it, use
+  it after — and guard the update with an `if` to count only what qualifies.
+- Pattern 3, **search for the best**: crown `xs[0]` champion and let every
+  later element challenge it, tracking the *index* when you need to know where
+  the winner lives.
+- Pattern 4, **transform**: build a new list and leave the original untouched,
+  writing it as a list comprehension when it fits on one line.
+- Python's `==` compares two lists element by element, whereas Java's `==`
+  compares array *references* and needs `Arrays.equals` for contents.
+- Parallel lists link two collections by index; they work, but nothing
+  enforces the link, which is why a class
+  ([Chapter 12](../ch12-classes/index.md)) is the robust replacement.
+
+### Key terms
+
+| Term | One-line reminder |
+| --- | --- |
+| [array](../concept-index.md#a) | a fixed-length, single-type block of numbered slots — Java's collection |
+| [list (Python)](../concept-index.md#l) | a growable block of references, willing to hold any type |
+| [index](../concept-index.md#i) | how many steps a slot sits from the start, counting from 0 |
+| negative index | Python's `xs[-1]`, shorthand for `xs[len(xs) - 1]` |
+| [out-of-bounds access](../concept-index.md#o) | using an index no slot answers to — an `IndexError` in Python |
+| `dtype` | the single element type a NumPy array enforces on everything inside it |
+| traversal | a loop that visits each element of a collection in turn |
+| accumulator | a running result initialised before the loop and read after it |
+| running champion | the best-so-far value (or index) that every later element challenges |
+| [comprehension](../concept-index.md#c) | `[f(x) for x in xs]` — the one-line spelling of the transform pattern |
+| [parallel arrays](../concept-index.md#p) | two lists whose matching indexes describe one and the same thing |
+
+## The exercises
+
 Work through these in order — they start with reading indexes and end
 with a genuinely tricky one-pass search. Try each one before opening the
 solution, and for Exercise 7.1 commit to your prediction *in writing*

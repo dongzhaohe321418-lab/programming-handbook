@@ -3,9 +3,11 @@
 Search visits one path; sometimes you need *every* node — to print a tree,
 copy it, free it, or check it. A systematic visit of all nodes is called a
 **traversal**, and for binary trees there are three recursive classics plus
-one queue-powered outsider. Then this section delivers the chapter's honest
-ending: the experiment showing that a BST fed sorted input silently becomes
-a linked list, and what that does to every $O(\log n)$ promise made so far.
+one queue-powered outsider.
+
+Then this section delivers the chapter's honest ending: the experiment
+showing that a BST fed sorted input silently becomes a linked list, and what
+that does to every $O(\log n)$ promise made so far.
 
 ## Three traversals, one line apart
 
@@ -100,8 +102,12 @@ of 30's family, then all of 70's, then 50 last) until the pattern clicks.
 Look at the in-order line above: `20 30 40 50 60 70 80`. That is not a
 coincidence of this example. In-order prints *everything smaller than the
 node* (its whole left subtree), then the node, then everything larger — at
-every level of the recursion. The BST invariant plus in-order traversal
-equals sorted output, for free. Test it on random data:
+every level of the recursion.
+
+!!! note "The freebie"
+    BST invariant + in-order traversal = sorted output, at no extra cost.
+
+Test it on random data:
 
 ```python
 # continues
@@ -130,9 +136,10 @@ print("matches sorted()?", collected == sorted(values))
 
 The last new line is `matches sorted()? True` — and it will be `True` for
 *any* seed, any values. Twelve numbers went in scrambled; the tree's shape
-absorbed the scramble, and in-order read them back sorted. (A tree-based
-sort is real: insert everything, walk in-order — that is the idea behind
-"tree sort", and behind why databases keep indexes in trees.)
+absorbed the scramble, and in-order read them back sorted.
+
+(A tree-based sort is real: insert everything, walk in-order. That is the
+idea behind "tree sort", and behind why databases keep indexes in trees.)
 
 ## What pre-order and post-order are for
 
@@ -173,6 +180,7 @@ print("rebuilt matches?", check == saved)
 
 The new lines are `saved pre-order: [50, 30, 20, 40, 70, 60, 80]` and
 `rebuilt matches? True` — insert-in-pre-order rebuilt an identical tree.
+
 (Try the same experiment with the in-order list and see what shape you get —
 that disaster is the second half of this section.)
 
@@ -216,9 +224,24 @@ level 2: [20, 40, 60, 80]
 ```
 
 Swap the deque for a stack and the same loop becomes a depth-first walk —
-the container's discipline *is* the algorithm's strategy. Level-order
-generalised to arbitrary graphs is breadth-first search, waiting for you in
-[Chapter 25](../ch25-next/01-cs400-preview.md).
+the container's discipline *is* the algorithm's strategy.
+
+Level-order generalised to arbitrary graphs is breadth-first search, built
+in full in [Section 37.2](../ch37-graphs/02-traversal.md) with this same
+loop plus one extra line: a `visited` set, because a graph — unlike a tree —
+can lead you back where you started.
+
+### All four at a glance
+
+| Traversal | Order of moves | On our tree | Reach for it when you want to … |
+| --- | --- | --- | --- |
+| **pre-order** | visit, left, right | `50 30 20 40 70 60 80` | save or copy a tree *with its shape* |
+| **in-order** | left, visit, right | `20 30 40 50 60 70 80` | read a BST's values in sorted order |
+| **post-order** | left, right, visit | `20 40 30 60 80 70 50` | delete or total up children before parents |
+| **level-order** | queue: root, depth 1, depth 2, … | `50 · 30 70 · 20 40 60 80` | print or inspect a tree level by level |
+
+The first three are one recursive function with the `print` in a different
+place; only level-order needs a container of its own.
 
 ## The balance problem: a linked list in disguise
 
@@ -237,8 +260,9 @@ flowchart TD
 
 Every new value is larger than everything before it, so every insertion
 walks all the way down the right spine and attaches at the bottom. No node
-ever gets a left child. The "tree" is a linked list wearing a costume, with
-$h = n - 1$. Measure it:
+ever gets a left child.
+
+The "tree" is a linked list wearing a costume, with $h = n - 1$. Measure it:
 
 ```python
 import math
@@ -308,13 +332,16 @@ The output:
   511 |           18 |          510 |       9.0
 ```
 
-Read the middle columns as a verdict. Random insertion order stays within
-about twice the theoretical minimum height $\log_2(n+1) - 1$ — the known
-result is that random BSTs average roughly $2.99 \log_2 n$ in height. But
-*sorted* insertion order hits the worst case exactly: height $n - 1$, a
-chain. On the chain, search, insert, and delete are all $O(n)$; "a million
-items in twenty steps" becomes "a million items in a million steps". And
-sorted (or nearly sorted) input is not exotic — log files by timestamp,
+Read the middle columns as a verdict.
+
+- **Random order is fine.** It stays within about twice the theoretical
+  minimum height $\log_2(n+1) - 1$; the known result is that random BSTs
+  average roughly $2.99 \log_2 n$ in height.
+- **Sorted order hits the worst case exactly.** Height $n - 1$: a chain. On
+  the chain, search, insert, and delete are all $O(n)$, so "a million items
+  in twenty steps" becomes "a million items in a million steps".
+
+And sorted (or nearly sorted) input is not exotic — log files by timestamp,
 IDs issued in sequence, alphabetized imports. The failure mode is the
 *common* case.
 
@@ -323,13 +350,28 @@ IDs issued in sequence, alphabetized imports. The failure mode is the
 The repair is one idea: detect when a subtree leans too far and *rotate* —
 a local, $O(1)$ re-linking that lifts the middle value up and restores
 bushiness, without breaking the BST invariant. Trees that rotate on every
-insert and delete are called **self-balancing**; the two you will meet by
-name are **AVL trees** (strictest balance, invented 1962) and **red-black
-trees** (looser balance, faster updates — the industry default). Both
-guarantee $h = O(\log n)$ *no matter what order the input arrives in*.
-Building them is a course-sized project — the data-structures course
-previewed in [Chapter 25](../ch25-next/01-cs400-preview.md) — but you now
-understand exactly the disease they cure.
+insert and delete are called **self-balancing**. Two you will meet by name:
+
+- **AVL trees** — strictest balance, invented 1962. Shortest trees, so the
+  fastest searches, at the cost of more rotation work per write.
+- **Red-black trees** — looser balance, fewer rotations per write, and the
+  industry default.
+
+Both guarantee $h = O(\log n)$ *no matter what order the input arrives in*.
+
+You do not have to take that on faith or wait for another book:
+[Chapter 35](../ch35-balanced-trees/index.md) picks up exactly here.
+
+- [Section 35.1](../ch35-balanced-trees/01-rotations.md) — implements the
+  rotation and proves it preserves the invariant.
+- [Section 35.2](../ch35-balanced-trees/02-avl.md) — builds a complete AVL
+  tree.
+- [Section 35.3](../ch35-balanced-trees/03-red-black.md) — builds the
+  red-black tree that `TreeMap` is.
+- [Section 35.4](../ch35-balanced-trees/04-b-trees.md) — generalises the
+  idea to the B-trees that databases and file systems keep on disk.
+
+You already understand the disease; that chapter is the cure.
 
 !!! info "Java corner"
 

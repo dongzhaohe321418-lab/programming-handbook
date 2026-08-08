@@ -2,11 +2,12 @@
 
 [Section 21.1](01-heap-property.md) gave us a promise: a complete tree in a
 plain list, minimum at index 0, every leaf within $\log_2 n$ steps of the
-root. Now we collect on the promise. This section builds the two repair
-operations that keep the heap property alive while items come and go, grows
-them into a `MinHeap` class, then hands the job to Python's built-in `heapq`
-— and finishes with the two most famous things heaps are used for: sorting
-and top-k selection.
+root. Now we collect on the promise.
+
+This section builds the two repair operations that keep the heap property
+alive while items come and go, grows them into a `MinHeap` class, then hands
+the job to Python's built-in `heapq`. It finishes with the two most famous
+things heaps are used for: sorting and top-k selection.
 
 ## The PriorityQueue ADT
 
@@ -88,11 +89,17 @@ sift_up(heap, len(heap) - 1)
 print(f"repaired:  {heap}")
 ```
 
-The output replays the trace table line for line. Why is the result a valid
-heap? Each swap can only *shrink* the value at the parent slot, so pairs off
-the path stay legal; and the loop only stops when the risen item's parent is
-$\le$ it. The path has at most $\lfloor \log_2 n \rfloor$ edges — that is the
-whole cost.
+The output replays the trace table line for line.
+
+Why is the result a valid heap? Two reasons, together:
+
+- **Pairs off the path stay legal.** Each swap can only *shrink* the value
+  sitting in the parent slot, and a smaller parent never breaks anything.
+- **Pairs on the path end up legal.** The loop stops only when the risen
+  item's parent is $\le$ it (or it becomes the root).
+
+The path has at most $\lfloor \log_2 n \rfloor$ edges — that is the whole
+cost.
 
 ## Extract-min: sift down
 
@@ -116,9 +123,9 @@ Take the heap we just built, `[1, 5, 2, 9, 7, 4, 3]`, and extract the `1`:
 | swap 0 ↔ 2 | `[2, 5, 3, 9, 7, 4]` | children of `3` are 5 and 2; smallest child 2 < 3, swap |
 | stop | `[2, 5, 3, 9, 7, 4]` | `3`'s only child is now 4, and $4 \ge 3$ — done |
 
-Note the crucial detail in step 3: we swap with the **smaller** child. Swap
-with the larger one and it would become the parent of its smaller sibling —
-instantly illegal.
+!!! warning "Always swap with the *smaller* child"
+    Swap with the larger one instead and it becomes the parent of its
+    smaller sibling — instantly illegal. This is step 3's whole subtlety.
 
 ```python
 def sift_down(heap, i):
@@ -147,6 +154,7 @@ print(f"repaired: {heap}")
 
 We got `[2, 5, 3, 9, 7, 4]` back — the exact heap we started 21.1 with,
 which is a nice check that insert and extract really are inverses here.
+
 Sift-down also walks one root-to-leaf path at worst: $O(\log n)$.
 
 ## A MinHeap class
@@ -214,9 +222,10 @@ print("popped in order:", [h.pop() for _ in range(len(h))])
 ```
 
 Push six values in scrambled order, pop six times, and out they come
-ascending: `[1, 2, 4, 7, 8, 9]`. The heap never *stored* them in sorted
-order — it just always knew the minimum, six times in a row. Hold that
-thought for heapsort below.
+ascending: `[1, 2, 4, 7, 8, 9]`.
+
+The heap never *stored* them in sorted order — it just always knew the
+minimum, six times in a row. Hold that thought for heapsort below.
 
 ## heapq: the standard library says "just use a list"
 
@@ -248,9 +257,10 @@ print("the list between pops:", heap)
 ```
 
 The final line prints `[4, 7, 8, 9]` — a valid min-heap that merely
-*happens* to look sorted because so few items remain. (Print the list
-right after the six pushes and you'll see `[1, 2, 8, 7, 4, 9]`.) And
-popping an empty heap is an error, same as our class:
+*happens* to look sorted because so few items remain. (Print the list right
+after the six pushes and you'll see `[1, 2, 8, 7, 4, 9]`.)
+
+And popping an empty heap is an error, same as our class:
 
 ```python
 # raises IndexError
@@ -260,10 +270,11 @@ heap = []
 heapq.heappop(heap)    # nothing to pop -> IndexError: index out of range
 ```
 
-`heapify` deserves a note: it repairs an arbitrary list into a heap in
-$O(n)$ — cheaper than the $O(n \log n)$ of pushing items one by one, thanks
-to a clever bottom-up sweep of sift-downs (most nodes are near the bottom
-and sink only a step or two).
+!!! tip "`heapify` is cheaper than pushing one by one"
+    It repairs an arbitrary list into a heap in $O(n)$, not the
+    $O(n \log n)$ of $n$ separate pushes — thanks to a bottom-up sweep of
+    sift-downs, in which most nodes are near the bottom and sink only a step
+    or two.
 
 ### Priorities attached to data: the tuple pattern
 
@@ -285,10 +296,12 @@ while todo:
     print(f"priority {priority}: {task}")
 ```
 
-The outage comes out first even though it was pushed second. (Tied
-priorities fall through to comparing the items themselves — fine for
-strings, a `TypeError` for uncomparable objects; the standard fix is
-`(priority, counter, item)` with an ever-increasing counter.)
+The outage comes out first even though it was pushed second.
+
+Tied priorities fall through to comparing the items themselves — fine for
+strings, a `TypeError` for uncomparable objects. The standard fix is
+`(priority, counter, item)` with an ever-increasing counter, which breaks
+every tie before the item is ever consulted.
 
 ### Max-heaps by negation
 
@@ -361,12 +374,14 @@ print("sorted():", sorted(data))
 print("agree?   ", heapsort(data) == sorted(data))
 ```
 
-(The classic in-place version builds a *max*-heap inside the array and
-swaps the root to the back instead of using a second list, but the idea is
-identical.) In practice you will keep calling `sorted()` — it's Timsort,
-faster in real workloads — but heapsort's guaranteed bound and $O(1)$ extra
-memory keep it a serious tool, and it is the standard library's own engine
-behind `heapq.nlargest`.
+(The classic in-place version builds a *max*-heap inside the array and swaps
+the root to the back instead of using a second list, but the idea is
+identical.)
+
+In practice you will keep calling `sorted()` — it's Timsort, faster in real
+workloads. But heapsort's guaranteed bound and $O(1)$ extra memory keep it a
+serious tool, and it is the standard library's own engine behind
+`heapq.nlargest`.
 
 ## The top-k pattern
 
@@ -395,24 +410,38 @@ print("full sort  :", sorted(readings, reverse=True)[:k])
 print("nlargest   :", heapq.nlargest(k, readings))
 ```
 
-All three lines agree — but the costs differ wildly. Full sort:
-$O(n \log n)$ and all $n$ values in memory. Size-k heap: $O(n \log k)$ time
-and only $k$ values in memory. For "top 10 of a billion log lines",
-$\log_2 10 \approx 3.3$ versus $\log_2 10^9 \approx 30$ — and a
-10-element list versus a billion. The one-liner `heapq.nlargest(k, ...)`
-(and its twin `nsmallest`) does exactly this under the hood.
+All three lines agree — but the costs differ wildly:
+
+- **Full sort** — $O(n \log n)$ time, and all $n$ values in memory at once.
+- **Size-$k$ heap** — $O(n \log k)$ time, and only $k$ values in memory.
+
+For "top 10 of a billion log lines" that is $\log_2 10 \approx 3.3$ versus
+$\log_2 10^9 \approx 30$ per item — and a 10-element list versus a billion.
+The one-liner `heapq.nlargest(k, ...)` (and its twin `nsmallest`) does
+exactly this under the hood.
 
 ## Where priority queues run the world
 
 Once you know the shape of the problem — *many pending things, always serve
-the most urgent* — you see it everywhere. Operating systems schedule
-processes with priority queues; Dijkstra's shortest-path algorithm uses one
-to always expand the closest unexplored node (it's the beating heart of
-route navigation); discrete-event simulations keep future events in a heap
-keyed by timestamp and repeatedly pop the earliest; bandwidth managers,
-A* game pathfinding, and Huffman compression all queue up on the same
-structure. Several of these are waiting for you one course from now — see
-[the Programming III preview](../ch25-next/01-cs400-preview.md).
+the most urgent* — you see it everywhere:
+
+- **Process scheduling.** An operating system picks the highest-priority
+  runnable task ([Section 23.1](../ch23-os/01-os-processes.md)).
+- **Shortest paths.** Dijkstra's algorithm always expands the closest
+  unexplored node — the beating heart of route navigation.
+- **Discrete-event simulation.** Future events sit in a heap keyed by
+  timestamp; the loop repeatedly pops the earliest one.
+- **And more of the same shape:** bandwidth managers, A\* game pathfinding,
+  and Huffman compression all queue up on this structure.
+
+Two of them arrive later in this book, and the heap you just built is the
+reason they are fast:
+[Section 37.3](../ch37-graphs/03-shortest-paths.md) implements Dijkstra's
+algorithm with a `heapq` priority queue, and
+[37.4](../ch37-graphs/04-mst.md) does the same for Prim's
+minimum-spanning-tree algorithm. In both, replacing the heap with a linear
+scan for the minimum is exactly what turns an $O(E \log V)$ algorithm into an
+$O(V^2)$ one.
 
 !!! warning "Common mistakes"
     - **Sifting down with the larger child.** Swap the sinking node with its

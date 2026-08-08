@@ -4,9 +4,11 @@ Suppose your program must answer, over and over, one specific question:
 *"what is the smallest item right now?"* — while new items keep arriving in
 between questions. A hospital triage system asks it (most urgent patient
 next), an operating system asks it (highest-priority task next), and a
-simulation asks it (earliest event next). This section shows why the data
-structures you already know handle this badly, and introduces the
-beautifully lazy invariant — the **heap property** — that handles it well.
+simulation asks it (earliest event next).
+
+This section shows why the data structures you already know handle this
+badly, and introduces the beautifully lazy invariant — the **heap
+property** — that handles it well.
 
 ## The problem: smallest item, moving target
 
@@ -25,11 +27,14 @@ Try the structures from earlier chapters:
 | Sorted list | $O(n)$ shift | $O(1)$ | $O(1)$ at the right end | Every arrival pays the full shifting cost |
 | Balanced BST ([Ch 20](../ch20-bst/index.md)) | $O(\log n)$ | $O(\log n)$ walk left | $O(\log n)$ | Works — but stores parent/child pointers and full ordering we never use |
 
-The unsorted list makes questions expensive; the sorted list makes arrivals
-expensive. The BST works, but it is overkill: a BST can list *all* items in
-order, find *any* key, report predecessors and successors — and we only ever
-ask for the minimum. We are paying (in memory for node objects and pointers,
-and in balancing complexity) for power we do not use.
+Read the table as three verdicts. The unsorted list makes *questions*
+expensive; the sorted list makes *arrivals* expensive; the BST is fast at
+both, and overkill.
+
+Why overkill? A BST can list *all* items in order, find *any* key, and
+report predecessors and successors — and we only ever ask for the minimum.
+We would be paying, in node objects and pointers and balancing complexity,
+for power we never use.
 
 The heap is the "just enough" structure: $O(\log n)$ insert, $O(1)$
 peek-min, $O(\log n)$ extract-min — with no node objects, no pointers, and
@@ -45,8 +50,12 @@ A **min-heap** is a binary tree that obeys a single rule:
 That's all. Read it again and notice what it does *not* say — nothing about
 left versus right. In a min-heap the left child may be larger than the right
 child, or smaller; the rule never compares siblings, only parent against
-child. (A **max-heap** is the mirror image: every parent $\ge$ its children.
+child.
+
+(A **max-heap** is the mirror image: every parent $\ge$ its children.
 Everything in this chapter flips symmetrically.)
+
+### Heap property versus BST invariant
 
 This is the number-one point of confusion with the binary search tree, so
 let's put the two invariants side by side:
@@ -67,12 +76,15 @@ graph TD
     end
 ```
 
-Both trees hold the same five numbers. In the BST, position encodes total
-order: everything left of 8 is smaller, everything right is larger, and an
-in-order traversal reads out 1, 3, 6, 8, 10. In the min-heap, the root's
-left child is 6 and its right child is 3 — the *bigger* one sits on the
-left, and that is perfectly legal, because the only promises made are
-$1 \le 6$, $1 \le 3$, $6 \le 8$, and $6 \le 10$.
+Both trees hold the same five numbers.
+
+In the BST, position encodes total order: everything left of 8 is smaller,
+everything right is larger, and an in-order traversal reads out 1, 3, 6, 8,
+10.
+
+In the min-heap, the root's left child is 6 and its right child is 3 — the
+*bigger* one sits on the left, and that is perfectly legal, because the only
+promises made are $1 \le 6$, $1 \le 3$, $6 \le 8$, and $6 \le 10$.
 
 | | BST invariant | Min-heap property |
 | --- | --- | --- |
@@ -110,8 +122,10 @@ Completeness is stricter than the "balanced" trees of
 [Chapter 20](../ch20-bst/03-traversals-balance.md): there is exactly *one*
 legal shape for each size $n$. Six nodes? Full levels of 1 and 2, then three
 nodes packed into the leftmost slots of the third level. No choice, no
-lopsidedness — ever. And a complete tree with $n$ nodes has height
-$\lfloor \log_2 n \rfloor$, because each full level doubles the node count.
+lopsidedness — ever.
+
+And a complete tree with $n$ nodes has height $\lfloor \log_2 n \rfloor$,
+because each full level doubles the node count.
 
 ```python
 import math
@@ -121,10 +135,12 @@ for n in [1, 3, 7, 15, 100, 1000, 1_000_000]:
     print(f"n = {n:>9,}  ->  height {height}")
 ```
 
-A million items, and any leaf is at most 19 steps from the root. Every heap
-operation we build in [section 21.2](02-priority-queues.md) walks a single
-root-to-leaf path, so every one of them is $O(\log n)$ — *guaranteed*, with
-no balancing act required, because completeness makes imbalance impossible.
+A million items, and any leaf is at most 19 steps from the root.
+
+Every heap operation we build in [section 21.2](02-priority-queues.md) walks
+a single root-to-leaf path, so every one of them is $O(\log n)$ —
+*guaranteed*, with no balancing act required, because completeness makes
+imbalance impossible.
 
 ## The trick: storing the tree in a plain list
 
@@ -181,10 +197,12 @@ for i, value in enumerate(heap):
 ```
 
 Every parent–child pair the output lists satisfies parent $\le$ child, so the
-list is a valid min-heap. Notice the boundary rule the code uses: a computed
-child index that is `>= len(heap)` simply does not exist. That is how "the
-last level is filled left to right" looks in list form — the list just
-*ends*, with no `None` placeholders needed.
+list is a valid min-heap.
+
+Notice the boundary rule the code uses: a computed child index that is
+`>= len(heap)` simply does not exist. That is how "the last level is filled
+left to right" looks in list form — the list just *ends*, with no `None`
+placeholders needed.
 
 !!! info "Java corner"
     Java's `java.util.PriorityQueue` uses exactly this representation

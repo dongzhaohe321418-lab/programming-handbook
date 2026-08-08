@@ -13,12 +13,17 @@ the map: where can you go from here?
 ## The event loop: programs that wait
 
 A graphical program (GUI, for *graphical user interface*) is organised
-around three parts. **Events** — clicks, keypresses, window resizes —
-arrive from the user at unpredictable moments and wait in a queue. The
-**event loop**, owned by the GUI framework rather than by you, takes
-events one at a time and dispatches each to the **handler** you
-registered for it. Your handler updates some state, the framework
-redraws the window, and the loop goes back to waiting:
+around three parts:
+
+- **Events** — clicks, keypresses, window resizes — arrive from the user at
+  unpredictable moments and wait in a queue.
+- **The event loop** is owned by the GUI framework rather than by you. It
+  takes events one at a time and dispatches each to the handler registered
+  for it.
+- **Your handlers** do the work: one updates some state, the framework
+  redraws the window, and the loop goes back to waiting.
+
+In a picture:
 
 ```mermaid
 flowchart LR
@@ -85,14 +90,27 @@ public class HelloWindow {
 }
 ```
 
-The two programs are the same shape. Build widgets, register a handler
-(`command=say_hello` / `addActionListener(...)`), then start the loop
-(`mainloop()` / `setVisible(true)`), after which *your* code only runs
-when events arrive. Note a crucial detail in the Python: it says
-`command=say_hello` — the function itself, no parentheses. Writing
-`command=say_hello()` would *call* the function immediately, once,
-during setup, and register its return value (`None`) as the handler.
-This is the most common first GUI bug in existence.
+The two programs are the same shape:
+
+1. **Build the widgets.**
+2. **Register a handler** — `command=say_hello` in Python,
+   `addActionListener(...)` in Java.
+3. **Start the loop** — `mainloop()` / `setVisible(true)`.
+
+After step 3, *your* code only runs when events arrive.
+
+Note a crucial detail in the Python: it says `command=say_hello` — the
+function itself, no parentheses. Writing `command=say_hello()` would *call*
+the function immediately, once, during setup, and register its return value
+(`None`) as the handler. This is the most common first GUI bug in existence.
+
+Neither sketch is the end of the story.
+[Section 42.4](../ch42-web-gui/04-desktop-gui.md) builds a small app twice —
+in tkinter, and in **JavaFX**, the toolkit that has largely replaced the
+Swing shown here — and adds what a real interface needs: layout panes,
+observable properties, the UI-thread rule that explains frozen windows, and a
+runnable Python model of a widget tree with layout, hit testing, and event
+bubbling.
 
 ## Callbacks: functions handed to the framework
 
@@ -178,13 +196,21 @@ roughly what `format` does for a living.
 
 ## The map from here
 
-Four directions, each fully reachable with what you now know.
+Four directions, each fully reachable with what you now know. The first is
+more than a direction now: [Chapter 42](../ch42-web-gui/index.md) takes the
+web up in full, alongside the desktop windows this page began with.
 
 **The web.** A web application is a program whose events are HTTP
 requests instead of clicks: a browser asks for a URL, your handler
 function builds a page, the framework sends it back. Python frameworks
 like Flask and Django are dictionaries-of-handlers at heart — the event
-loop model again, wearing a different hat.
+loop model again, wearing a different hat. That is exactly where
+Chapter 42 goes: [42.1](../ch42-web-gui/01-html-css.md) on the HTML and
+CSS a page is made of, [42.2](../ch42-web-gui/02-http-server.md) on HTTP
+and the request parser, router, and middleware chain at the heart of every
+web framework, and [42.3](../ch42-web-gui/03-javascript.md) on browser
+JavaScript — including the real event loop, task queue and microtask queue
+and all, that the little dispatcher earlier on this page is a sketch of.
 
 **Games.** A game is an event loop running at sixty beats per second:
 read input, update the world, redraw, repeat. The objects of Chapters
@@ -209,14 +235,21 @@ an event loop listening for keys.
 
 Look at what those four paragraphs quietly assumed: functions,
 collections, classes, files, loops, events — and you have every one.
-That is the real graduation from Part II. No domain on the map requires
-new *fundamentals*; each requires learning a library, and libraries are
-learned by reading documentation, trying small examples, and debugging
-patiently — skills you have been practicing since Chapter 2. Programmers
-are not people who know everything; they are people equipped to learn
-the next thing. You are now one of them. Part III will deepen the
-foundations — inheritance, complexity, recursion, data structures — but
-from this page onward, nothing in programming is closed to you.
+That is the real graduation from Part II.
+
+No domain on the map requires new *fundamentals*. Each requires learning a
+library, and libraries are learned by reading documentation, trying small
+examples, and debugging patiently — skills you have been practicing since
+Chapter 2.
+
+Programmers are not people who know everything; they are people equipped to
+learn the next thing. You are now one of them. Part III will deepen the
+foundations — inheritance, complexity, recursion, data structures — and
+[Part VI](../part6-overview.md) later hands you the working toolchain that
+professional programmers assume: the shell as a language, build systems,
+test frameworks, regular expressions, and the web and GUI material of
+Chapter 42. But from this page onward, nothing in programming is closed to
+you.
 
 !!! warning "Common mistakes"
 

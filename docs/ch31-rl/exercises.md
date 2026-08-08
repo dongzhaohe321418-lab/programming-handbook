@@ -1,5 +1,82 @@
 # Chapter 31 · Exercises
 
+## The chapter in brief
+
+- RL exists because **judging is easier than producing**: you can *score* a
+  response you could never have *written*, and that score is enough to train on
+  ([31.1](01-rl-basics.md)).
+- The seven RL words — state, action, policy, reward, trajectory, return,
+  discount — all apply to a language model unchanged, because **a next-token
+  predictor already is a policy**.
+- A **gradient is a slope**, measurable by nudging a parameter and watching the
+  loss; descent is "subtract the slope, scaled by a learning rate".
+- Every hand-derived gradient gets a **finite-difference check**, which is a
+  unit test in the sense of
+  [24.2](../ch24-practice/02-testing.md) and catches sign errors in one second.
+- **Best-of-$n$** is a serious baseline: real gains, no training, diminishing
+  returns like $\sqrt{\log n}$, and a KL price you can compute.
+- **REINFORCE** raises the log-probability of actions that led to high reward
+  and lowers it for the rest — the ancestor of everything that follows
+  ([31.2](02-policy-gradient-ppo.md)).
+- Subtracting a **baseline** removes variance without touching the average, and
+  is usually the difference between learning and not learning; a state-dependent
+  baseline gives you the **advantage** and an actor-critic pair.
+- **PPO is REINFORCE plus four fixes** — importance ratio, clipped objective,
+  several epochs per batch, and a KL penalty to a frozen reference — and the
+  clip's job is to guarantee that no single batch destroys the run.
+- The KL-regularised objective has a **closed-form optimum**,
+  $\pi^{*} \propto \pi_{\text{ref}} e^{r/\beta}$, and $\beta$ is the dial
+  between "learned nothing" and "learned to cheat".
+- PPO holds **four models** — about 235 GB at 7B — because optimiser state, not
+  weights, is what fills a GPU.
+- **DPO** deletes the reward model by solving that optimum for $r$: any policy
+  implicitly defines a reward, the intractable $Z(x)$ cancels across a pair, and
+  training becomes ordinary cross-entropy ([31.3](03-dpo-grpo.md)).
+- DPO's loss stalling near 0.5 is normal, and its real hazard is that **both
+  likelihoods can fall** — the objective only constrains the difference.
+- **GRPO** deletes the value model by using a group of samples to the same
+  prompt as the baseline, which suits **verifiable rewards** and wastes every
+  zero-variance group.
+- Humans **compare** rather than score, agreement is measured with **Cohen's
+  kappa** rather than raw agreement, and a **Bradley-Terry** model turns those
+  comparisons into a scalar ([31.4](04-reward-models.md)).
+- **Reward hacking** is Goodhart's law with a competent optimiser: the proxy
+  climbs while true quality peaks and falls, so you must stop on an evaluation
+  the optimiser cannot see.
+- **Process supervision** beats outcome supervision on long chains, a test suite
+  is the most reliable reward there is, and **credit assignment** over a
+  trajectory remains genuinely open.
+
+### Key terms
+
+| Term | One-line reminder |
+| --- | --- |
+| [policy](../appendix/E-ai-glossary.md#p) | the thing that chooses actions — for an LLM, the model itself |
+| trajectory / return | the whole generated response, and its total score |
+| [gradient](../concept-index.md#g) | the slope of the loss with respect to a parameter |
+| gradient check | compare the analytic gradient against finite differences, and assert |
+| best-of-$n$ | sample $n$, keep the best; no training at all |
+| [KL divergence](../appendix/E-ai-glossary.md#k) | how far one distribution has moved from another, in nats |
+| REINFORCE | scale each action's log-prob gradient by the return that followed it |
+| baseline | a number subtracted from the return to cut variance, not signal |
+| [advantage](../appendix/E-ai-glossary.md#a) | return minus the value of the state — how much better than expected |
+| actor-critic | policy plus a learned value function that judges the state |
+| [PPO](../appendix/E-ai-glossary.md#p) | ratio, clip, several epochs, KL penalty |
+| importance ratio | $\pi_\theta(a) / \pi_{\text{old}}(a)$ — lets one batch fund several steps |
+| reference policy | the frozen pre-RL checkpoint the KL term measures against |
+| [DPO](../appendix/E-ai-glossary.md#d) | train on preference pairs directly; the policy *is* the reward model |
+| [GRPO](../appendix/E-ai-glossary.md#g) | use a group of sampled responses as the baseline; no critic |
+| [Bradley-Terry](../appendix/E-ai-glossary.md#b) | preference probability is a sigmoid of the score gap |
+| Cohen's kappa | agreement corrected for the agreement chance would produce |
+| [reward hacking](../appendix/E-ai-glossary.md#r) | the proxy goes up while the thing you wanted goes down |
+| ORM / PRM | score the final answer, versus score every step |
+| verifiable reward | a checker or test suite used directly as the reward |
+| [RLHF / RLAIF](../appendix/E-ai-glossary.md#r) | preferences from humans, or from a model given written criteria |
+| credit assignment | deciding which steps of a long trajectory earned the reward |
+
+Now the drills — and run every block, because in this chapter the printed
+numbers are the argument.
+
 Eight problems on the whole post-training pipeline, easiest first. They build on
 [31.1](01-rl-basics.md), [31.2](02-policy-gradient-ppo.md),
 [31.3](03-dpo-grpo.md) and [31.4](04-reward-models.md), and every solution runs

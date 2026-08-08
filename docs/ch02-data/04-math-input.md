@@ -44,19 +44,22 @@ print(round(3.5))
 ```
 
 The output is `0`, `2`, `2`, `4`. Python does **not** round halves up — it
-rounds them **to the nearest even number**. This rule is called *banker's
-rounding* (officially "round half to even"), and it exists for a good
-statistical reason: always rounding `.5` upward drags every total slightly
-upward, while rounding to even sends ties up half the time and down half
-the time, cancelling the bias. Banks, scientists, and the IEEE
-floating-point standard all use it — and so does Python.
+rounds them **to the nearest even number**.
 
-Two consequences worth remembering. First, only exact halves are affected —
-`round(2.6)` is `3` as usual. Second, floats add their own wrinkle:
-`round(2.675, 2)` gives `2.67`, not `2.68`, because `2.675` is *stored* as
-a hair under 2.675 before `round` even sees it
-([Chapter 5.1](../ch05-under-the-hood/01-numeric-pitfalls.md) has the full
-story).
+This rule is called *banker's rounding* (officially "round half to even"),
+and it exists for a good statistical reason: always rounding `.5` upward
+drags every total slightly upward, while rounding to even sends ties up half
+the time and down half the time, cancelling the bias. Banks, scientists, and
+the IEEE floating-point standard all use it — and so does Python.
+
+Two consequences worth remembering:
+
+- **Only exact halves are affected.** `round(2.6)` is `3`, just as you
+  expect.
+- **Floats add their own wrinkle.** `round(2.675, 2)` gives `2.67`, not
+  `2.68`, because `2.675` is *stored* as a hair under 2.675 before `round`
+  ever sees it ([Chapter 5.1](../ch05-under-the-hood/01-numeric-pitfalls.md)
+  has the full story).
 
 !!! info "Java corner"
     Java's `Math.round(2.5)` returns `3` — it always rounds halves toward
@@ -221,8 +224,14 @@ exceptions in [Chapter 10](../ch10-exceptions/index.md).
 ## Worked example: a tip calculator
 
 Time to combine the whole chapter — input handling, conversion, arithmetic,
-and output — into one honest program. It splits a restaurant bill, tip
-included, among friends:
+and output — into one honest program that splits a restaurant bill, tip
+included, among friends. It has three acts, and so does almost every
+interactive program you will write:
+
+1. **Read** the raw answers as text (here, hard-coded as strings).
+2. **Convert** each one to the right type — `float` for money, `int` for
+   counts.
+3. **Compute** the results, then report them formatted to the cent.
 
 ```python
 # --- read (imagine the user typed these three answers) ---
@@ -256,8 +265,7 @@ Per person: $18.44
 
 Walk the numbers: 18% of \$62.50 is \$11.25; the total is \$73.75; split
 four ways, each person owes \$18.4375, displayed to the cent as `$18.44`.
-Notice the three-act structure — *read, convert, compute* — and how each
-conversion picked the right type (`float` for money, `int` for counts).
+
 The `f"..."` strings with `:.2f` are a preview of **f-strings**, the
 formatting tool [Chapter 3.4](../ch03-functions/04-output-formatting.md)
 covers properly; here they just mean "show two decimal places".

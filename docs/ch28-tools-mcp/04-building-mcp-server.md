@@ -208,10 +208,12 @@ the model's side:
 | A wrong `action` silently does the wrong thing | A wrong tool name is rejected outright |
 | You cannot give `delete` a confirmation step without giving `read` one | Permissions per tool |
 
-Split it. Ten small tools with sharp schemas beat one flexible tool every
-time. The counterweight: do not split so far that a routine task needs six
-round trips. If the model *always* calls `open_file` then `read_file`, make
-that one tool.
+Split it: ten small tools with sharp schemas beat one flexible tool every
+time.
+
+The counterweight is real, though. Do not split so far that a routine task
+needs six round trips — if the model *always* calls `open_file` and then
+`read_file`, make that one tool.
 
 **Descriptions are prompts.** Say what the tool does, when to use it, when
 *not* to, what the units are, and what happens on failure. "Returns 0 for an
@@ -243,22 +245,27 @@ the context window and cost real money. Return a page plus a cursor:
 
 The same convention applies to the protocol's own list methods: `tools/list`,
 `resources/list`, and `prompts/list` all accept an optional `cursor` param
-and may return a `nextCursor` in the result. Exercise 28.5 has you implement
+and may return a `nextCursor` in the result. Exercise 28.7 has you implement
 exactly that.
 
 ## Testing an MCP server
 
-An MCP server is unusually pleasant to test, because its interface is
-*dicts*. No network, no mocking library, no fixtures beyond a constructor:
-build a server, hand it a message, assert on the message that comes back.
-That is [arrange, act, assert](../ch24-practice/02-testing.md) with nothing
-in the way.
+An MCP server is unusually pleasant to test, because its interface is *dicts*.
+No network, no mocking library, no fixtures beyond a constructor:
 
-Two families of test are worth writing, and they catch different bugs.
-**Protocol conformance** tests check the envelope: ids match, notifications
-are silent, unknown methods produce $-32601$. **Tool contract** tests check
-the payload: every tool advertises a schema and a real description, a good
-call returns content, a bad call returns the right kind of failure.
+1. Build a server.
+2. Hand it a message.
+3. Assert on the message that comes back.
+
+That is [arrange, act, assert](../ch24-practice/02-testing.md) with nothing in
+the way. Two families of test are worth writing, and they catch different
+bugs:
+
+- **Protocol conformance** tests check the envelope: ids match, notifications
+  are silent, unknown methods produce $-32601$.
+- **Tool contract** tests check the payload: every tool advertises a schema
+  and a real description, a good call returns content, a bad call returns the
+  right *kind* of failure.
 
 ```python
 # --- the server under test: MiniMCPServer from 28.3, condensed -------
@@ -420,33 +427,43 @@ yourself the loop really inspects every tool.
 
 ## Debugging
 
-**The MCP Inspector** is the tool you want first: an interactive developer
-tool, published by the protocol's maintainers as
-`@modelcontextprotocol/inspector`, that launches your server, performs the
-handshake, and gives you a UI to browse `tools/list` and fire `tools/call`
-with arguments you type. It shows the raw JSON-RPC in both directions, which
-means you can see a malformed schema before a model ever does.
+### The MCP Inspector
+
+This is the tool you want first: an interactive developer tool, published by
+the protocol's maintainers as `@modelcontextprotocol/inspector`. It launches
+your server, performs the handshake, and gives you a UI to browse `tools/list`
+and fire `tools/call` with arguments you type.
+
+It also shows the raw JSON-RPC in both directions, which means you can see a
+malformed schema before a model ever does.
 
 ```console
 $ npx @modelcontextprotocol/inspector python -m inventory_mcp
 ```
 
-**Log to stderr — never stdout.** This is the number-one first-day bug on the
-stdio transport, and it is worth understanding rather than memorising. On
-stdio, your server's **stdout is the protocol**: the client reads it line by
-line and parses each line as a JSON-RPC message. A stray `print("got here")`
-inserts `got here` into that stream, the client tries `json.loads("got
-here")`, and the connection dies with a parse error that names *your debug
-line* as the problem. `logging.basicConfig(stream=sys.stderr)` — or
-`console.error` in Node — keeps your diagnostics on a channel nobody is
-parsing. Over the HTTP transport, stdout is harmless, which is exactly why
-this bug is so confusing when a server works in one host and not another.
+### Log to stderr — never stdout
 
-Three more habits that pay for themselves: run your tests before starting the
-host, because a server that crashes during `initialize` often shows up in the
-host as a bare "server failed to start"; make the server's own errors
-descriptive enough to be read in a log with no context; and version your tool
-schemas, because a host may have cached the previous list.
+This is the number-one first-day bug on the stdio transport, and it is worth
+understanding rather than memorising:
+
+1. On stdio, your server's **stdout is the protocol**. The client reads it
+   line by line and parses each line as a JSON-RPC message.
+2. A stray `print("got here")` inserts `got here` into that stream.
+3. The client tries `json.loads("got here")` and the connection dies — with a
+   parse error that names *your debug line* as the problem.
+
+`logging.basicConfig(stream=sys.stderr)`, or `console.error` in Node, keeps
+your diagnostics on a channel nobody is parsing. Over the HTTP transport
+stdout is harmless, which is exactly why this bug is so confusing when a
+server works in one host and not another.
+
+### Three more habits
+
+- **Run your tests before starting the host.** A server that crashes during
+  `initialize` often shows up in the host as a bare "server failed to start".
+- **Make the server's own errors descriptive** enough to be read in a log with
+  no surrounding context.
+- **Version your tool schemas.** A host may have cached the previous list.
 
 ## Security
 
@@ -499,13 +516,18 @@ print("naive '..' check says '/etc/passwd' is safe:",
       naive_is_safe("/etc/passwd"), "— an absolute path needs no '..'")
 ```
 
-Three allowed, three denied — and look at the last allowed one: `./ok/../fine.md`
+Three allowed, three denied. Look at the last allowed one: `./ok/../fine.md`
 contains `..` but stays inside the root, so a string check would wrongly
-*deny* it while wrongly *allowing* `/etc/passwd`. Resolving first and
-comparing against the root gets both right. (`Path.resolve()` also collapses
-symlinks, which is the other way out of a directory.) Note that
-`root / "/etc/passwd"` discards the root entirely — absolute paths win in
-`pathlib` — which is precisely why the comparison happens after resolution.
+*deny* it while wrongly *allowing* `/etc/passwd`.
+
+Resolving first and comparing against the root gets both right. Two details
+make it work:
+
+- **`Path.resolve()` also collapses symlinks**, which is the other way out of
+  a directory.
+- **`root / "/etc/passwd"` discards the root entirely** — absolute paths win
+  in `pathlib` — which is precisely why the comparison happens *after*
+  resolution.
 
 **Secrets never go in tool descriptions or schemas.** Every description and
 every schema is sent to the model, and from there into logs, traces, and
@@ -513,13 +535,16 @@ sometimes a provider's servers. Put credentials in the environment, read them
 at startup, and never echo them in an error message.
 
 **Human in the loop for anything irreversible.** Sending, deleting, paying,
-deploying, merging. Hosts generally prompt the user before a tool call, but
-do not rely on the host: mark destructive tools clearly, keep them separate
-from read-only ones, and where the stakes justify it, require a confirmation
-token that only a human flow can produce. Least privilege is the same
-argument in credential form — if the server only needs to read, give it a
-read-only account, and the worst case of a successful prompt injection is an
-information leak rather than a deletion.
+deploying, merging. Hosts generally prompt the user before a tool call, but do
+not rely on the host:
+
+- **Mark destructive tools clearly** and keep them separate from read-only
+  ones.
+- **Require a confirmation token** that only a human flow can produce, where
+  the stakes justify it.
+- **Apply least privilege.** If the server only needs to read, give it a
+  read-only account — then the worst case of a successful prompt injection is
+  an information leak rather than a deletion.
 
 !!! warning "Common mistakes"
 

@@ -54,16 +54,18 @@ problem — and the fix is to add the jumps by hand.
 
 ## Add an express lane
 
-Put every second node onto a second list — an express lane above the local
-one. Search the express lane until the next key would overshoot, then drop
-down and walk the local lane. With $n$ nodes below and $n/2$ above you pay
-about $n/2 + 2$ steps, and with an express lane of every $\sqrt n$-th node
-you pay about $2\sqrt n$. Better, but still not logarithmic.
+Put every second node onto a second list — an express lane above the local one.
+Search the express lane until the next key would overshoot, then drop down and
+walk the local lane.
 
-The move that *is* logarithmic: **put an express lane above the express
-lane, and keep going.** Each level halves the number of nodes, so there are
-about $\log_2 n$ levels, and at each level you take a couple of steps before
-dropping down.
+That helps, but not enough. With $n$ nodes below and $n/2$ above you pay about
+$n/2 + 2$ steps; with an express lane of every $\sqrt n$-th node you pay about
+$2\sqrt n$. Better, still not logarithmic.
+
+The move that *is* logarithmic: **put an express lane above the express lane,
+and keep going.** Each level halves the number of nodes, so there are about
+$\log_2 n$ levels, and at each level you take a couple of steps before dropping
+down.
 
 ```mermaid
 flowchart LR
@@ -81,19 +83,27 @@ flowchart LR
     end
 ```
 
-Every node lives in level 0; a node that appears at level $k$ also appears
-at every level below it. The search rule is two lines:
+Every node lives in level 0; a node that appears at level $k$ also appears at
+every level below it.
 
-> Start at the header on the top level. **While the next key on this level
-> is smaller than the target, step right.** Otherwise **drop down one
-> level.** At the bottom, the next node is the answer or the target is
-> absent.
+!!! note "The skip-list search rule"
 
-Searching for 41 in the picture: at level 2, step right to 25 (25 < 41);
-next is `nil`, so drop. At level 1, the next key is 58, which is not
-smaller, so drop again. At level 0, step right to 31, and the node after it
-is 41. Four comparisons instead of six, on ten keys — and the gap widens
-fast with $n$.
+    Start at the header on the top level, then repeat two moves:
+
+    1. While the next key on this level is **smaller** than the target, step
+       right.
+    2. Otherwise, drop down one level.
+
+    At the bottom, the next node is either the answer or proof that the target
+    is absent.
+
+Searching for 41 in the picture, step by step: at level 2, step right to 25
+(25 < 41); next is `nil`, so drop. At level 1, the next key is 58, which is not
+smaller, so drop again. At level 0, step right to 31, and the node after it is
+41.
+
+Four comparisons instead of six, on ten keys — and the gap widens fast with
+$n$.
 
 ```mermaid
 flowchart LR
@@ -114,10 +124,15 @@ require shuffling half the structure on every update, which is precisely the
 rebalancing work we were trying to avoid.
 
 The skip list's idea, due to William Pugh in 1990, is to stop insisting.
-**When a node is inserted, flip a coin: heads, promote it one level and flip
-again; tails, stop.** Nobody coordinates, nobody rebalances, and yet the
-level populations come out right *on average* — half the nodes at level 0
-only, a quarter reaching level 1, an eighth reaching level 2, and so on:
+
+!!! note "The promotion rule"
+
+    When a node is inserted, **flip a coin**: heads, promote it one level and
+    flip again; tails, stop. Nobody coordinates and nobody rebalances.
+
+And yet the level populations come out right *on average* — half the nodes at
+level 0 only, a quarter reaching level 1, an eighth reaching level 2, and so
+on:
 
 $$ P(\text{node reaches level } k) = p^{\,k} = 2^{-k}, \qquad
    \mathbb{E}[\text{levels}] = \frac{1}{1-p} = 2 $$
@@ -170,20 +185,28 @@ average pointers per node: 1.965 (theory: 1/(1-p) = 2)
 tallest tower reached level 10 (log2(1000) = 9.97)
 ```
 
-Each level really does hold about half of the one below — 1000, 491, 237,
-123 — and the average tower is 1.97 pointers tall against a prediction of 2.
+Each level really does hold about half of the one below — 1000, 491, 237, 123 —
+and the average tower is 1.97 pointers tall against a prediction of 2.
+
 The ratios wobble once the counts get small, exactly as coin flips should:
-there is no mechanism forcing them, only probability. Nobody counted
-anything, nobody rebalanced anything, and the structure came out levelled.
-That is the entire balancing mechanism.
+there is no mechanism forcing them, only probability. Nobody counted anything,
+nobody rebalanced anything, and the structure came out levelled. That is the
+entire balancing mechanism.
 
 ## A complete skip list
 
-The one piece of machinery an implementation needs is the **update array**:
-while searching down and right, remember for each level the last node you
-stood on. Those are exactly the nodes whose pointers must change when you
-splice a new node in or cut an old one out — the linked-list "keep hold of
-the predecessor" trick from Chapter 18, once per level.
+The one piece of machinery an implementation needs is the **update array**.
+Every operation is then the same three steps:
+
+1. **Search down and right**, and for each level remember the last node you
+   stood on. That array of remembered nodes is `update`.
+2. **Roll the dice** (insert only) to decide how tall the new node is.
+3. **Splice or unsplice**, one lane at a time, using `update[i]` as the
+   predecessor at level $i$.
+
+Those remembered nodes are exactly the ones whose pointers must change — the
+linked-list "keep hold of the predecessor" trick from Chapter 18, once per
+level.
 
 ```python
 import random
@@ -327,16 +350,17 @@ L1:   H   .   .  14  25  31  58   .   .  84
 L0:   H   3   9  14  25  31  58  62  77  84
 ```
 
-Notice how much lumpier the real structure is than the idealised diagram
-above: the coin flips gave 14 a tower and skipped 9 entirely, and level 2
-holds two nodes rather than a tidy every-fourth. It does not matter. What
-matters is only that towers get rarer at a fixed rate, and the search still
-took the same shape.
+Notice how much lumpier the real structure is than the idealised diagram above:
+the coin flips gave 14 a tower and skipped 9 entirely, and level 2 holds two
+nodes rather than a tidy every-fourth.
 
-Every operation is the same three lines — find the predecessors, then splice
-or unsplice — and there is no case analysis anywhere. Compare that with
-[AVL rebalancing](../ch35-balanced-trees/02-avl.md)'s four cases and
-red-black deletion's six.
+It does not matter. What matters is only that towers get rarer at a fixed rate,
+and the search still took the same shape.
+
+Every operation is the same three steps — find the predecessors, then splice or
+unsplice — and there is no case analysis anywhere. Compare that with
+[AVL rebalancing](../ch35-balanced-trees/02-avl.md)'s four cases and red-black
+deletion's six.
 
 ## Watching one insertion
 
@@ -428,19 +452,21 @@ what the name says.
 
 An AVL tree's $O(\log n)$ is a **theorem about every possible input**. A skip
 list's is a statement about probability: the expected search cost is
-$O(\log n)$, and the chance of being much worse falls off very fast. The
-formal statement is *with high probability*: for any constant $c$, the
-probability that a search on $n$ keys costs more than $c\log_2 n$ steps
-shrinks polynomially in $n$. A skip list of a million keys taking a thousand
-steps is not impossible — it is roughly as likely as flipping a hundred
-heads in a row.
+$O(\log n)$, and the chance of being much worse falls off very fast.
+
+The formal statement is *with high probability*: for any constant $c$, the
+probability that a search on $n$ keys costs more than $c\log_2 n$ steps shrinks
+polynomially in $n$. A skip list of a million keys taking a thousand steps is
+not impossible — it is roughly as likely as flipping a hundred heads in a row.
 
 The crucial detail is **whose randomness it is**. A plain BST also has good
 *average* behaviour, and Chapter 35 opened by showing how easily an adversary
-(or an ordinary sorted file) destroys it, because the randomness came from
-the *input*. A skip list's randomness comes from its own private generator.
-Feed it perfectly sorted keys, reversed keys, or keys chosen by an attacker
-who has read this page — the coin flips do not care.
+(or an ordinary sorted file) destroys it, because the randomness came from the
+*input*.
+
+A skip list's randomness comes from its own private generator. Feed it
+perfectly sorted keys, reversed keys, or keys chosen by an attacker who has read
+this page — the coin flips do not care.
 
 ```python
 # continues
@@ -512,14 +538,15 @@ then 500. Second, **the sorted and shuffled columns agree**. The input order
 is irrelevant, which is exactly the property a plain BST lacks and the
 property that cost Chapter 35 three rotation schemes to obtain.
 
-The ratio column settles just under 2. For $p = 1/2$ the theory predicts
-about $\log_2 n$ drops plus about $\log_2 n$ steps to the right — roughly
-$2\log_2 n$ node visits, of which our counter sees the key comparisons. The
-`top level` column tracks $\log_2 n$ as well, until it meets the
-`max_level = 16` ceiling at $n = 4000$; that ceiling is why a real
-implementation sizes it for the largest table it expects. Turning $p$ down
-to $1/4$ makes the towers shorter and the walks longer, trading memory for
-time — Redis uses $p = 1/4$ for exactly that reason.
+The ratio column settles just under 2. For $p = 1/2$ the theory predicts about
+$\log_2 n$ drops plus about $\log_2 n$ steps to the right — roughly
+$2\log_2 n$ node visits, of which our counter sees the key comparisons.
+
+The `top level` column tracks $\log_2 n$ as well, until it meets the
+`max_level = 16` ceiling at $n = 4000$. That ceiling is why a real
+implementation sizes it for the largest table it expects. Turning $p$ down to
+$1/4$ makes the towers shorter and the walks longer, trading memory for time —
+Redis uses $p = 1/4$ for exactly that reason.
 
 ## Where skip lists are used, and why
 
@@ -539,15 +566,16 @@ showing up in real systems?
   forward through document ids without decoding everything in between.
 
 The pattern behind that list is **concurrency**. Rebalancing a tree is a
-structural change: a rotation moves several nodes at once, so a writer must
-lock a whole neighbourhood and readers must be kept out of it. A skip list
-insertion is a handful of independent single-pointer updates, each of which
-can be done atomically, and a reader traversing at level 0 never sees a
-half-finished rotation because there are none. Lock-free skip lists are
-merely difficult; lock-free balanced trees are a research topic.
+structural change: a rotation moves several nodes at once, so a writer must lock
+a whole neighbourhood and readers must be kept out of it.
 
-The second reason is plain economics of engineering: an implementation is
-about eighty lines and reviewers can verify it. Red-black deletion is not.
+A skip list insertion is a handful of independent single-pointer updates, each
+of which can be done atomically, and a reader traversing at level 0 never sees a
+half-finished rotation because there are none. Lock-free skip lists are merely
+difficult; lock-free balanced trees are a research topic.
+
+The second reason is plain economics of engineering: an implementation is about
+eighty lines and reviewers can verify it. Red-black deletion is not.
 
 | | Skip list | [Balanced BST](../ch35-balanced-trees/index.md) | Hash table |
 |---|---|---|---|

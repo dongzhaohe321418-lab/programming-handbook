@@ -1,6 +1,6 @@
 # Project 6 · A ReAct Agent from Scratch
 
-[Chapter 30](../../ch30-agents/index.md) built an agent in ninety lines and
+[Chapter 30](../../ch30-agents/index.md) built an agent in about a hundred and twenty lines and
 then broke it four different ways. This project builds the version that
 survives being broken: a tool registry that validates arguments before it
 runs anything, a parser that hands the model a *repair message* instead of a
@@ -66,14 +66,14 @@ the way. That last row is the whole reason the guards exist.
 - [30.1 The agent loop and ReAct](../../ch30-agents/01-agent-loop-react.md)
   — the Thought/Action/Observation cycle, the step budget, the loop guard,
   and the rule that *your program* writes the `Observation` lines.
-- [30.4 Frameworks and production concerns](../../ch30-agents/04-frameworks.md)
+- [30.4 The framework landscape](../../ch30-agents/04-frameworks.md)
   — spans, traces, and the reason a swallowed error must still be recorded.
 - [29.3 Agent memory and context management](../../ch29-memory-rag/03-agent-memory.md)
   — the context is a budget you pay every turn; summarise the old, keep the
   recent.
 - [28.1 Function calling and JSON Schema](../../ch28-tools-mcp/01-function-calling.md)
   — arguments arrive as JSON and get validated before anything runs.
-- [Chapter 13 · Program Design](../../ch13-design/index.md) — five small
+- [Chapter 13 · Class Design and UML](../../ch13-design/index.md) — five small
   classes with one job each, assembled by a loop that knows about none of
   their internals.
 - [Chapter 41 · Regular Expressions](../../ch41-regex/index.md) — the
@@ -187,7 +187,7 @@ loop feeds that repair message back as the observation instead of crashing.
             for tag in ("Thought", "Action Input", "Action", "Final Answer"):
                 if line.strip().startswith(tag + ":"):
                     fields[tag] = line.strip()[len(tag) + 1:].strip()
-                    break                       # longest tag wins
+                    break                       # "Action Input" before "Action"
         if "Action Input" not in fields:
             return {"kind": "unparsed",
                     "repair": "PARSE ERROR: add an 'Action Input:' line "
@@ -567,7 +567,7 @@ appreciate after you have watched a run without them.
         """
         fields = {}
         for line in reply.splitlines():
-            for tag in FIELDS:                    # longest tags first: see FIELDS
+            for tag in FIELDS:                    # "Action Input" before "Action"
                 if line.strip().startswith(tag + ":"):
                     fields[tag] = line.strip()[len(tag) + 1:].strip()
                     break
@@ -986,7 +986,8 @@ appreciate after you have watched a run without them.
 — because the policy's contract is the contract a chat API already offers:
 text in, text out. Replacing the stand-in is that line and nothing else.
 This is not runnable here because it needs a network and an API key, which
-is precisely why the rest of the project uses `FakeLLM`:
+is precisely why the rest of the project uses rule-based stand-ins such as
+`HeightGapLLM`:
 
 ```text
 # before — deterministic, offline, free, and identical on every machine:

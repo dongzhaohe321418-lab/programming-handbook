@@ -22,14 +22,18 @@ different clothes. This chapter covers the core four: how to *store* a graph
 one (§37.3), and how to *connect* one at minimum cost (§37.4). Between them
 they are perhaps eighty percent of the graph algorithms you will ever need.
 
-The chapter is built on things you already own. Breadth-first search is a
-[queue](../ch19-stacks-queues/03-queues.md) plus a
-[set](../ch14-beyond/01-collections-tour.md). Depth-first search is the same
-loop with a [stack](../ch19-stacks-queues/02-stacks.md), or with
-[recursion](../ch17-recursion/index.md) letting the call stack do the work.
-Dijkstra's algorithm is breadth-first search with the queue upgraded to the
-[priority queue you built in Chapter 21](../ch21-heaps/02-priority-queues.md).
-Kruskal's algorithm starts by [sorting](../ch22-sorting/index.md) the edges.
+The chapter is built entirely on things you already own:
+
+- **Breadth-first search** is a [queue](../ch19-stacks-queues/03-queues.md)
+  plus a [set](../ch14-beyond/01-collections-tour.md).
+- **Depth-first search** is the same loop with a
+  [stack](../ch19-stacks-queues/02-stacks.md), or with
+  [recursion](../ch17-recursion/index.md) letting the call stack do the work.
+- **Dijkstra's algorithm** is breadth-first search with the queue upgraded to
+  the [priority queue you built in Chapter 21](../ch21-heaps/02-priority-queues.md).
+- **Kruskal's algorithm** starts by [sorting](../ch22-sorting/index.md) the
+  edges.
+
 Nothing here is a new primitive; it is old primitives pointed at a new kind of
 data. Every algorithm is traced on a drawn example before it is implemented,
 and every failure mode — the cycle that traps a naive walk, the negative edge

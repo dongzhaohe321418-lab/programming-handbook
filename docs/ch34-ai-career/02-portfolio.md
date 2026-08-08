@@ -3,19 +3,29 @@
 Phase 4 of the learning path produces evidence, and this section is about what
 counts as evidence. The short version: a project that **runs**, is **measured**,
 and is **documented** beats any list of technologies, and it beats it by so much
-that the comparison is not close. A repository whose README opens with "built
-with LangChain, Pinecone, FastAPI, Docker" tells a reader which tutorials you
-followed. A repository whose README opens with "answers questions over 40k
-support tickets; 71% ± 6 exact-match on a 200-item held-out set, up from 48%
-with naive chunking; p95 latency 1.9s; here is what still fails" tells them you
-can do the job.
+that the comparison is not close.
+
+Compare two opening lines. A README that opens with "built with LangChain,
+Pinecone, FastAPI, Docker" tells a reader which tutorials you followed. One that
+opens with "answers questions over 40k support tickets; 71% ± 6 exact-match on a
+200-item held-out set, up from 48% with naive chunking; p95 latency 1.9s; here is
+what still fails" tells them you can do the job.
 
 ## Four portfolio archetypes
 
 Four projects that reliably demonstrate the skills of Part V. Build **one**
 properly rather than four halfway; a single finished, measured system is worth
-more than a portfolio page of abandoned starts. Each archetype below comes with
-the trap that eats most attempts at it.
+more than a portfolio page of abandoned starts.
+
+| Archetype | What it proves you can do | The headline number | The trap that eats it |
+| --- | --- | --- | --- |
+| **1. MCP server + agent** | design tools a model can use, and loop over them | task success rate on questions written in advance | wrapping one API call and calling it an agent |
+| **2. Inference study** | turn cost and speed into arithmetic | latency and throughput *curves*, not points | drawing conclusions from a 5% difference on a laptop |
+| **3. Data + alignment** | engineer a dataset and prove a training change helped | before and after on a held-out set, with intervals | evaluating on data from the generator that made the training set |
+| **4. A reproduction** | read a paper closely enough to rebuild it | their number, your number, and the gap explained | treating a difference as failure and abandoning the write-up |
+
+Each archetype below is laid out the same way — **Scope**, **Measure**, **The
+trap** — so you can compare them straight down the page.
 
 ### 1. A domain MCP server plus an agent
 
@@ -106,7 +116,7 @@ no context and no patience, exactly like a code reviewer.
 | **Limitations** | a short list | what it does badly, what you did not test, what would break at scale |
 | **How to run** | a code block | clone, install, one command that produces the results table |
 
-Four rules that separate a README that works from one that does not.
+### Four rules that separate a README that works from one that does not
 
 **Lead with the number, and put an interval on it.** "71% ± 6 on 200 held-out
 items, against a 48% baseline" is a sentence a reader can evaluate. "Achieves
@@ -137,32 +147,47 @@ conventions, respond to review, and finish. Those are precisely the things a
 personal project cannot demonstrate and precisely the things a team is hiring
 for.
 
-**Finding a first issue.** Pick a project you already use — that is not advice
-about passion, it is about being able to tell whether a change is correct. Then,
-in order of increasing effort: reproduce an open bug and post the exact steps and
-environment (valuable on its own, and often the whole blocker); fix a
-documentation error you personally hit; add a test for an untested branch; then
-take a small labelled issue. Read `CONTRIBUTING.md` first, and read the last
-twenty merged pull requests before opening one — they tell you the house style
-faster than any document.
+### Finding a first issue
 
-**First-PR etiquette.** Comment on the issue before you start, so two people do
-not do the same work. Keep the change small and single-purpose; a 40-line PR gets
-reviewed today and a 900-line PR gets reviewed eventually. Match the surrounding
-style even where you disagree with it. Include a test that fails before your
-change and passes after ([24.2](../ch24-practice/02-testing.md)). Write a
-description with what, why, and how you verified it
-([24.1](../ch24-practice/01-git-workflow.md)). When review comes, respond to
-every comment, push fixes as new commits so the reviewer can see what changed,
-and do not argue about style in your first contribution. Then be patient:
-maintainers are volunteers and a two-week wait is normal, not rejection.
+Pick a project you already use. That is not advice about passion — it is about
+being able to tell whether a change is correct. Then work up in order of
+increasing effort:
 
-**Why documentation and test pull requests are underrated.** They are the two
-kinds of contribution maintainers most reliably want and least reliably get.
-They require you to understand the code as well as a feature PR would, they are
-much easier to review, and they get merged. Three merged documentation fixes
-tell a hiring manager that you can operate inside someone else's project; one
-unmerged 900-line feature branch tells them nothing at all.
+1. **Reproduce an open bug** and post the exact steps and environment. Valuable
+   on its own, and often the whole blocker.
+2. **Fix a documentation error** you personally hit.
+3. **Add a test** for an untested branch.
+4. **Take a small labelled issue.**
+
+Read `CONTRIBUTING.md` first, and read the last twenty merged pull requests
+before opening one — they tell you the house style faster than any document.
+
+### First-PR etiquette
+
+- **Comment on the issue before you start**, so two people do not do the same
+  work.
+- **Keep the change small and single-purpose.** A 40-line PR gets reviewed
+  today; a 900-line PR gets reviewed eventually.
+- **Match the surrounding style**, even where you disagree with it.
+- **Include a test that fails before your change and passes after**
+  ([24.2](../ch24-practice/02-testing.md)).
+- **Write a description with what, why, and how you verified it**
+  ([24.1](../ch24-practice/01-git-workflow.md)).
+- **When review comes, answer every comment**, push fixes as new commits so the
+  reviewer can see what changed, and do not argue about style in your first
+  contribution.
+- **Then be patient.** Maintainers are volunteers, and a two-week wait is normal
+  rather than rejection.
+
+### Why documentation and test pull requests are underrated
+
+They are the two kinds of contribution maintainers most reliably want and least
+reliably get. They require you to understand the code as well as a feature PR
+would, they are much easier to review, and they get merged.
+
+Three merged documentation fixes tell a hiring manager that you can operate
+inside someone else's project. One unmerged 900-line feature branch tells them
+nothing at all.
 
 ## Research output, honestly
 
@@ -191,12 +216,16 @@ part of your record, so apply Chapter 33's standards to yourself before you post
 
 ## Interviewing
 
-**System design for LLM roles** is a distinct format. The questions are open —
-*design a RAG system for a company's internal documents*, *design a serving
-stack for a chat product*, *design an evaluation pipeline for an agent* — and the
-interviewer is watching for whether you ask about constraints before you draw
-boxes, whether you can do capacity arithmetic out loud, and whether you know
-which parts are hard.
+### System design for LLM roles
+
+This is a distinct format. The questions are open — *design a RAG system for a
+company's internal documents*, *design a serving stack for a chat product*,
+*design an evaluation pipeline for an agent* — and the interviewer is watching
+for three things:
+
+- whether you **ask about constraints** before you draw boxes;
+- whether you can do **capacity arithmetic out loud**;
+- whether you know **which parts are hard**.
 
 Here is a worked outline for the first one.
 
@@ -279,16 +308,21 @@ expensive. Say out loud that the prices are placeholders and that you would
 substitute current ones — an interviewer who knows the field will trust the
 method and distrust confident stale numbers.
 
-**The coding round is still a coding round.** For most LLM engineering roles it
-is ordinary data-structures work: hash maps, graphs, two pointers, recursion with
-memoisation, occasionally a heap. Parts III and VI are the preparation, and
-[34.1](01-learning-path.md)'s drill schedule is how to keep it warm. Two pieces
-of advice that generalise: state the complexity before you write the code, and
-say what you are testing as you test it — interviewers are grading your process
-at least as much as your solution ([16.1](../ch16-complexity/01-big-o.md)).
-Expect at least one round to be practical instead: fix a bug in a small agent,
-write a scorer, or design a prompt with an eval attached. Chapter 33 is
-unusually good preparation for that round because almost nobody prepares for it.
+### The coding round is still a coding round
+
+For most LLM engineering roles it is ordinary data-structures work: hash maps,
+graphs, two pointers, recursion with memoisation, occasionally a heap. Parts III
+and VI are the preparation, and [34.1](01-learning-path.md)'s drill schedule is
+how to keep it warm.
+
+Two pieces of advice that generalise: **state the complexity before you write
+the code**, and **say what you are testing as you test it**. Interviewers are
+grading your process at least as much as your solution
+([16.1](../ch16-complexity/01-big-o.md)).
+
+Expect at least one round to be practical instead — fix a bug in a small agent,
+write a scorer, or design a prompt with an eval attached. Chapter 33 is unusually
+good preparation for that round, because almost nobody prepares for it.
 
 ## Staying current without drowning
 
@@ -311,15 +345,20 @@ every morning.
 
 The reason this is enough brings the chapter back to where Part V started. Most
 of what looks new is a recombination of mechanisms you have already built by
-hand. A new attention variant is a change to the numbers you computed in
-[Chapter 26](../ch26-llm-internals/index.md); a new serving trick is arithmetic
-you did in [Chapter 27](../ch27-inference/index.md); a new alignment method is a
-different way to estimate the gradient in
-[Chapter 31](../ch31-rl/index.md); and every claim about any of them is a
-measurement that deserves the scrutiny of
-[Chapter 33](../ch33-eval/index.md). Those foundations are what let you read a
-launch announcement and work out in an afternoon whether it changes anything for
-you. Tools age in months. That understanding does not.
+hand:
+
+- a new attention variant is a change to the numbers you computed in
+  [Chapter 26](../ch26-llm-internals/index.md);
+- a new serving trick is arithmetic you did in
+  [Chapter 27](../ch27-inference/index.md);
+- a new alignment method is a different way to estimate the gradient in
+  [Chapter 31](../ch31-rl/index.md);
+- and every claim about any of them is a measurement that deserves the scrutiny
+  of [Chapter 33](../ch33-eval/index.md).
+
+Those foundations are what let you read a launch announcement and work out in an
+afternoon whether it changes anything for you. Tools age in months. That
+understanding does not.
 
 !!! warning "Common mistakes"
 

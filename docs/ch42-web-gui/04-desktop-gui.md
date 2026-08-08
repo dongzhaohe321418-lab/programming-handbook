@@ -13,35 +13,38 @@ dirty-tracking re-render.
 
 ## When a desktop app beats a web page
 
-Choose a **desktop application** when the program must reach the machine: read
+**Choose a desktop application when the program must reach the machine.** Read
 and write arbitrary local files at speed, drive specialised hardware, use the
 GPU heavily, run offline for hours, sit in the menu bar or system tray, or
 respond with sub-frame latency. Video editors, IDEs, CAD tools, digital audio
 workstations, and instrument-control software are desktop applications for
 these reasons and not out of nostalgia.
 
-Choose a **web application** when reach and updating matter more: no install,
+**Choose a web application when reach and updating matter more.** No install,
 one URL, every platform including phones, an update that ships to everyone the
 moment you deploy, and a natural place to keep shared data. Most business
 software is a web application because the alternative is shipping an installer
 to ten thousand machines every fortnight.
 
-And be honest about the third option: a **terminal program** — the kind you
-have been writing all book — is often the correct answer for a tool used by
-one person or invoked by other programs. It is faster to build, trivially
-scriptable, works over SSH, and does not need a designer. A great deal of
-software has been made worse by a graphical interface nobody asked for.
+**And be honest about the third option: a terminal program.** The kind you have
+been writing all book is often the correct answer for a tool used by one person
+or invoked by other programs. It is faster to build, trivially scriptable,
+works over SSH, and does not need a designer. A great deal of software has been
+made worse by a graphical interface nobody asked for.
 
 ## The concepts every toolkit shares
 
-Four ideas transfer between JavaFX, tkinter, Qt, Swing, SwiftUI, Android, and
+Five ideas transfer between JavaFX, tkinter, Qt, Swing, SwiftUI, Android, and
 the browser. Learn them once.
 
-**1. The widget tree.** A window contains panels, which contain controls. It is
-the same shape as the DOM from [42.1](01-html-css.md) — a tree with one root,
-each node holding children, drawn parent-first so children paint on top. JavaFX
-calls it the **scene graph**; the browser calls it the DOM; tkinter just calls
-them widgets. Same tree.
+### 1. The widget tree
+
+A window contains panels, which contain controls. It is the same shape as the
+DOM from [42.1](01-html-css.md) — a tree with one root, each node holding
+children, drawn parent-first so children paint on top.
+
+JavaFX calls it the **scene graph**; the browser calls it the DOM; tkinter just
+calls them widgets. **Same tree.**
 
 ```mermaid
 flowchart TD
@@ -54,24 +57,30 @@ flowchart TD
     H --> B2["Button '+'"]
 ```
 
-**2. Layout managers, not coordinates.** You *could* place every control at an
-absolute pixel position. Do not: the window resizes, the user's font is bigger
-than yours, the translated German label is 40% longer, and the layout falls
-apart. Instead you declare *relationships* — "stack these vertically", "put
-this in the centre", "share the extra space equally" — and a **layout manager**
+### 2. Layout managers, not coordinates
+
+You *could* place every control at an absolute pixel position. Do not: the
+window resizes, the user's font is bigger than yours, the translated German
+label is 40% longer, and the layout falls apart.
+
+Instead you declare *relationships* — "stack these vertically", "put this in
+the centre", "share the extra space equally" — and a **layout manager**
 computes the positions on every resize. This is exactly the flexbox bargain
 from [42.1](01-html-css.md), and every toolkit makes it: JavaFX has `VBox`,
 `HBox`, `GridPane`, `BorderPane`; tkinter has `pack`, `grid`, `place`; Qt has
 box and grid layouts.
 
-**3. Event handlers.** You register functions; the framework calls them. The
-inversion of control from
+### 3. Event handlers
+
+You register functions; the framework calls them. The inversion of control from
 [Chapter 14.3](../ch14-beyond/03-guis-and-beyond.md), unchanged.
 
-**4. The UI thread rule.** Every toolkit has exactly one thread allowed to
-touch widgets — the **JavaFX Application Thread**, tkinter's main loop thread,
-Swing's Event Dispatch Thread. Two consequences follow, and they are the source
-of most GUI bugs in existence:
+### 4. The UI thread rule
+
+Every toolkit has exactly one thread allowed to touch widgets — the **JavaFX
+Application Thread**, tkinter's main loop thread, Swing's Event Dispatch
+Thread. Two consequences follow, and they are the source of most GUI bugs in
+existence:
 
 - **Never do slow work on it.** The loop cannot dispatch the next event while
   your handler is running, so a three-second database query means a
@@ -88,21 +97,29 @@ of most GUI bugs in existence:
   (tkinter), or `invokeLater` (Swing). Violating this produces the worst class
   of bug: intermittent, unreproducible, and dependent on timing.
 
-**5. Separate the state from the view.** The pattern has several names —
-**MVC** (Model, View, Controller) and **MVVM** (Model, View, ViewModel) are the
-common two — and one idea: the **model** is the data and rules, knowing nothing
-about buttons; the **view** displays it; a thin layer in between reacts to input
-and updates the model. Keep them apart and you can test the model without a
-screen, redesign the screen without touching the logic, and answer "why is this
-number wrong?" by looking in one place. It is the same one-way flow the todo
-page in [42.3](03-javascript.md) used, and the same
+### 5. Separate the state from the view
+
+The pattern has several names — **MVC** (Model, View, Controller) and **MVVM**
+(Model, View, ViewModel) are the common two — and one idea, in three parts:
+
+- the **model** is the data and the rules, knowing nothing about buttons;
+- the **view** displays it;
+- a **thin layer in between** reacts to input and updates the model.
+
+Keep them apart and you can test the model without a screen, redesign the
+screen without touching the logic, and answer "why is this number wrong?" by
+looking in one place. It is the same one-way flow the todo page in
+[42.3](03-javascript.md) used, and the same
 [encapsulation](../ch13-design/01-encapsulation.md) argument from Chapter 13.
 
 ## JavaFX: the skeleton
 
-Every JavaFX program has the same three-object spine. A **`Stage`** is an
-operating-system window. A **`Scene`** is the content inside it, and holds the
-root of the scene graph. The root is a **layout pane** containing controls.
+Every JavaFX program has the same three-object spine:
+
+1. A **`Stage`** is an operating-system window.
+2. A **`Scene`** is the content inside it, and holds the root of the scene
+   graph.
+3. The **root** is a layout pane containing controls.
 
 ```java
 import javafx.application.Application;
@@ -132,9 +149,11 @@ public class Hello extends Application {
 
 `launch` starts the JavaFX runtime, creates the Application Thread, and calls
 your `start` method **on that thread**. After `start` returns, control belongs
-to the toolkit — your code only runs again when an event arrives. There is also
-`init()` (before the toolkit starts, off the UI thread — good for loading
-configuration) and `stop()` (on shutdown, for saving state).
+to the toolkit — your code only runs again when an event arrives.
+
+Two other lifecycle hooks exist: `init()` runs before the toolkit starts, off
+the UI thread, which makes it the right place to load configuration; `stop()`
+runs on shutdown, for saving state.
 
 ### Controls and layout panes
 
@@ -208,16 +227,17 @@ node.setOnMouseClicked(e -> System.out.println(e.getX() + "," + e.getY()));
 stage.setOnCloseRequest(e -> { if (unsaved) e.consume(); });   // veto the close
 ```
 
-`e.consume()` stops the event travelling further — JavaFX events propagate
-along the scene graph much as DOM events bubble in [42.3](03-javascript.md),
-and `consume()` is `stopPropagation()`.
+`e.consume()` stops the event travelling further. JavaFX events propagate along
+the scene graph much as DOM events bubble in [42.3](03-javascript.md), and
+`consume()` is that chapter's `stopPropagation()` under another name.
 
 ### Properties and binding — JavaFX's distinctive idea
 
 This is what JavaFX has that Swing and tkinter do not. A **property** is an
-observable value: something can watch it and react when it changes. Bind a
-control's property to a model property and the control updates itself, for
-ever, with no handler code.
+observable value: something can watch it and react when it changes.
+
+**Bind a control's property to a model property and the control updates
+itself, for ever, with no handler code.**
 
 ```java
 IntegerProperty cups = new SimpleIntegerProperty(0);
@@ -247,8 +267,11 @@ cups.set(cups.get() + 1);      // every bound control updates itself, right now
 That is the MVVM idea made concrete: `cups` is the model, the labels are the
 view, and the binding is the entire controller. A bound label cannot drift out
 of sync with the model, because there is no code path that changes one without
-the other. Collections have observable versions too — `FXCollections.observableArrayList()`
-backing a `ListView` means adding to the list updates the list on screen.
+the other.
+
+Collections have observable versions too —
+`FXCollections.observableArrayList()` backing a `ListView` means adding to the
+list updates the list on screen.
 
 !!! info "Java corner — bind versus set"
 
@@ -260,7 +283,7 @@ backing a `ListView` means adding to the list updates the list on screen.
 
 ### FXML, Scene Builder, and CSS
 
-Building a interface entirely in Java gets verbose. **FXML** is an XML dialect
+Building an interface entirely in Java gets verbose. **FXML** is an XML dialect
 that describes the scene graph declaratively, keeping layout out of your logic:
 
 ```xml
@@ -309,11 +332,16 @@ JavaFX-specific properties that all begin `-fx-`:
 .card        { -fx-border-color: #dde3e8; -fx-border-radius: 8; }
 ```
 
-Selectors match the same way: `.button` is a style class (every `Button` has it
-by default), `#countLabel` matches `setId("countLabel")`, and
-`node.getStyleClass().add("card")` is `classList.add`. The property *names* are
-JavaFX's own — `-fx-text-fill`, not `color` — because they set scene-graph
-attributes rather than CSS ones.
+Selectors match the same way as in the browser:
+
+| JavaFX | Browser equivalent |
+|---|---|
+| `.button` — a style class every `Button` carries by default | `.button` |
+| `#countLabel` — matches `setId("countLabel")` | `#countLabel` |
+| `node.getStyleClass().add("card")` | `classList.add("card")` |
+
+The property *names* are JavaFX's own — `-fx-text-fill`, not `color` — because
+they set scene-graph attributes rather than CSS ones.
 
 ### Background work without freezing the window
 
@@ -416,19 +444,22 @@ public class Counter extends Application {
 }
 ```
 
-Five numbered parts, and the numbering is the lesson. **(1)** the model is one
-`IntegerProperty` — the entire truth of the application, testable without a
-window. **(2)** the view binds to it; note that no code ever calls
-`count.setText(...)`, so the label physically cannot disagree with `cups`, and
-`minus` greys itself out at zero through a binding rather than an `if` in two
-different handlers. **(3)** the handlers are lambdas that modify *only the
-model*. **(4)** layout is expressed as nesting and alignment, so the window
-resizes and translates without breaking. **(5)** the `Stage` is created for you
-and handed to `start`; nothing appears until `show()`.
+Five numbered parts, and the numbering is the lesson:
+
+1. **The model is one `IntegerProperty`** — the entire truth of the
+   application, testable without a window.
+2. **The view binds to it.** No code ever calls `count.setText(...)`, so the
+   label physically cannot disagree with `cups`, and `minus` greys itself out
+   at zero through a binding rather than an `if` duplicated in two handlers.
+3. **The handlers are lambdas that modify only the model.**
+4. **Layout is expressed as nesting and alignment**, so the window resizes and
+   translates without breaking.
+5. **The `Stage` is created for you** and handed to `start`; nothing appears
+   until `show()`.
 
 Compare that with the todo page in [42.3](03-javascript.md): state in one
 place, view derived from state, handlers touching only state. Different
-language, different century, same architecture.
+language, different century, **same architecture**.
 
 ### Building and running it, honestly
 
@@ -452,16 +483,24 @@ $ mvn javafx:run          # using the org.openjfx:javafx-maven-plugin
 
 If you forget `--module-path` you get the notoriously unhelpful
 `Error: JavaFX runtime components are missing, and are required to run this
-application`. That message means precisely one thing: the JavaFX modules are
-not on the module path. Every JavaFX tutorial that omits the flags assumes an
-IDE has added them for you.
+application`.
+
+**That message means precisely one thing: the JavaFX modules are not on the
+module path.** Every JavaFX tutorial that omits the flags is assuming an IDE
+has added them for you.
 
 ## The same program in Python
 
 `tkinter` ships with Python, so this needs no installation — but it needs a
 real desktop, which the browser sandbox running this book's Python does not
-have. Save it and run it locally, as
-[Chapter 14.3](../ch14-beyond/03-guis-and-beyond.md) first showed.
+have.
+
+!!! tip "Save this file and run it on your own machine"
+
+    Save the block below as **`counter.py`** and run `python counter.py` from a
+    terminal. A small window appears with two buttons. There is no Run button
+    for it here, and no way to see it without doing this, as
+    [Chapter 14.3](../ch14-beyond/03-guis-and-beyond.md) first showed.
 
 ```text
 # counter.py — run on your own machine, not with the Run button
@@ -504,28 +543,44 @@ Counter(root)
 root.mainloop()                                  # hand control to the event loop
 ```
 
-Every JavaFX idea is present in a different accent: `Tk()` is the `Stage`,
-`Frame` is a layout pane, `pack` is the layout manager, `command=` is
-`setOnAction`, `IntVar` plus `trace_add` is the observable property, and
-`mainloop()` is `launch`. Note `command=self.increment` with **no
-parentheses** — the classic first GUI bug, flagged back in Chapter 14.3.
-tkinter's UI thread rule is identical; the safe bridge from a worker thread is
-`widget.after(0, callback)`.
+Every JavaFX idea is present in a different accent:
 
-Two other Python toolkits are worth knowing by name. **PyQt** (and the
-API-compatible **PySide**) wraps the Qt framework: far richer widgets, a
-designer tool, and genuinely native-looking applications, at the cost of a
-large dependency and a licence to read. **Kivy** targets touch and mobile with
-its own drawing stack, so the same code runs on Android and iOS. For a small
-tool, tkinter's zero-install advantage is hard to beat.
+| JavaFX | tkinter |
+|---|---|
+| `Stage` | `Tk()` |
+| a layout pane (`HBox`, `VBox`) | `Frame` |
+| the pane's own arrangement rules | `pack`, `grid`, `place` |
+| `setOnAction(...)` | `command=...` |
+| `IntegerProperty` + binding | `IntVar` + `trace_add` |
+| `launch(args)` | `mainloop()` |
+| `Platform.runLater(fn)` | `widget.after(0, fn)` |
+
+Note `command=self.increment` with **no parentheses** — the classic first GUI
+bug, flagged back in Chapter 14.3. tkinter's UI thread rule is identical to
+JavaFX's.
+
+Two other Python toolkits are worth knowing by name:
+
+- **PyQt** (and the API-compatible **PySide**) wraps the Qt framework: far
+  richer widgets, a designer tool, and genuinely native-looking applications —
+  at the cost of a large dependency and a licence to read.
+- **Kivy** targets touch and mobile with its own drawing stack, so the same
+  code runs on Android and iOS.
+
+For a small tool, tkinter's zero-install advantage is hard to beat.
 
 ## Runnable: a GUI engine, headless
 
-A toolkit's job is three passes over a tree — **layout** (where does everything
-go), **render** (draw it), and **dispatch** (whose handler does this click
-belong to) — plus a rule for when to do it all again. All three are
-straightforward, and none of them needs a screen: we will draw to a grid of
-characters and feed the dispatcher a scripted list of click coordinates.
+A toolkit's job is three passes over a tree, plus a rule for when to do it all
+again:
+
+1. **Layout** — where does everything go?
+2. **Render** — draw it.
+3. **Dispatch** — whose handler does this click belong to?
+
+All three are straightforward, and none of them needs a screen: we will draw to
+a grid of characters and feed the dispatcher a scripted list of click
+coordinates.
 
 ```python
 from dataclasses import dataclass, field
@@ -836,12 +891,15 @@ Every mechanism in the JavaFX program above appears in that output.
 | Typical use | anything shared or multi-user | media, engineering, hardware, IDEs | developer tools, batch jobs, servers |
 | You have now built | the router in [42.2](02-http-server.md) | the layout and event engine above | every program in Parts I–III |
 
-The honest summary: build a terminal program if the user is a programmer or
-another program; build a web application if more than one person needs the same
-data; build a desktop application when the machine itself is the point. And
-notice how little of your knowledge is stranded by the choice — the widget tree,
-the event handlers, the one-way flow from state to view, and the rule about not
-blocking the UI thread are the same in all three.
+The honest summary is three sentences:
+
+- Build a **terminal program** if the user is a programmer or another program.
+- Build a **web application** if more than one person needs the same data.
+- Build a **desktop application** when the machine itself is the point.
+
+And notice how little of your knowledge is stranded by the choice. The widget
+tree, the event handlers, the one-way flow from state to view, and the rule
+about not blocking the UI thread are the same in all three.
 
 !!! warning "Common mistakes"
 

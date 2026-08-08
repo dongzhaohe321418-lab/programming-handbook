@@ -40,11 +40,13 @@ print(f"the gap 3.4 - 2.1 = 1.3 in logit space becomes a "
       f"{probs[1] / probs[0]:.2f}x ratio in probability space")
 ```
 
-Two properties to keep in mind. Softmax is **shift-invariant** — adding 5 to
-every logit changes nothing — so only the *gaps* between logits matter. And
-it is **exponential**, so a modest logit gap becomes a large probability
-ratio: the 1.3-point lead of `cat` over `the` makes `cat` 3.67 times more
-likely.
+Two properties of softmax are worth keeping in mind:
+
+- **It is shift-invariant.** Adding 5 to every logit changes nothing, so only
+  the *gaps* between logits matter.
+- **It is exponential.** A modest logit gap becomes a large probability
+  ratio: the 1.3-point lead of `cat` over `the` makes `cat` 3.67 times more
+  likely.
 
 ## A toy model to sample from
 
@@ -113,17 +115,21 @@ print(greedy_generate())
 ```
 
 Look at what came out: `<bos> the cat sat on the cat sat on the cat sat on
-the cat sat on`. The model walked into a four-token cycle — `the → cat →
-sat → on → the` — and, because greedy decoding is deterministic and depends
-only on the current token, it can *never* leave. This is not a quirk of our
-toy: greedy and low-temperature decoding on real models produce exactly this
-failure, the paragraph that starts repeating itself and never stops.
+the cat sat on`. Greedy decoding has two problems, and this output shows the
+first one.
 
-Greedy also has a subtler problem. Taking the highest-probability token at
-every step does **not** produce the highest-probability *sentence* — a
-slightly worse first token can open onto a much better continuation. Greedy
-decoding makes the locally optimal choice with no lookahead at all, and
-locally optimal choices do not compose into a globally optimal sequence.
+**Problem 1 — it gets stuck.** The model walked into a four-token cycle,
+`the → cat → sat → on → the`, and because greedy decoding is deterministic
+and depends only on the current token, it can *never* leave. This is not a
+quirk of our toy. Greedy and low-temperature decoding on real models produce
+exactly this failure: the paragraph that starts repeating itself and never
+stops.
+
+**Problem 2 — locally best is not globally best.** Taking the
+highest-probability token at every step does **not** produce the
+highest-probability *sentence*. A slightly worse first token can open onto a
+much better continuation, and greedy decoding has no lookahead at all with
+which to notice.
 
 ## Temperature: flattening or sharpening the distribution
 
@@ -134,11 +140,13 @@ $$
 p_i = \frac{e^{z_i / T}}{\sum_j e^{z_j / T}}
 $$
 
-Dividing by a small $T$ spreads the logits further apart, so softmax
-concentrates: the distribution gets sharper and the output more predictable.
-Dividing by a large $T$ squashes the logits together, so the distribution
-flattens and rarer tokens get a real chance. $T = 1$ leaves the model's own
-distribution untouched.
+Three cases, and they are the whole of it:
+
+- **$T < 1$** spreads the logits further apart, so softmax concentrates: the
+  distribution sharpens and the output becomes more predictable.
+- **$T = 1$** leaves the model's own distribution untouched.
+- **$T > 1$** squashes the logits together, so the distribution flattens and
+  rarer tokens get a real chance.
 
 ```python
 # continues
@@ -153,15 +161,20 @@ for T in [0.2, 1.0, 2.0]:
           f"{entropy:>8.2f} bits")
 ```
 
-At $T = 0.2$ the top token `cat` takes 91.8% of the mass and the model is
-nearly deterministic — 0.44 bits of entropy, meaning less than one coin
-flip's worth of uncertainty. At $T = 1$ `cat` takes 50.6%. At $T = 2$ it is
-down to 40.2% and the entropy has risen to 1.86 bits. Watch the `tail`
-column especially: it holds the nine tokens our table scored at $-6.0$ —
-the ones the model considers *wrong*. They carry 0.06% of the mass at
-$T = 1$ and 4% at $T = 2$. That is a one-in-twenty-five chance of nonsense
-on every single step, compounding over a whole paragraph. Here is the same
-story as a picture:
+Read the table row by row:
+
+- **$T = 0.2$** — `cat` takes 91.8% of the mass and the model is nearly
+  deterministic, at 0.44 bits of entropy: less than one coin flip's worth of
+  uncertainty.
+- **$T = 1.0$** — `cat` takes 50.6%.
+- **$T = 2.0$** — `cat` is down to 40.2% and entropy has risen to 1.86 bits.
+
+Watch the `tail` column especially. It holds the nine tokens our table scored
+at $-6.0$, the ones the model considers *wrong*. They carry 0.06% of the mass
+at $T = 1$ and 4% at $T = 2$ — a one-in-twenty-five chance of nonsense on
+every single step, compounding over a whole paragraph.
+
+### Temperature in one picture
 
 ```python
 # continues
@@ -222,11 +235,11 @@ for k in [1, 3, 12]:
 ```
 
 With $k = 3$ only `cat`, `mat`, and `dog` survive; every other token is
-mathematically impossible this step. Note `k=1` is exactly greedy decoding —
-one survivor with probability 1.000.
+mathematically impossible this step. Note that `k=1` is exactly greedy
+decoding — one survivor, with probability 1.000.
 
-The weakness of top-k is that $k$ is fixed while the model's confidence is
-not. When the model is sure (after `sat`, only `on` makes sense) $k = 50$
+**The weakness of top-k is that $k$ is fixed while the model's confidence is
+not.** When the model is sure (after `sat`, only `on` makes sense) $k = 50$
 drags in 49 bad options. When the model is genuinely uncertain, $k = 50$
 amputates good ones.
 
@@ -261,9 +274,22 @@ for context in ["the", "sat"]:
 This is the adaptivity top-k lacks. After `the` — where the model is
 undecided between `cat`, `mat`, and `dog` — top-p 0.9 keeps three tokens.
 After `sat`, where `on` is overwhelming, the *same setting* keeps just one.
+
 The nucleus grows and shrinks with the model's own confidence, which is why
 top-p (typically 0.9–0.95) is the common default, sometimes combined with a
 generous top-k as a safety net.
+
+### The four strategies side by side
+
+| Strategy | What it does | Adapts to confidence? | Reach for it when |
+| --- | --- | --- | --- |
+| **Greedy** ($T=0$) | Always take the `argmax` | — (no randomness at all) | You want determinism: extraction, classification, tests |
+| **Temperature** | Rescale every logit by $1/T$ before softmax | No — it reshapes, never removes | You want a global dial from cautious to wild |
+| **Top-k** | Keep the $k$ best logits, drop the rest | No — $k$ is fixed | You need a hard cap on how many tokens are reachable |
+| **Top-p** (nucleus) | Keep the smallest set whose mass reaches $p$ | **Yes** — the set grows and shrinks | The general-purpose default, usually with $T$ |
+
+They compose rather than compete: a typical production setting is a
+temperature *and* a top-p, with top-k as a backstop.
 
 ## Repetition penalty: taxing what you already said
 
@@ -306,16 +332,28 @@ print("\n'the' was already used, so its lead over 'a' shrinks from "
 
 Used with a light hand ($\rho \approx 1.05$–$1.2$) this breaks loops. Used
 heavily it is actively harmful, because it penalises the words a text
-legitimately needs to repeat — the names of the characters, the keyword in
-a piece of code, the word "the". Variants exist (frequency and presence
-penalties count *how often* a token appeared rather than merely whether it
-did), and all of them share the same failure mode.
+legitimately needs to repeat: the names of the characters, the keyword in a
+piece of code, the word "the".
+
+Variants exist — **frequency** and **presence** penalties count *how often* a
+token appeared rather than merely whether it did — and all of them share that
+same failure mode.
 
 ## The complete generation loop
 
-Everything above assembles into one function. This is genuinely the whole
-sampler — a real implementation adds batching, streaming, and stop
-sequences, but the decision logic is exactly this:
+Everything above assembles into one function, and the *order* of the stages
+is part of the design:
+
+1. **Get the logits** for the current token — one forward pass.
+2. **Apply the repetition penalty** to tokens already generated.
+3. **Divide by the temperature** (or shortcut to `argmax` if $T = 0$).
+4. **Truncate by rank** with top-k.
+5. **Truncate by mass** with top-p.
+6. **Softmax and draw** one token.
+7. **Stop** on `<eos>` or the token budget.
+
+This is genuinely the whole sampler. A real implementation adds batching,
+streaming, and stop sequences, but the decision logic is exactly this:
 
 ```python
 # continues
@@ -349,18 +387,22 @@ for label, kwargs in settings:
     print(f"{label} | {generate(seed=49, **kwargs)}")
 ```
 
-Read the five lines against each other — same model, same seed, five
-different texts. Greedy is stuck in its cycle and never emits `<eos>`, so it
-runs until the token limit. `T=0.7` with top-p stays inside the table's
-sensible transitions and stops properly. Top-k=3 makes a different draw at
-the same branch (`a dog` rather than `the dog`). The repetition-penalty run
-takes the longest tour, having been pushed away from words it just used. And
-$T = 3.0$ finally lets the $-6.0$ tail through — it emits `<bos>` in the
-middle of a sentence, which is nonsense no path through the table allows.
-That is precisely what a real model at temperature 3 looks like.
+Read the five lines against each other. Same model, same seed, five
+different texts:
 
-Does the repetition penalty actually reduce repetition, or does it just feel
-like it should? Run 300 seeds and count:
+| Setting | What it produced |
+| --- | --- |
+| greedy ($T = 0$) | Stuck in its cycle, never emits `<eos>`, runs to the token limit |
+| $T = 0.7$, top-p 0.9 | Stays inside the table's sensible transitions and stops properly |
+| $T = 1.0$, top-k 3 | A different draw at the same branch — `a dog` rather than `the dog` |
+| $T = 1.0$, top-p 0.9, $\rho = 1.2$ | The longest tour, pushed away from words it just used |
+| $T = 3.0$ | Lets the $-6.0$ tail through: `<bos>` mid-sentence, which no path through the table allows |
+
+That last row is precisely what a real model at temperature 3 looks like.
+
+### Does the repetition penalty actually work?
+
+Or does it just feel like it should? Run 300 seeds and count:
 
 ```python
 # continues
@@ -413,31 +455,42 @@ data: [DONE]
 
 Streaming changes nothing about the maths and everything about how the wait
 *feels*: the reader starts reading after the first token rather than after
-the last. It also explains two things you may have noticed. The first token
-takes noticeably longer than the rest — the model has to process your whole
-prompt before it can produce anything. And the pieces that arrive are
-*tokens*, not words, which is why a streamed reply sometimes jerks forward
-in half-words or splits an emoji across two chunks.
+the last. It also explains two things you may have noticed:
+
+- **The first token takes noticeably longer than the rest.** The model has to
+  process your whole prompt before it can produce anything.
+- **The pieces that arrive are *tokens*, not words.** That is why a streamed
+  reply sometimes jerks forward in half-words, or splits an emoji across two
+  chunks.
+
+[Section 27.3](../ch27-inference/03-latency-streaming.md) names those two
+delays properly and puts the wire format under a microscope.
 
 ## Why temperature = 0 is not perfectly deterministic
 
 Setting temperature to 0 makes the *sampler* deterministic — `argmax` has no
 randomness in it — and yet sending the same prompt twice to a real API at
 temperature 0 can still return different text. This is not a lie in the
-documentation; it is floating-point arithmetic meeting parallel hardware.
-GPUs sum long lists of numbers in whatever order the work happened to be
-scheduled, and floating-point addition is not associative: $(a + b) + c$ can
-differ from $a + (b + c)$ in the last bit. Those last bits change with the
-batch size, which changes with how many other users hit the server at that
-instant. Usually the tiny difference changes nothing — but when the top two
-logits are nearly tied, a difference of $10^{-7}$ flips the `argmax`, and
-from that token onward the two outputs diverge completely. Add the fact that
-providers update model weights, quantization, and kernels without changing
-the model's name, and the honest summary is: temperature 0 gives you
-*greedy* decoding, not *reproducible* decoding. If you need reproducibility,
-pin it in your own evaluation harness — the
+documentation. It is floating-point arithmetic meeting parallel hardware, in
+four steps:
+
+1. **GPUs sum long lists of numbers in whatever order the work was
+   scheduled.**
+2. **Floating-point addition is not associative**: $(a + b) + c$ can differ
+   from $a + (b + c)$ in the last bit.
+3. **That scheduling changes with the batch size**, which changes with how
+   many other users hit the server at that instant.
+4. **A near-tie amplifies the difference.** When the top two logits are
+   nearly equal, a discrepancy of $10^{-7}$ flips the `argmax` — and from
+   that token onward the two outputs diverge completely.
+
+Add the fact that providers update model weights, quantization, and kernels
+without changing the model's name, and the honest summary is short:
+**temperature 0 gives you *greedy* decoding, not *reproducible* decoding.**
+
+If you need reproducibility, pin it in your own evaluation harness. The
 [testing discipline of Chapter 24](../ch24-practice/02-testing.md) applies
-here exactly as it does anywhere else — rather than trusting the sampler.
+here exactly as it does anywhere else.
 
 !!! warning "Common mistakes"
     - **Thinking the sampler is part of the model.** It is not, and it has

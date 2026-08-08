@@ -28,11 +28,13 @@ runtime:
                   -> arguments.lmit: unknown; expected one of ['limit', 'query']
       TOOL FAILED calculate({"expression": "2 +"})
                   -> ValueError: the expression ended in the middle
+      ...
 
 4. the path-traversal guard
       ALLOW ./x/../todo.md         '- [x] write the retention spec'
       DENY  ../../etc/passwd       ValueError: path escapes /notes: '../../etc/passwd'
       DENY  /etc/passwd            ValueError: path escapes /notes: '/etc/passwd'
+      ...
 
 6. a model driving the protocol
    step 1: search_notes({"query": "retention", "limit": 3})
@@ -175,7 +177,7 @@ built as a recursive-descent parser — no `eval`, ever.
 `../../etc/passwd` and `/etc/passwd` are refused; a missing note raises
 `FileNotFoundError` whose message names what to try next; and `calculate`
 handles `2 + 3 * 4` (14.0), `(2 + 3) * 4` (20.0), unary minus, and
-`1 / 0` — the last three as errors the *model* can read.
+`1 / 0` — the last of those as an error the *model* can read.
 
 ??? tip "Hint"
 
@@ -243,15 +245,17 @@ unknown URI is `-32602` with the available URIs in `error.data`.
 
 ### Milestone 5 — every error code, deliberately
 
-**Goal:** produce all five reserved codes on purpose, and keep tool failures
-*out* of that set.
+**Goal:** produce the four reserved codes a client can actually trigger, on
+purpose, and keep tool failures *out* of that set.
 
 **Done when...** you can print, in order: `-32700` from unparseable bytes,
 `-32600` from a request sent before the handshake completes, `-32601` from
 `prompts/list` (with the implemented methods in `data`), `-32602` from an
-unknown tool name and from schema violations, `-32603` from a handler bug —
-and a *failing tool* comes back as a normal result with `isError: true`,
-never as an error object.
+unknown tool name and from schema violations — and a *failing tool* comes back
+as a normal result with `isError: true`, never as an error object. (`-32603`,
+internal error, is the fifth reserved code; it is defined in the reference
+implementation but nothing in the driver triggers it, because a correct server
+never should. Adding a deliberately broken tool to see it is a good extension.)
 
 ??? tip "Hint"
 
@@ -290,9 +294,10 @@ or a final answer, plus a `run_over_mcp(question, client, llm)` loop that
 calls `tools/list` once and then never mentions a tool by name.
 
 **Done when...** the model answers a question no single tool can — it
-searches, reads the note the search found, searches again for a price,
-computes with the numbers it extracted, and states the answer — and
-`run_over_mcp` contains no string literal naming any of your tools.
+searches, picks the most promising of the notes the search returned and
+reads it, searches again for a price, computes with the numbers it
+extracted, and states the answer — and `run_over_mcp` contains no string
+literal naming any of your tools.
 
 ??? tip "Hint"
 
@@ -304,12 +309,28 @@ computes with the numbers it extracted, and states the answer — and
     ```python
     import re
 
-    transcript = ("Observation: meeting.md:3: retention sign-off pending\n"
-                  "specs/retention.md:1: Retention policy\n")
-    paths = re.findall(r"^(\S+?):\d+:", transcript, re.M)
+    # Exactly what search_notes returned, pasted into the transcript by the
+    # host loop. Note that the first hit shares a line with the label.
+    transcript = (
+        "Observation: meeting.md:3: - retention policy sign-off still pending\n"
+        "specs/retention.md:1: Retention policy (approved 2026-02-14)\n"
+        "todo.md:1: - [x] write the retention spec\n")
+    paths = re.findall(r"(\S+\.md):\d+:", transcript)
     print("candidates:", paths)
-    print("chosen:", max(paths, key=lambda p: "retention" in p))
+    print("chosen   :", max(paths, key=lambda p: "retention" in p))
     ```
+
+    ```text
+    candidates: ['meeting.md', 'specs/retention.md', 'todo.md']
+    chosen   : specs/retention.md
+    ```
+
+    Three hits came back and the policy picked the one worth reading. Match
+    on the **shape of a row**, not on the start of a line: the obvious
+    `^(\S+?):\d+:` with `re.MULTILINE` looks right and silently drops the
+    first hit, because that row sits after `Observation: ` on the same line.
+    A `max` over an incomplete candidate list still prints an answer, which
+    is why this bug survives until the row it lost was the one you needed.
 
     Test the reaction by changing the data, not the policy: edit a note so
     the retention period is 24 months and the final answer should follow,
@@ -785,7 +806,10 @@ six test suites wearing a print statement.
                 return {"tool": "search_notes",
                         "arguments": {"query": "retention", "limit": 3}}
             if "months" not in transcript:
-                paths = re.findall(r"^(\S+?):\d+:", transcript, re.M)
+                # Row shape, not line start: the first hit shares its line
+                # with the "Observation: " label, so a ^-anchored pattern
+                # would drop it and leave max() a shorter list to choose from.
+                paths = re.findall(r"(\S+\.md):\d+:", transcript)
                 best = max(paths, key=lambda p: "retention" in p)
                 return {"tool": "read_note", "arguments": {"path": best}}
             if "GB-month" not in transcript:

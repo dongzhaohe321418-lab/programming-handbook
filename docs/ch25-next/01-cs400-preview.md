@@ -3,12 +3,15 @@
 The typical third course — often called *Data Structures and Algorithms* —
 takes the structures you built in Part III and asks two ruthless questions:
 *can we make the guarantees unconditional?* and *what else can we model?*
-This section is the appetizer plate — and the meal is now served next door.
+
+This section is the appetizer plate, and the meal is now served next door.
 Everything previewed below is built properly in
 [Part VI](../part6-overview.md), which picks up exactly where Chapter 22 left
-off. So read this page for the reason each idea exists and one small taste
-you can run; each section ends with a pointer to the chapter that implements
-it in full.
+off.
+
+So read this page for two things: the reason each idea exists, and one small
+taste you can run. Each section ends with a pointer to the chapter that
+implements it in full.
 
 ## The balance problem, solved
 
@@ -46,12 +49,13 @@ for name, order in [("sorted", sorted_order), ("hand-picked", nice_order)]:
     print(f"{name:>12} insert order → height {height(root)}")
 ```
 
-Same 15 keys, height 15 versus height 4. In Part III we dodged the problem
-by hand-picking a friendly insert order; a *self-balancing* tree refuses to
-need your help. The tool it uses is the **rotation**: a constant-time
-re-wiring of one parent–child link that lifts the child up, drops the parent
-down, and hands one subtree across — without ever breaking the BST ordering
-rule.
+Same 15 keys, height 15 versus height 4.
+
+In Part III we dodged the problem by hand-picking a friendly insert order; a
+*self-balancing* tree refuses to need your help. The tool it uses is the
+**rotation**: a constant-time re-wiring of one parent–child link that lifts
+the child up, drops the parent down, and hands one subtree across — without
+ever breaking the BST ordering rule.
 
 ```mermaid
 graph TD
@@ -65,47 +69,64 @@ graph TD
     end
 ```
 
-Every self-balancing tree is "a BST plus a policy for when to rotate."
-The two you will meet:
+!!! note "What a self-balancing tree is, in one line"
+    A BST plus a policy for when to rotate.
 
-**AVL trees** keep the strictest promise: at every node, the left and right
-subtree heights may differ by at most 1. Every insert or delete walks back
-up the tree checking that rule and rotating wherever it breaks. The result
-is the shortest, fastest-to-search tree of the family — at the price of
-doing a little more rotation work on every write. AVL trees are the ones you
-will most likely implement by hand in a course, because the balance rule is
-easy to state and check.
+Three such policies are worth knowing by name.
 
-**Red-black trees** relax the rule: each node is coloured red or black, and
-a handful of colour constraints guarantee the tree's height is at most about
-twice the optimal $\log_2 n$. Looser balance means slightly deeper searches
-than AVL, but fewer rotations per insert — which is why *library authors*
-love them: Java's `TreeMap` and `TreeSet`, and the C++ `std::map`, are
-red-black trees under the hood. You will probably study one and trust the
-other.
+### AVL trees — the strictest promise
 
-**B-trees** answer a different question: what if the tree lives on a *disk*,
-where reading one node costs a thousand times more than comparing keys? A
-B-tree node holds hundreds of keys and hundreds of children, so the whole
+At every node, the left and right subtree heights may differ by at most 1.
+Every insert or delete walks back up the tree checking that rule and rotating
+wherever it breaks.
+
+The result is the shortest, fastest-to-search tree of the family — at the
+price of a little more rotation work on every write. AVL trees are the ones
+you will most likely implement by hand in a course, because the balance rule
+is easy to state and check.
+
+### Red-black trees — the library favourite
+
+Here the rule is relaxed: each node is coloured red or black, and a handful
+of colour constraints guarantee the tree's height is at most about twice the
+optimal $\log_2 n$.
+
+Looser balance means slightly deeper searches than AVL, but fewer rotations
+per insert — which is why *library authors* love them. Java's `TreeMap` and
+`TreeSet`, and the C++ `std::map`, are red-black trees under the hood. You
+will probably study one and trust the other.
+
+### B-trees — trees for disks
+
+B-trees answer a different question: what if the tree lives on a *disk*,
+where reading one node costs a thousand times more than comparing keys?
+
+A B-tree node holds hundreds of keys and hundreds of children, so the whole
 tree is only 3–4 levels deep and finding any record costs 3–4 disk reads.
-They are, in one phrase, *trees for disks* — and they are why databases and
-filesystems can find one row among a billion almost instantly.
+That is why databases and filesystems can find one row among a billion almost
+instantly.
+
+### Where they get built
 
 All three are drawn, traced, and implemented in
-[Chapter 35 · Balanced Trees](../ch35-balanced-trees/index.md) — rotations in
-[35.1](../ch35-balanced-trees/01-rotations.md), AVL in
-[35.2](../ch35-balanced-trees/02-avl.md), red-black in
-[35.3](../ch35-balanced-trees/03-red-black.md), and B-trees in
-[35.4](../ch35-balanced-trees/04-b-trees.md).
+[Chapter 35 · Balanced Trees](../ch35-balanced-trees/index.md):
+
+- [35.1](../ch35-balanced-trees/01-rotations.md) — rotations;
+- [35.2](../ch35-balanced-trees/02-avl.md) — AVL trees;
+- [35.3](../ch35-balanced-trees/03-red-black.md) — red-black trees;
+- [35.4](../ch35-balanced-trees/04-b-trees.md) — B-trees.
 
 ## Hash tables: the $O(1)$ magic trick
 
 Trees earn $O(\log n)$ lookup by keeping keys in order. Hash tables get
-*average* $O(1)$ by abandoning order entirely. The trick has two steps: a
-**hash function** turns any key into a big number, and a modulo squashes
-that number into a **bucket index** — a plain array position. Finding a key
-is then just "compute the index, look in that slot." No walking, no
-comparisons down a path: one arithmetic step, one array access.
+*average* $O(1)$ by abandoning order entirely. The trick has two steps:
+
+1. A **hash function** turns any key into a big number.
+2. A modulo squashes that number into a **bucket index** — a plain array
+   position.
+
+Finding a key is then just "compute the index, look in that slot." No
+walking, no comparisons down a path: one arithmetic step, one array access.
 
 Python's built-in `hash()` is such a function:
 
@@ -115,18 +136,20 @@ print(hash("cat") == hash("cat"))  # always identical within one program run
 print(hash("cat") % 8)             # squashed into one of 8 bucket slots
 ```
 
-The int line prints `42`, and the comparison prints `True` — the same key
-must always land in the same bucket, or you could never find it again. We
-do not show the raw value of `hash("cat")` in prose, because CPython
-deliberately randomises string hashes each time the interpreter starts (a
-security measure against attackers who craft colliding keys). Stable within
-a run, different between runs — remember that if your output differs from a
+The int line prints `42`, and the comparison prints `True` — the same key must
+always land in the same bucket, or you could never find it again.
+
+We do not show the raw value of `hash("cat")` in prose, because CPython
+deliberately randomises string hashes each time the interpreter starts, as a
+security measure against attackers who craft colliding keys. Stable within a
+run, different between runs — remember that if your output differs from a
 friend's.
 
 Two different keys can land in the same bucket — a **collision** — and any
 honest hash table must handle it. The classic fix is **chaining**: each
-bucket holds a little list of the pairs that landed there. Here is an entire
-working hash table, small enough to read in one breath:
+bucket holds a little list of the pairs that landed there.
+
+Here is an entire working hash table, small enough to read in one breath:
 
 ```python
 def bucket_of(key, size=8):
@@ -155,37 +178,41 @@ print(buckets)
 ```
 
 `"cat"` and `"act"` contain the same letters, so our sum-of-characters hash
-sends both to bucket 0 — a collision — yet `get` still returns the right
-value for each, because it walks bucket 0's chain comparing actual keys.
+sends both to bucket 0 — a collision — yet `get` still returns the right value
+for each, because it walks bucket 0's chain comparing actual keys.
+
 That is the whole design: hash to jump straight to a bucket, then a tiny
-linear search inside it. Keep the chains short (real tables *resize* when
-they get about two-thirds full, and use far better hash functions than
-ours) and the average cost stays $O(1)$.
+linear search inside it. Keep the chains short — real tables *resize* when
+they get about two-thirds full, and use far better hash functions than ours —
+and the average cost stays $O(1)$.
 
-Now the reveal: **you have been using an industrial-strength hash table
-since [Chapter 14](../ch14-beyond/01-collections-tour.md)**. Python's `dict`
-and `set`, and Java's `HashMap` and `HashSet`, are exactly this structure —
-grown up, with resizing, smarter collision handling, and decades of tuning.
-Every `d[key]`, every `x in some_set`, every `counts.get(word, 0)` you have
-written was a hash-and-jump.
+!!! note "You have been using one since Chapter 14"
+    Python's `dict` and `set`, and Java's `HashMap` and `HashSet`, are
+    exactly this structure grown up: resizing, smarter collision handling,
+    decades of tuning. Every `d[key]`, every `x in some_set`, every
+    `counts.get(word, 0)` you have written was a hash-and-jump
+    ([Chapter 14](../ch14-beyond/01-collections-tour.md)).
 
-[Chapter 36](../ch36-hashing-tries/index.md) opens that box: what makes a hash
-function good, and load factors, in
-[36.1](../ch36-hashing-tries/01-hash-tables.md); chaining versus open
-addressing, and why tables resize, in
-[36.2](../ch36-hashing-tries/02-collisions-resizing.md); plus two structures
-this preview has not even hinted at — **tries**
-([36.3](../ch36-hashing-tries/03-tries.md)), which index by prefix, and
-**skip lists** ([36.4](../ch36-hashing-tries/04-skip-lists.md)), which get
-tree-like performance out of coin flips.
+[Chapter 36](../ch36-hashing-tries/index.md) opens that box:
+
+- [36.1](../ch36-hashing-tries/01-hash-tables.md) — what makes a hash
+  function good, and what a load factor is;
+- [36.2](../ch36-hashing-tries/02-collisions-resizing.md) — chaining versus
+  open addressing, and why tables resize;
+- [36.3](../ch36-hashing-tries/03-tries.md) — **tries**, which index by
+  prefix;
+- [36.4](../ch36-hashing-tries/04-skip-lists.md) — **skip lists**, which get
+  tree-like performance out of coin flips.
 
 ## Graphs: nodes and edges model everything
 
 A **graph** is just dots and lines: **nodes** (also called *vertices*) and
-**edges** connecting pairs of them. That sounds too simple to matter until
-you notice what it models: people and friendships, cities and roads, web
-pages and links, tasks and dependencies, airports and routes. Trees were
-graphs with rules (one parent, no cycles); general graphs drop the rules.
+**edges** connecting pairs of them.
+
+That sounds too simple to matter until you notice what it models: people and
+friendships, cities and roads, web pages and links, tasks and dependencies,
+airports and routes. Trees were graphs with rules — one parent, no cycles;
+general graphs drop the rules.
 
 ```mermaid
 graph LR
@@ -214,18 +241,19 @@ edges = sum(len(nbrs) for nbrs in friends.values()) // 2
 print(len(friends), "people,", edges, "friendships")
 ```
 
-Each friendship appears in two lists (Ava lists Ben, Ben lists Ava), which
-is why halving the total count gives 5 edges. Notice the structure is a
-`dict` of `list`s — two tools you have owned since Part II, composed.
+Each friendship appears in two lists (Ava lists Ben, Ben lists Ava), which is
+why halving the total count gives 5 edges. Notice the structure is a `dict` of
+`list`s — two tools you have owned since Part II, composed.
 
-The first real graph algorithm every course teaches is **breadth-first
-search (BFS)**: explore the graph in rings — everyone 1 hop away, then
-everyone 2 hops away, and so on. The engine that makes "rings" happen is a
-plain FIFO [queue](../ch19-stacks-queues/03-queues.md): visit a person, and
-enqueue their not-yet-seen neighbours to be processed *after* everyone
-already waiting. Because nearer people always enter the queue before
-farther ones, the first time you reach someone is guaranteed to be via a
-shortest path.
+The first real graph algorithm every course teaches is **breadth-first search
+(BFS)**: explore the graph in rings — everyone 1 hop away, then everyone 2
+hops away, and so on.
+
+The engine that makes "rings" happen is a plain FIFO
+[queue](../ch19-stacks-queues/03-queues.md): visit a person, and enqueue their
+not-yet-seen neighbours to be processed *after* everyone already waiting.
+Because nearer people always enter the queue before farther ones, the first
+time you reach someone is guaranteed to be via a shortest path.
 
 ```python
 from collections import deque
@@ -253,65 +281,75 @@ print(hops_from("Ava"))
 ```
 
 The output, `{'Ava': 0, 'Ben': 1, 'Cy': 1, 'Dana': 2, 'Eli': 3}`, reads as a
-tiny social insight: Eli is three introductions away from Ava. That loop —
-about ten lines — is the same algorithm that powers "degrees of separation"
-features, shortest-move solvers for puzzles, and web crawlers.
+tiny social insight: Eli is three introductions away from Ava.
 
-Its sibling, **depth-first search (DFS)**, swaps the queue for a
-[stack](../ch19-stacks-queues/02-stacks.md) — or equivalently uses
-[recursion](../ch17-recursion/index.md), letting the call stack *be* the
-stack. Instead of exploring in rings, DFS dives down one path as far as it
-can before backtracking, which makes it the natural tool for questions like
-"is there *any* route?", "does this dependency graph contain a cycle?", or
-"in what order must these tasks run?".
+That loop — about ten lines — is the same algorithm that powers "degrees of
+separation" features, shortest-move solvers for puzzles, and web crawlers.
 
-And when edges carry *weights* — road distances, flight prices — shortest
-"hops" stops being shortest *path*. The famous fix is **Dijkstra's
-algorithm**, which is BFS with the queue upgraded to a
-[priority queue](../ch21-heaps/02-priority-queues.md): always expand the
-cheapest frontier node next. You already own every part it is made of.
+Two close relatives complete the family:
 
-[Chapter 37 · Graphs](../ch37-graphs/index.md) builds all of it: the three
-representations and their trade-offs in
-[37.1](../ch37-graphs/01-representations.md), BFS and DFS with five
-applications in [37.2](../ch37-graphs/02-traversal.md), Dijkstra, Bellman-Ford
-and A\* — including a demonstration of Dijkstra returning a confidently wrong
-answer — in [37.3](../ch37-graphs/03-shortest-paths.md), and minimum spanning
-trees in [37.4](../ch37-graphs/04-mst.md). Then
-[Project 9](../projects/09-route-finder/README.md) puts them together into a
-working route finder over a city map.
+- **Depth-first search (DFS)** swaps the queue for a
+  [stack](../ch19-stacks-queues/02-stacks.md) — or uses
+  [recursion](../ch17-recursion/index.md) and lets the call stack *be* the
+  stack. Instead of rings, it dives down one path as far as it can before
+  backtracking, which suits questions like "is there *any* route?", "does
+  this dependency graph contain a cycle?", and "in what order must these
+  tasks run?".
+- **Dijkstra's algorithm** handles edges that carry *weights* — road
+  distances, flight prices — where fewest hops is no longer shortest path.
+  It is BFS with the queue upgraded to a
+  [priority queue](../ch21-heaps/02-priority-queues.md): always expand the
+  cheapest frontier node next. You already own every part it is made of.
+
+[Chapter 37 · Graphs](../ch37-graphs/index.md) builds all of it:
+
+- [37.1](../ch37-graphs/01-representations.md) — the three representations
+  and their trade-offs;
+- [37.2](../ch37-graphs/02-traversal.md) — BFS and DFS with five
+  applications;
+- [37.3](../ch37-graphs/03-shortest-paths.md) — Dijkstra, Bellman-Ford, and
+  A\*, including a demonstration of Dijkstra returning a confidently wrong
+  answer;
+- [37.4](../ch37-graphs/04-mst.md) — minimum spanning trees.
+
+Then [Project 9](../projects/09-route-finder/README.md) puts them together
+into a working route finder over a city map.
 
 ## What else awaits
 
 One more topic this book now covers, and three that genuinely belong to other
 courses.
 
-**Sorting faster than $O(n \log n)$.** [Chapter 22](../ch22-sorting/index.md)
-proved that no *comparison* sort can beat $O(n \log n)$ — and then there are
-sorts that beat it anyway, because they never compare two keys at all.
-[Chapter 38 · Linear-Time Sorting](../ch38-linear-sorting/index.md) shows
-exactly which assumption counting, radix, and bucket sort trade away to slip
-past a proof.
+**Sorting faster than $O(n \log n)$** — covered here, in
+[Chapter 38](../ch38-linear-sorting/index.md).
+[Chapter 22](../ch22-sorting/index.md) left $O(n \log n)$ looking like the
+floor for sorting, and for any algorithm that works by *comparing* keys it
+is: [Section 38.1](../ch38-linear-sorting/01-lower-bound.md) proves it with a
+decision-tree counting argument. Then
+[38.2](../ch38-linear-sorting/02-counting-radix-bucket.md) beats the bound
+anyway, with counting, radix, and bucket sort — three algorithms that never
+compare two keys at all.
+
+The other three belong to later courses:
 
 **Dynamic programming** is recursion that stops re-solving the same
 subproblem twice, by remembering answers in a table. It turns some
-exponential-time recursions into polynomial ones and is the standard tool
+exponential-time recursions into polynomial ones, and it is the standard tool
 for optimisation puzzles ("fewest coins", "best schedule").
 
-**Concurrency** is making one program genuinely do several things at once —
-multiple threads or processes sharing time and memory. It buys speed and
-responsiveness at the cost of a new class of bug (race conditions) that no
-amount of rereading your own code will reveal; courses teach the locks and
+**Concurrency** is making one program genuinely do several things at once,
+with multiple threads or processes sharing time and memory. It buys speed and
+responsiveness at the cost of a new class of bug — race conditions — that no
+amount of rereading your own code will reveal. Courses teach the locks and
 queues that tame them.
 
-**Networks** explain what actually happens between your browser and a
-server: how data is chopped into packets, addressed, routed, and reassembled
-(IP and TCP), and how protocols like HTTP layer meaning on top. After one
-networking course, the phrase "the request timed out" becomes a diagnosis
-instead of an incantation. (The HTTP layer itself is
-[42.2](../ch42-web-gui/02-http-server.md) in this book, where you build a
-server's brain; the packets underneath it are the networking course's
-business.)
+**Networks** explain what actually happens between your browser and a server:
+how data is chopped into packets, addressed, routed, and reassembled (IP and
+TCP), and how protocols like HTTP layer meaning on top. After one networking
+course, "the request timed out" becomes a diagnosis instead of an incantation.
+(The HTTP layer itself is [42.2](../ch42-web-gui/02-http-server.md) in this
+book, where you build a server's brain; the packets underneath it are the
+networking course's business.)
 
 !!! warning "Common mistakes"
 

@@ -70,10 +70,15 @@ You generate a **key pair**: two files that are mathematically linked.
 
 The pair has one magic property: **the private key can produce a signature
 that the public key can check, and the public key cannot produce that
-signature.** Authentication then works by challenge and response. The server
-sends you a fresh random number. You sign it with your private key and send
-back only the signature. The server checks the signature against the public
-key it already has. If it verifies, you are in.
+signature.**
+
+Authentication is then a four-step challenge and response:
+
+1. The server sends you a fresh random number.
+2. You sign it with your private key.
+3. You send back **only the signature** — never the key.
+4. The server checks the signature against the public key it already has. If
+   it verifies, you are in.
 
 Three consequences are worth stating explicitly, because they are what make
 this better than a password:
@@ -88,10 +93,14 @@ this better than a password:
 3. **Revocation is one line.** Deleting a line from `authorized_keys` removes
    that key's access, with no effect on any other machine or user.
 
-The names to know: **Ed25519** is the modern default (short keys, fast,
-excellent security margin), and **RSA** is the older standard, still fine at
-3072 bits or more but producing much longer keys. If you have no reason to
-choose otherwise, generate Ed25519.
+Two names to know:
+
+| Algorithm | Where it stands |
+|---|---|
+| **Ed25519** | the modern default — short keys, fast, excellent security margin |
+| **RSA** | the older standard, still fine at 3072 bits or more, much longer keys |
+
+If you have no reason to choose otherwise, generate Ed25519.
 
 ## The same idea with numbers you can run
 
@@ -159,11 +168,12 @@ factored n in 52 tries: 3233 = 53 * 61  -> the private key falls out immediately
 
 The middle section is the real mechanism, faithfully: sign with the private
 exponent, verify with the public one, and an attacker who changes the
-signature by 1 produces garbage. The last section is the honest caveat — a
-2 000-year-old algorithm (trial division) breaks a four-digit modulus in
-52 steps, which is why real keys are enormous. Never write your own
-cryptography; use the tools below, which are written and audited by people
-who do this full time.
+signature by 1 produces garbage.
+
+The last section is the honest caveat. A 2 000-year-old algorithm (trial
+division) breaks a four-digit modulus in 52 steps, which is why real keys are
+enormous. **Never write your own cryptography** — use the tools below, which
+are written and audited by people who do this full time.
 
 ## Host keys, and that alarming first connection
 
@@ -181,10 +191,11 @@ kim@cluster:~$
 ```
 
 Everyone types `yes` without reading it. What it is actually asking is: *do
-you have any independent way to know this is the right machine?* The correct
-answer is to compare the fingerprint against one published by whoever runs
-the server — a wiki page, an onboarding email, the cloud console. The
-fingerprint is a hash of the server's public key, printed compactly:
+you have any independent way to know this is the right machine?*
+
+The correct answer is to compare the fingerprint against one published by
+whoever runs the server — a wiki page, an onboarding email, the cloud console.
+The fingerprint is a hash of the server's public key, printed compactly:
 
 ```python
 import base64
@@ -238,9 +249,10 @@ one action that turns a detected attack into a successful one.
 
 ## The practical workflow
 
-Five commands cover almost everything.
+Five commands cover almost everything. The first two are a one-time setup,
+done in order; the rest are daily habits.
 
-**Generate a key pair, once per machine you type on:**
+### 1. Generate a key pair — once per machine you type on
 
 ```console
 $ ssh-keygen -t ed25519 -C "kim@laptop"
@@ -256,7 +268,7 @@ Use a passphrase. The whole point of the private key is that possessing the
 file is *not enough*; the passphrase is the second factor, and you will type
 it approximately once per day thanks to the agent below.
 
-**Install the public key on a server:**
+### 2. Install the public key on a server
 
 ```console
 $ ssh-copy-id kim@cluster.example.edu
@@ -270,7 +282,7 @@ $ ssh kim@cluster.example.edu        # no password this time
 the manual equivalent is to paste the one-line contents of `id_ed25519.pub`
 into that file yourself.
 
-**Stop typing long commands — `~/.ssh/config`:**
+### 3. Stop typing long commands — `~/.ssh/config`
 
 ```text
 Host cluster
@@ -289,13 +301,13 @@ Host github.com
     IdentityFile    ~/.ssh/id_ed25519
 ```
 
-Now `ssh cluster` is the whole command, `scp file cluster:` works, and
+Now `ssh cluster` is the whole command and `scp file cluster:` works.
 `ssh gpu-04` automatically hops through the login node first — that is what
 `ProxyJump` does, and it replaces the fragile nested-`ssh` incantations you
 will see in older documentation. Wildcards in `Host` patterns mean one block
 can configure a whole fleet.
 
-**Type your passphrase once — the agent:**
+### 4. Type your passphrase once — the agent
 
 ```console
 $ eval "$(ssh-agent -s)"          # start the agent (many systems do this for you)
@@ -311,7 +323,7 @@ $ ssh-add -l                      # what the agent is currently holding
 request, so every later connection is passphrase-free until you log out. Put
 `AddKeysToAgent yes` in your config to have it happen automatically.
 
-**Copy files — `scp` for one-offs, `rsync` for everything else:**
+### 5. Copy files — `scp` for one-offs, `rsync` for everything else
 
 ```console
 $ scp results.csv cluster:~/data/            # local -> remote
@@ -325,13 +337,15 @@ $ rsync -avz --delete ./site/ cluster:/var/www/site/     # make remote match exa
 
 `rsync` transfers only the differences, resumes cleanly after a dropped
 connection, preserves timestamps and permissions (`-a`), compresses in
-flight (`-z`), and can mirror a directory exactly (`--delete`). One trap
-worth memorising: a **trailing slash on the source** means "the contents of
-this directory". `rsync -a src/ dest/` puts the contents into `dest`;
-`rsync -a src dest/` creates `dest/src`. Nearly every rsync surprise is that
-slash.
+flight (`-z`), and can mirror a directory exactly (`--delete`).
 
-**Run one command without an interactive shell:**
+!!! tip "One trap worth memorising: the trailing slash"
+
+    A **trailing slash on the source** means "the contents of this directory".
+    `rsync -a src/ dest/` puts the contents into `dest`; `rsync -a src dest/`
+    creates `dest/src`. Nearly every rsync surprise is that slash.
+
+### Run one command without an interactive shell
 
 ```console
 $ ssh cluster 'df -h /scratch | tail -n 1'
@@ -350,9 +364,10 @@ Wi-Fi changes, or a train goes into a tunnel. The connection drops, the
 remote shell receives a hang-up signal, and it kills everything it started.
 Four hours of compute, gone.
 
-The fix is a **terminal multiplexer**: a program that runs *on the server*
-and owns your shells, so that your SSH connection is merely a window onto
-them. Detach — deliberately or by accident — and the programs keep running.
+The fix is a **terminal multiplexer**: a program that runs *on the server* and
+owns your shells, so that your SSH connection is merely a window onto them.
+
+Detach — deliberately or by accident — and the programs keep running.
 Reconnect from a different machine and attach again.
 
 ```console
@@ -387,11 +402,13 @@ one more key. These are the ones worth learning first:
 | ++ctrl+b++ then ++x++ | kill the current pane (asks first) |
 
 A typical remote layout is one window per concern: an editor in one, a log
-tail in another, a shell for git in a third. `screen` is the older program
-that does the same job and is sometimes the only one installed; the concepts
-transfer directly. For a single fire-and-forget command, `nohup command &`
-or `setsid` is enough — but tmux is what you want the moment you need to look
-at the output again.
+tail in another, a shell for git in a third.
+
+Two alternatives worth knowing. `screen` is the older program that does the
+same job and is sometimes the only one installed; the concepts transfer
+directly. For a single fire-and-forget command, `nohup command &` or `setsid`
+is enough — but tmux is what you want the moment you need to look at the
+output again.
 
 ## Port forwarding: reaching a service that is not public
 
@@ -405,10 +422,11 @@ $ ssh -L 8888:localhost:8888 cluster
 ```
 
 Read `-L` as **L**ocal: "open port 8888 *on my machine*, and forward anything
-that connects to it through the encrypted channel to `localhost:8888` *as
-seen from the server*". Now typing `http://localhost:8888` into your own
-browser reaches the remote notebook, and no port was ever opened to the
-world.
+that connects to it through the encrypted channel to `localhost:8888` *as seen
+from the server*".
+
+Now typing `http://localhost:8888` into your own browser reaches the remote
+notebook, and no port was ever opened to the world.
 
 ```mermaid
 flowchart LR
@@ -422,7 +440,7 @@ resolved **on the server**, not on your laptop. That is why the target can be
 a service bound to the server's loopback interface and unreachable from
 anywhere else — which is exactly how such services should be configured.
 
-Three variations complete the picture:
+Four variations complete the picture:
 
 | Command | Effect |
 |---|---|
@@ -442,35 +460,37 @@ something smarter than syncing files back and forth.
 
 **VS Code Remote-SSH** connects over your existing SSH configuration and
 installs a small server component into your home directory on the remote
-machine. The user interface runs locally, so typing is instant, while the
-file system, the integrated terminal, the language server, the debugger, and
-most extensions run *on the remote host*. There is no local copy of the
-project to fall out of sync, and the remote machine's Python, compilers, and
-GPUs are the ones in use.
+machine. The user interface runs locally, so typing is instant, while the file
+system, the integrated terminal, the language server, the debugger, and most
+extensions run *on the remote host*. There is no local copy of the project to
+fall out of sync, and the remote machine's Python, compilers, and GPUs are the
+ones in use.
 
 **JetBrains Gateway** takes the same approach for IntelliJ, PyCharm, and the
 rest: a thin client on your laptop draws the interface, and the full IDE
 backend — indexing, inspections, refactoring — runs on the server, where the
 code and the memory are.
 
-Both are, underneath, ordinary SSH connections. Everything on this page still
-applies: they read `~/.ssh/config`, they use your agent, and if `ssh cluster`
-works in a terminal they will generally work too. Both also keep their remote
-component running for a while after you disconnect, which is why an editor
-session survives a brief network blip in the same way a tmux session does.
+Both are, underneath, ordinary SSH connections, so everything on this page
+still applies:
+
+- they read `~/.ssh/config` and use your agent — if `ssh cluster` works in a
+  terminal, they will generally work too;
+- they keep their remote component running for a while after you disconnect,
+  which is why an editor session survives a brief network blip in the same way
+  a tmux session does.
 
 ## Permissions, decoded
 
 SSH is famously fussy about file permissions: it will refuse to use a private
-key that other users could read. Understanding the refusal means reading Unix
-permission bits, which are just [binary](../ch00-machine/02-binary.md)
-grouped in threes and tested with the
-[bitwise operators](../ch06-loops/04-bitwise-enums.md) from Chapter 6.
+key that other users could read.
 
-A file has nine permission bits: read, write, and execute, for the **owner**,
-the owner's **group**, and **others**. `ls -l` prints them as letters;
-`chmod` takes them as an octal number, because each octal digit is exactly
-three bits.
+Understanding the refusal means reading Unix permission bits, which are just
+[binary](../ch00-machine/02-binary.md) grouped in threes and tested with the
+[bitwise operators](../ch06-loops/04-bitwise-enums.md) from Chapter 6. A file
+has nine permission bits — read, write, and execute, for the **owner**, the
+owner's **group**, and **others**. `ls -l` prints them as letters; `chmod`
+takes them as an octal number, because each octal digit is exactly three bits.
 
 ```python
 FLAGS = "rwxrwxrwx"
@@ -511,7 +531,7 @@ for mode, path, rule in [
     (0o600, "~/.ssh/authorized_keys", "on the server: only you may edit it"),
 ]:
     sym = to_symbolic(mode)
-    readable = "yes" if sym[3:] != "------" else "no"
+    readable = "yes" if sym[6:] != "---" else "no"
     print(f"  {mode:03o}  {sym}  {path:<22} others can read: {readable:<3} ({rule})")
 ```
 

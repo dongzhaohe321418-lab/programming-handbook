@@ -26,8 +26,8 @@ always shows integers in decimal — the base was a property of the *source
 code text*, never of the value. (There is also an octal prefix `0o` for
 base 8, which you will rarely need.)
 
-Hexadecimal earns its keep as a *compact abbreviation of binary*: one hex
-digit is exactly four bits, so `0x2A` unpacks digit-by-digit to
+Hexadecimal earns its keep as a *compact abbreviation of binary*: **one hex
+digit is exactly four bits**, so `0x2A` unpacks digit-by-digit to
 `0010 1010`. That is why memory addresses, colour codes like `#FF8800`, and
 error codes are conventionally written in hex.
 
@@ -157,9 +157,13 @@ print(0.1 + 0.2)
 
 This prints `0.30000000000000004` — not `0.3`. Nothing is broken: each of
 `0.1` and `0.2` was already a hair off before the addition even happened.
-For now, remember two habits: expect tiny errors in float arithmetic, and
-never test floats with `==`. The full story — and the right way to compare
-floats — is in
+
+For now, two habits are enough:
+
+- **Expect tiny errors** whenever floats are added, multiplied, or divided.
+- **Never test floats with `==`.** Compare with a tolerance instead.
+
+The full story — and the right way to compare floats — is in
 [Chapter 5.1](../ch05-under-the-hood/01-numeric-pitfalls.md).
 
 !!! warning "Common mistakes"

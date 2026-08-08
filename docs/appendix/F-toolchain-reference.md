@@ -499,7 +499,7 @@ patterns as raw strings: `r"\d+"`.
 | `(?P<name>...)` | named capture group |
 | `(?=...)` `(?!...)` | lookahead: followed by / not followed by |
 | `(?<=...)` `(?<!...)` | lookbehind: preceded by / not preceded by |
-| `\1` / `\g<name>` | back-reference to an earlier group |
+| `\1` / `(?P=name)` | back-reference inside the *pattern* (`\1` / `\g<name>` in a replacement string) |
 
 | Function | Returns |
 |---|---|

@@ -40,6 +40,7 @@ KL from the reference    1.622 nats
 method                    P(top answer)  KL from ref   held-out  generations / query
 reference (untuned)               14.4%        0.000      50.0%                    0
 best-of-4 sampling                46.2%        0.571     100.0%                    4
+...
 best-of-64 sampling              100.0%        1.945     100.0%                   64
 DPO, 12 pairs                     87.8%        1.622      88.6%                    1
 ```
@@ -56,7 +57,7 @@ function DPO learned without ever building one.
   on purpose.
 - [31.4 Reward models](../../ch31-rl/04-reward-models.md) — why annotators
   compare instead of scoring, and what Bradley-Terry does with a comparison.
-- [31.1 RL basics](../../ch31-rl/01-rl-basics.md) — softmax policies,
+- [31.1 RL from first principles](../../ch31-rl/01-rl-basics.md) — softmax policies,
   log-probabilities, and checking a gradient with finite differences.
 - [26.4 Sampling](../../ch26-llm-internals/04-sampling.md) — the softmax
   that turns logits into the probabilities every table here prints.
@@ -155,7 +156,7 @@ $$
 
 **Done when...** the loss at `theta = REF_LOGITS` is exactly
 $\log 2 = 0.693147$ — every margin is zero because the policy *is* the
-reference — and the loss is finite for margins of $\pm 50$, which a naive
+reference — and the loss is finite for margins of $\pm 800$, which a naive
 `-log(1 / (1 + exp(-s)))` is not.
 
 ??? tip "Hint"

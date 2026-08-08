@@ -41,13 +41,16 @@ four operations and says nothing about how they are implemented:
 
 ## A stack in ten lines of Python
 
-A Python list already does everything we need — *if* we agree that the top
-of the stack is the **end** of the list. `append` and `pop()` at the end are
-$O(1)$ (amortised), because a list keeps spare capacity at its end, as you
-saw in [Chapter 9](../ch09-collections/02-dynamic-lists.md). The *front*
-would be the wrong end: inserting or removing at index 0 shifts every other
-element, costing $O(n)$ per operation. Same list, opposite ends, completely
-different bills.
+A Python list already does everything we need — *if* we agree that the top of
+the stack is the **end** of the list.
+
+- **The end is the right end.** `append` and `pop()` there are $O(1)$
+  (amortised), because a list keeps spare capacity at its end, as you saw in
+  [Chapter 9](../ch09-collections/02-dynamic-lists.md).
+- **The front is the wrong end.** Inserting or removing at index 0 shifts
+  every other element — $O(n)$ per operation.
+
+Same list, opposite ends, completely different bills.
 
 ```python
 class Stack:
@@ -106,8 +109,13 @@ the `)` arrives while `[` is still waiting.
 
 The insight: **the most recently opened bracket must be the first one
 closed**. "Most recent first" is LIFO — so a stack of *currently open
-brackets* solves it. Walk the text once; push every opener; on every closer,
-pop and check that the popped opener matches.
+brackets* solves it. The algorithm is one pass:
+
+1. **Walk the text once**, character by character.
+2. **On an opener** `(`, `[`, `{` — push it onto the stack.
+3. **On a closer** `)`, `]`, `}` — pop, and check that the popped opener is
+   this closer's partner.
+4. **At the end** — the text is balanced only if the stack is empty.
 
 Here is the full trace on `"([{}])"`:
 
@@ -121,9 +129,12 @@ Here is the full trace on `"([{}])"`:
 | 6 | `)` | closer → pop `(` — matches | *(empty)* |
 | end | — | stack empty → **balanced** | |
 
-Two failure modes exist, and the algorithm catches both: a closer that
-arrives when the stack is empty or holds the wrong opener (`"([)]"`,
-`"))"`), and openers still left on the stack when the text ends (`"(()"`).
+Two failure modes exist, and the algorithm catches both:
+
+- **A closer with no matching opener** — the stack is empty, or its top holds
+  the wrong bracket. Examples: `"([)]"`, `"))"`.
+- **Openers still on the stack when the text ends** — something was never
+  closed. Example: `"(()"`.
 
 ```python
 class Stack:
@@ -174,11 +185,17 @@ simply ignores everything that is not a bracket.
 
 ## Undo and redo: two stacks facing each other
 
-Every "undo" you have ever pressed was a `pop`. An editor keeps a stack of
-performed actions; undo pops the most recent one (LIFO — you undo the *last*
-thing you did, not the first) and pushes it onto a second stack, so "redo"
-can push it back. A brand-new action clears the redo stack — after typing
-something new, the old future no longer applies.
+Every "undo" you have ever pressed was a `pop`. An editor keeps two stacks and
+obeys three rules:
+
+1. **Doing something** pushes the action onto the *undo* stack.
+2. **Undo** pops the most recent action off the undo stack — LIFO, because you
+   undo the *last* thing you did, not the first — and pushes it onto the *redo*
+   stack.
+3. **Redo** pops it back off the redo stack and returns it to the undo stack.
+
+One extra rule keeps history honest: a brand-new action **clears the redo
+stack**, because after typing something new the old future no longer applies.
 
 ```python
 undo_stack = []
@@ -291,13 +308,18 @@ frames of this stack, top down.
     System.out.println(stack.pop());    // a
     ```
 
-Java's standard advice is to use a `Deque` (usually `ArrayDeque`) as a
-stack. There *is* a class called `java.util.Stack`, but it is legacy: it
-dates from Java 1.0, extends `Vector` (so every operation pays for
-synchronisation you rarely need), and — worse for the ADT discipline — it
-inherits `Vector`'s methods for reading and inserting *anywhere*, so it
-cannot actually guarantee LIFO behaviour. Its own documentation points you
-to `Deque` instead.
+Java's standard advice is to use a `Deque` (usually `ArrayDeque`) as a stack.
+There *is* a class called `java.util.Stack`, but it is legacy for three
+reasons:
+
+- **It dates from Java 1.0** and predates the collections framework.
+- **It extends `Vector`**, so every operation pays for synchronisation you
+  rarely need.
+- **It inherits `Vector`'s methods** for reading and inserting *anywhere* —
+  worse for the ADT discipline, since it cannot actually guarantee LIFO
+  behaviour.
+
+Its own documentation points you to `Deque` instead.
 
 ## When `pop` has nothing to give
 

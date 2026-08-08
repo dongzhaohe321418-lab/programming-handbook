@@ -1,5 +1,52 @@
 # Exercises
 
+## The chapter in brief
+
+- The **terminal** is the window; the **shell** (bash, zsh, PowerShell) is
+  the program inside it that reads and runs your commands
+  ([1.1](01-command-line.md)).
+- A prompt like `kim@laptop:~/projects$` names the user, the machine, and the
+  **working directory** every command runs relative to.
+- `pwd`, `ls`, and `cd` answer *where am I*, *what is here*, and *take me
+  elsewhere* — and `ls -a` reveals the dot-files `ls` hides.
+- **Absolute paths** start at `/` and mean the same thing anywhere;
+  **relative paths** start from where you stand, with `..` for up and `~` for
+  home.
+- `mkdir`, `cp`, `mv`, and `rm` create, copy, rename, and delete — and `rm`
+  has no undo, no Trash, and no confirmation.
+- Python installs from python.org, and `python --version` confirms the shell
+  can find it ([1.2](02-python-setup.md)).
+- The same program runs four ways — the REPL for questions, a script file for
+  keeping, a notebook for narrative, and this site's Run button for reading.
+- A **virtual environment** gives each project its own private set of
+  packages, so one project's upgrade never breaks another.
+- **Git** stores your project as a chain of **commits** — snapshots with an
+  author, a date, a message, and a content-derived hash ID
+  ([1.3](03-git.md)).
+- Work flows through three areas: working directory → staging area →
+  repository history, via `git add` and `git commit`.
+- `git log` shows the history and `git diff` shows what changed, in the
+  unified-diff format you will read for the rest of your career.
+- **GitHub** hosts copies of repositories; nothing you commit locally goes
+  there until you `git push`.
+
+### Key terms
+
+| Term | What it means |
+| --- | --- |
+| [**shell**](../concept-index.md#s) | The program that reads your typed commands and carries them out |
+| [**command line**](../concept-index.md#c) | Talking to the computer by typing commands rather than clicking |
+| [**working directory**](../concept-index.md#w) | The folder you are "standing in"; every relative path starts here |
+| [**path**](../concept-index.md#p) | A route to a file — absolute from `/`, or relative from where you are |
+| **flag** | An option after a command that changes its behaviour, like `ls -a` |
+| **REPL** | Python's interactive prompt: read a line, evaluate, print, repeat |
+| **virtual environment** | A private per-project package set, created with `python -m venv` |
+| [**Git**](../concept-index.md#g) | The version-control tool that stores your project's full history |
+| [**commit**](../concept-index.md#c) | One snapshot of the whole project, with a message and a hash ID |
+| [**staging area**](../concept-index.md#s) | The drafting table where you assemble the *next* commit |
+| [**repository**](../concept-index.md#r) | The project plus its history, kept in the hidden `.git` folder |
+| **GitHub** | A website that hosts repositories — Git works fine without it |
+
 Tools become skills only through use. Work through these in order — they
 start with pure path-thinking and end with you building a miniature version
 control system. Attempt each one before opening the solution; being wrong

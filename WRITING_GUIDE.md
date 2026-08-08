@@ -47,8 +47,11 @@ harness. Therefore every Python block MUST:
 
 - be **self-contained**: it runs top-to-bottom in a fresh namespace with no
   undefined names. If a block deliberately continues the previous block on the
-  same page, its first line must be `# continues` (the harness then prepends
-  the earlier blocks).
+  same page, its first line must be `# continues`. Both the CI harness and the
+  site's Run button honour that marker: the earlier python blocks on the page
+  are executed first, in document order, so a reader who clicks a
+  continuation block out of order still gets its real output. This is why the
+  marker is mandatory — without it, a reader gets a bare `NameError`.
 - use only the **standard library, numpy, and matplotlib**. No pandas, scipy,
   requests, tkinter, network, threads, or pip installs.
 - never call `input()` — hard-code the "user input" into a variable and say so

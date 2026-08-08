@@ -51,8 +51,9 @@ sequenceDiagram
    [42.1](01-html-css.md), discovers it needs a stylesheet, a script, and some
    images, requests those too, then styles, lays out, and paints.
 
-Only step 5 is your program. Everything else is infrastructure — but knowing
-where each piece sits is what turns "the site is down" into a diagnosis.
+**Only step 5 is your program.** Everything else is infrastructure — but
+knowing where each piece sits is what turns "the site is down" into a
+diagnosis.
 
 ## The URL, dissected
 
@@ -102,13 +103,16 @@ escaping a path : /notes/green%20tea%20%26%20oolong.html
 and back        : /notes/green tea & oolong.html
 ```
 
-Three details that catch people out. The **fragment** (`#steps`) never leaves
-the browser — the server has no idea which anchor you jumped to. The **query
-string** is a convention, not a rule: `?q=cold+brew&page=2` is just text, and
-`parse_qs` decodes `+` as a space and `%26` as `&` because someone agreed to
-encode them that way. And a value must be **percent-encoded** before it goes in
-a URL, which is what `quote` and `urlencode` are for — hand-concatenating user
-text into a URL is how you get a broken link or an injected parameter.
+Three details that catch people out:
+
+- **The fragment (`#steps`) never leaves the browser.** The server has no idea
+  which anchor you jumped to.
+- **The query string is a convention, not a rule.** `?q=cold+brew&page=2` is
+  just text; `parse_qs` decodes `+` as a space and `%26` as `&` because
+  someone agreed to encode them that way.
+- **Values must be percent-encoded** before they go in a URL, which is what
+  `quote` and `urlencode` are for. Hand-concatenating user text into a URL is
+  how you get a broken link or an injected parameter.
 
 ## HTTP is plain text you could type
 
@@ -121,7 +125,7 @@ Host: teahouse.example
 User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)
 Accept: application/json
 Content-Type: application/json
-Content-Length: 38
+Content-Length: 49
 Cookie: session=8f3a91c0; theme=dark
 
 {"email": "ada@example.org", "cadence": "weekly"}
@@ -141,12 +145,18 @@ Cache-Control: no-store
 {"id": 1042, "email": "ada@example.org", "ok": true}
 ```
 
-That is the entire protocol. A **start line**, then **headers** (one
-`Name: value` per line, names case-insensitive), then a blank line, then an
-optional **body**. Request start line: method, target, version. Response start
-line: version, status code, reason phrase. HTTP/2 and HTTP/3 compress and
-multiplex these same messages in binary — the *model* on this page is
-unchanged, which is why learning the text form is not learning a legacy skill.
+That is the entire protocol. Every HTTP message has the same four parts, in
+this order:
+
+1. A **start line** — for a request: method, target, version; for a response:
+   version, status code, reason phrase.
+2. **Headers**, one `Name: value` per line, names case-insensitive.
+3. A **blank line**, which is what says "the headers are finished".
+4. An optional **body**.
+
+HTTP/2 and HTTP/3 compress and multiplex these same messages in binary — the
+*model* on this page is unchanged, which is why learning the text form is not
+learning a legacy skill.
 
 ### Methods, and what "safe" and "idempotent" mean
 
@@ -160,19 +170,33 @@ unchanged, which is why learning the text form is not learning a legacy skill.
 | `DELETE` | remove a resource | no | yes | rarely |
 | `OPTIONS` | ask what is allowed | yes | yes | no |
 
-**Safe** means the request does not change anything on the server, so a
-browser, a search-engine crawler, or a link prefetcher may issue it freely
-without asking. **Idempotent** means doing it twice has the same effect as
-doing it once — `PUT /users/42` with the same body lands on the same state
-whether it arrives once or five times, but `POST /orders` five times creates
-five orders. This is not pedantry: it decides whether a client may safely retry
-after a timeout, and it is exactly why browsers show "confirm form
-resubmission" when you refresh after a `POST`.
+Two words in that table carry real weight:
+
+- **Safe** — the request changes nothing on the server, so a browser, a
+  search-engine crawler, or a link prefetcher may issue it freely without
+  asking.
+- **Idempotent** — doing it twice has the same effect as doing it once.
+  `PUT /users/42` with the same body lands on the same state whether it
+  arrives once or five times; `POST /orders` five times creates five orders.
+
+This is not pedantry. It decides whether a client may safely retry after a
+timeout, and it is exactly why browsers show "confirm form resubmission" when
+you refresh after a `POST`.
 
 ### Status codes worth knowing
 
-The first digit is the family; learn the families and the dozen codes below and
-you can read almost any log.
+The first digit is the family, and the families alone will carry you a long
+way:
+
+| Family | Means |
+|---|---|
+| `1xx` | informational, rarely seen |
+| `2xx` | it worked |
+| `3xx` | go and look somewhere else |
+| `4xx` | **the client got it wrong** |
+| `5xx` | **the server got it wrong** |
+
+Learn those five, plus the dozen codes below, and you can read almost any log.
 
 | Code | Meaning | When you send it |
 |---|---|---|
@@ -193,10 +217,11 @@ you can read almost any log.
 | `502` / `503` / `504` | bad gateway, unavailable, timeout | the upstream service is unwell |
 
 The dividing line matters more than any individual code: **4xx is the client's
-fault, 5xx is the server's fault.** Returning `200 OK` with `{"error": "..."}`
-in the body — a shockingly common design — breaks every retry policy, monitor,
-and cache between you and your user, all of which read the status code and
-nothing else.
+fault, 5xx is the server's fault.**
+
+Returning `200 OK` with `{"error": "..."}` in the body — a shockingly common
+design — breaks every retry policy, monitor, and cache between you and your
+user, all of which read the status code and nothing else.
 
 ### Headers and bodies
 
@@ -214,20 +239,20 @@ Headers are metadata about the message. A handful appear constantly:
 | `Cache-Control` | both | how long this may be reused |
 | `Location` | response | where to go after a redirect, or where the new resource lives |
 
-The body is *just bytes*; `Content-Type` is the only thing that says what they
-mean. Send JSON with `Content-Type: text/html` and the browser will try to
+**The body is just bytes; `Content-Type` is the only thing that says what they
+mean.** Send JSON with `Content-Type: text/html` and the browser will try to
 render it as a page — the bytes were fine, the label was wrong.
 
 ## Statelessness, cookies, sessions, and tokens
 
 HTTP has **no memory**. Every request arrives as if it were the first one ever
-sent; the server has no idea that the request for `/account` came from the same
-person who just posted to `/login`. That design is why the web scales — any
-server in a fleet can answer any request — and it is why logging in needs a
-trick.
+sent; the server has no idea that the request for `/account` came from the
+same person who just posted to `/login`.
 
-The trick is a **cookie**: a small named string the server asks the browser to
-store and send back on every subsequent request to that site.
+That design is why the web scales — any server in a fleet can answer any
+request — and it is why logging in needs a trick. The trick is a **cookie**: a
+small named string the server asks the browser to store and send back on every
+subsequent request to that site.
 
 ```mermaid
 sequenceDiagram
@@ -275,11 +300,15 @@ There are three common shapes, and the difference is *where the state lives*:
 
 ## The centrepiece: an HTTP server's brain, in Python
 
-A web server does two separable jobs. It moves bytes over a socket, and it
-turns a request into a response. The first job is the operating system's kind
-of work; the second is *all of your application*, and it needs no network at
-all. We are going to write the second job completely, feed it hand-written
-request strings, and print the exact bytes it would send back.
+A web server does two separable jobs:
+
+1. **It moves bytes over a socket** — the operating system's kind of work.
+2. **It turns a request into a response** — *all of your application*, and it
+   needs no network at all.
+
+We are going to write the second job completely, feed it hand-written request
+strings, and print the exact bytes it would send back. Four steps: parse,
+serialize, route, then wrap the whole thing in middleware.
 
 ### Step 1 — parse a request
 
@@ -340,7 +369,7 @@ def parse_request(raw):
 RAW = ("POST /api/subscribe?ref=newsletter HTTP/1.1\r\n"
        "Host: teahouse.example\r\n"
        "Content-Type: application/json\r\n"
-       "Content-Length: 30\r\n"
+       "Content-Length: 28\r\n"
        "\r\n"
        '{"email": "ada@example.org"}')
 
@@ -368,7 +397,7 @@ method  : POST
 path    : /api/subscribe
 query   : {'ref': 'newsletter'}
 version : HTTP/1.1
-headers : {'host': 'teahouse.example', 'content-type': 'application/json', 'content-length': '30'}
+headers : {'host': 'teahouse.example', 'content-type': 'application/json', 'content-length': '28'}
 body    : {"email": "ada@example.org"}
 lookup is case-insensitive: application/json
 rejected: malformed request line: 'GET /x'
@@ -377,10 +406,12 @@ rejected: malformed header line: 'Host teahouse.example'
 ```
 
 Forty lines and a raw byte string has become an object with fields. Note the
-two deliberate decisions: header names are **lower-cased on the way in** so
-lookups never depend on how the client capitalised them, and anything
-unparseable raises `BadRequest` rather than returning a half-built object —
-that exception becomes a `400` in a moment.
+two deliberate decisions:
+
+- **Header names are lower-cased on the way in**, so lookups never depend on
+  how the client capitalised them.
+- **Anything unparseable raises `BadRequest`** rather than returning a
+  half-built object — and that exception becomes a `400` in a moment.
 
 ### Step 2 — serialize a response
 
@@ -432,10 +463,12 @@ Content-Length: 12
 ```
 
 The `repr` is the honest view: `\r\n` everywhere, one blank line before the
-body. `Content-Length` is computed from the **encoded** bytes, not the
-character count — `len("café")` is 4 but its UTF-8 encoding is 5 bytes, and a
-client that trusts a wrong length either truncates your page or hangs waiting
-for a byte that never comes.
+body.
+
+`Content-Length` is computed from the **encoded** bytes, not the character
+count — `len("café")` is 4 but its UTF-8 encoding is 5 bytes, and a client
+that trusts a wrong length either truncates your page or hangs waiting for a
+byte that never comes.
 
 ### Step 3 — route with path parameters
 
@@ -537,18 +570,25 @@ for path in ["/users/42", "/users/ada", "/api/users/7", "/teapot"]:
 /teapot          -> no route (404) None
 ```
 
-`/users/ada` does not match, because `{user_id:int}` compiled to `\d+`. That is
-type validation happening in the router, before your handler runs — a small
-thing that removes a whole category of `int()` crashes. And `[^/]+` rather than
-`.+` is the point [41.2](../ch41-regex/02-groups-parsing.md) laboured: a path
-segment stops at the next slash, and a negated character class says so
-directly.
+Two things to notice in that output:
+
+- **`/users/ada` does not match**, because `{user_id:int}` compiled to `\d+`.
+  That is type validation happening in the router, before your handler runs — a
+  small thing that removes a whole category of `int()` crashes.
+- **`[^/]+` rather than `.+`** is the point
+  [41.2](../ch41-regex/02-groups-parsing.md) laboured: a path segment stops at
+  the next slash, and a negated character class says so directly.
 
 ### Step 4 — middleware, and the whole thing running
 
-**Middleware** is a function that wraps a handler: it can inspect the request
-before, inspect the response after, or short-circuit and answer by itself. The
-chain is built by wrapping outward, so the first entry in the list is the
+**Middleware** is a function that wraps a handler. It can do any of three
+things:
+
+- **inspect the request** before the handler runs;
+- **inspect or rewrite the response** after it runs;
+- **short-circuit** — answer by itself and never call the handler at all.
+
+The chain is built by wrapping outward, so the first entry in the list is the
 outermost layer and sees everything.
 
 ```python
@@ -682,13 +722,16 @@ access log:
 
 ```
 
-Read the access log carefully: it has **four** lines for **five** requests. The
-malformed one never reached the middleware, because parsing failed before
+Read the access log carefully: it has **four** lines for **five** requests.
+
+The malformed one never reached the middleware, because parsing failed before
 routing began — which is exactly right, and exactly why a real server's error
 log and access log are different files.
 
-Everything else is worth naming, because these are the parts of every web
-framework you will ever use:
+### The six parts you just built
+
+Everything in that program has a name, and every web framework you will ever
+use has the same six parts:
 
 - the **request object** — raw bytes turned into fields your code can read;
 - the **router** — a table from `(method, pattern)` to a function, with typed
@@ -703,11 +746,16 @@ framework you will ever use:
   traceback kept on the server;
 - the **serializer** — an object turned back into exact wire bytes.
 
-You have written the core of a web framework. Flask's `@app.route("/users/<int:user_id>")`
-is the decorator above; Express's `app.use(...)` is `MIDDLEWARE`; Spring's
-`@GetMapping("/users/{id}")` is `template_to_regex`. The remaining code in
-those projects is sockets, concurrency, templating, and a decade of edge cases —
-important, but no longer mysterious.
+You have written the core of a web framework, and the mapping is direct:
+
+| In a real framework | Is the thing you wrote |
+|---|---|
+| Flask's `@app.route("/users/<int:user_id>")` | the `@app.route` decorator above |
+| Express's `app.use(...)` | the `MIDDLEWARE` list |
+| Spring's `@GetMapping("/users/{id}")` | `template_to_regex` |
+
+The remaining code in those projects is sockets, concurrency, templating, and a
+decade of edge cases — important, but no longer mysterious.
 
 ## REST and JSON APIs
 
@@ -729,9 +777,11 @@ a crawler, or an antivirus link-scanner may follow it — and sites really have
 had their content deleted by a search engine dutifully crawling every
 `/deleteNote?id=` link on the page.
 
-Adding a JSON endpoint to the router you already have takes nine lines. This
-one accepts a `POST`, parses the body, validates it, and answers `201` with a
-`Location` header — or `400` if the body is not what it claims to be.
+### A JSON endpoint, added to the router you already have
+
+About twenty lines. This one accepts a `POST`, parses the body, validates it,
+and answers `201` with a `Location` header — or `400` if the body is not what
+it claims to be.
 
 ```python
 # continues
@@ -806,15 +856,18 @@ for raw in API_REQUESTS:
     HTTP/1.1 405 Method Not Allowed | method not allowed
 ```
 
-Four things to notice. Only the **first** `POST` created a note, so the `GET`
-lists exactly one — the two rejected posts never reached the store, which is
-what validating *before* mutating buys you. The two `400`s distinguish "your
-JSON is broken" from "your JSON is fine but the field is missing", and both
-answer in JSON, because a client that asked for JSON should not receive an HTML
-error page. The `GET` and the `POST` share a path and differ only by method,
-and `resolve` handles that because the route table is keyed on the pair. And
-the `DELETE` produced `405` rather than `404`: the path exists, the verb does
-not, and the `Allow` header tells the client which verbs would have worked.
+Four things to notice:
+
+1. **Only the first `POST` created a note**, so the `GET` lists exactly one.
+   The two rejected posts never reached the store — that is what validating
+   *before* mutating buys you.
+2. **The two `400`s say different things**: "your JSON is broken" versus "your
+   JSON is fine but the field is missing". Both answer *in JSON*, because a
+   client that asked for JSON should not receive an HTML error page.
+3. **The `GET` and the `POST` share a path** and differ only by method, and
+   `resolve` handles it because the route table is keyed on the pair.
+4. **The `DELETE` produced `405`, not `404`.** The path exists, the verb does
+   not, and the `Allow` header tells the client which verbs would have worked.
 
 !!! note "Idempotency in your own hands"
 
@@ -823,13 +876,18 @@ not, and the `Allow` header tells the client which verbs would have worked.
     either use `PUT /api/notes/{id}` with a client-chosen id, or accept an
     `Idempotency-Key` header and remember it. Payment APIs do the latter.
 
-## The ten-line real version
+## The five-line real version
 
 Everything above is the interesting half. The boring half — accept a TCP
 connection, read bytes until the headers end, write bytes back — is in the
-standard library. This is a complete static file server; the Run button cannot
-execute it because it opens a socket, so save it and run it on your own
-machine.
+standard library.
+
+!!! tip "Save this file and run it on your own machine"
+
+    The block below is a complete static file server. The Run button cannot
+    execute it, because it opens a socket. Save it as **`serve.py`** in the
+    folder that holds the `page.html` from [42.1](01-html-css.md), run
+    `python serve.py`, then open `http://127.0.0.1:8000/page.html`.
 
 ```text
 # serve.py — run this on your own machine, not in the browser
@@ -851,9 +909,12 @@ $ python -m http.server 8000
 
 Then open `http://127.0.0.1:8000/page.html` and you are looking at the page
 from [42.1](01-html-css.md), delivered over real HTTP. `127.0.0.1` is
-**localhost**, your own machine; nobody else can reach it. This server is for
-development only — it is single-threaded and has no security hardening
-whatsoever.
+**localhost**, your own machine; nobody else can reach it.
+
+This server is for development only — it is single-threaded and has no security
+hardening whatsoever.
+
+### The frameworks that do this for real
 
 For applications, nobody writes the router by hand. Four you will meet:
 
@@ -874,23 +935,27 @@ For applications, nobody writes the router by hand. Four you will meet:
 
 ## Static versus dynamic, and templates
 
-A **static** response is a file read off disk and sent unchanged — HTML, CSS,
-images, the JavaScript bundle. It is cacheable, fast, and safely served by a
-CDN. A **dynamic** response is built per request by your code, because it
-depends on who is asking or on data that changes. The usual way to build one is
-a **template**: an HTML file with placeholders (`{{ user.name }}`, `{% for note
-in notes %}`) that a template engine fills in — Jinja for Flask, Thymeleaf for
-Spring, EJS for Express. It is the mail-merge idea from
-[Chapter 14.3](../ch14-beyond/03-guis-and-beyond.md), industrialised, and its
-one non-negotiable feature is **auto-escaping**: a template engine converts
+- A **static** response is a file read off disk and sent unchanged — HTML, CSS,
+  images, the JavaScript bundle. It is cacheable, fast, and safely served by a
+  CDN.
+- A **dynamic** response is built per request by your code, because it depends
+  on who is asking or on data that changes.
+
+The usual way to build a dynamic response is a **template**: an HTML file with
+placeholders (`{{ user.name }}`, `{% for note in notes %}`) that a template
+engine fills in — Jinja for Flask, Thymeleaf for Spring, EJS for Express. It is
+the mail-merge idea from
+[Chapter 14.3](../ch14-beyond/03-guis-and-beyond.md), industrialised.
+
+Its one non-negotiable feature is **auto-escaping**: a template engine converts
 `<` to `&lt;` in every substituted value by default, which is what stops a user
 whose name is `<script>` from running code in every other user's browser.
 
 ## Security: the short version that actually matters
 
 **Never trust anything that arrives in a request.** Not the body, not the query
-string, not the path, not the headers, not the cookies — all of it is typed by
-a stranger, and the form you wrote is not the only way to send it.
+string, not the path, not the headers, not the cookies. All of it is typed by a
+stranger, and the form you wrote is not the only way to send it.
 
 - **SQL injection.** Building a query by string concatenation —
   `"SELECT * FROM users WHERE email = '" + email + "'"` — lets input like

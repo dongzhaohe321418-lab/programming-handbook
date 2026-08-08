@@ -1,14 +1,15 @@
 # Part V · AI Engineering
 
 Somewhere around 2023 a job appeared that had not existed before. It is not
-research — the people doing it are not designing new architectures or
-proving theorems — and it is not classical machine learning either, since
-most of them never train a model from scratch. The job is to take models
-that already exist and turn them into systems that work: wire them to tools
-and data, serve them fast enough and cheaply enough to matter, measure
-whether they are any good, and fix them when they are not. It is called
-**AI engineering**, and it is mostly software engineering — the kind you
-have been learning since Chapter 0 — applied to a component that is
+research — the people doing it are not designing new architectures or proving
+theorems — and it is not classical machine learning either, since most of
+them never train a model from scratch.
+
+The job is to take models that already exist and turn them into systems that
+work: wire them to tools and data, serve them fast enough and cheaply enough
+to matter, measure whether they are any good, and fix them when they are not.
+It is called **AI engineering**, and it is mostly software engineering — the
+kind you have been learning since Chapter 0 — applied to a component that is
 probabilistic, expensive, and occasionally wrong with total confidence.
 
 That last property makes it a distinct discipline. Every other component
@@ -70,15 +71,20 @@ frontier model represents millions of dollars of electricity, no browser tab
 will reproduce that, and any tutorial implying otherwise is selling
 something.
 
-**It can teach you every mechanism inside one.** Attention is a matrix
-multiply, a division, a softmax, and another matrix multiply — roughly
-fifteen lines of numpy, which you will write in Section 26.2 and watch
-produce real attention weights. A DPO update on six preference pairs with a
-two-parameter policy is a *correct* DPO update; only the scale is toy. A KV
-cache holding five tokens obeys exactly the arithmetic that decides how many
-users fit on an 80 GB GPU. Throughout Part V, where a snippet needs a
-language model, it gets a deterministic stand-in named `FakeLLM` — no
-network, no key, and completely reproducible:
+**It can teach you every mechanism inside one.** Three examples of what "toy
+scale, real algorithm" buys you:
+
+- **Attention** is a matrix multiply, a division, a softmax, and another
+  matrix multiply — roughly fifteen lines of numpy, which you will write in
+  Section 26.2 and watch produce real attention weights.
+- **A DPO update** on six preference pairs with a two-parameter policy is a
+  *correct* DPO update; only the scale is toy.
+- **A KV cache** holding five tokens obeys exactly the arithmetic that decides
+  how many users fit on an 80 GB GPU.
+
+Throughout Part V, where a snippet needs a language model, it gets a
+deterministic stand-in named `FakeLLM` — no network, no key, and completely
+reproducible:
 
 ```python
 class FakeLLM:
@@ -109,13 +115,14 @@ run`, an SDK call with your key in it — appears in a `text` or `console`
 fence, so it gets no Run button and is never pretended to have executed.
 
 Why is the small version worth building? Because the alternative — reading
-about attention, nodding, moving on — reliably produces people who can
-recite "queries, keys, and values" but cannot say what breaks if you drop
-the causal mask. Once you have written the fifteen lines, deleted the
-`/ np.sqrt(d_k)`, and watched the softmax saturate, the knowledge stops
-being verbal. Building the small version is the fastest route to real
-understanding precisely because it is the *smallest* thing that is still
-the real thing.
+about attention, nodding, moving on — reliably produces people who can recite
+"queries, keys, and values" but cannot say what breaks if you drop the causal
+mask.
+
+Once you have written the fifteen lines, deleted the `/ np.sqrt(d_k)`, and
+watched the softmax saturate, the knowledge stops being verbal. **Building the
+small version is the fastest route to real understanding precisely because it
+is the *smallest* thing that is still the real thing.**
 
 !!! warning "This field moves fast"
     Part V marks what is settled and what is merely current. Settled:
@@ -126,13 +133,16 @@ the real thing.
 
 ## Prerequisites
 
-**Parts I–IV, and nothing else.** You need Python fluency
-([Chapter 2](ch02-data/index.md) onward), comfort with classes and
-dictionaries ([Chapter 12](ch12-classes/index.md)), Big-O thinking
-([Chapter 16](ch16-complexity/index.md) — attention's $O(n^2)$ cost drives
-most of Part V's engineering), and a working mental model of processes and
-memory ([Chapter 23](ch23-os/index.md)), which is what makes GPU memory
-budgets and inference servers sensible rather than arbitrary.
+**Parts I–IV, and nothing else.** Concretely, four things:
+
+- **Python fluency** ([Chapter 2](ch02-data/index.md) onward).
+- **Comfort with classes and dictionaries**
+  ([Chapter 12](ch12-classes/index.md)).
+- **Big-O thinking** ([Chapter 16](ch16-complexity/index.md)) — attention's
+  $O(n^2)$ cost drives most of Part V's engineering.
+- **A working mental model of processes and memory**
+  ([Chapter 23](ch23-os/index.md)), which is what makes GPU memory budgets and
+  inference servers sensible rather than arbitrary.
 
 You need **no** machine learning background, no calculus, and no linear
 algebra: vectors, matrix products, dot products, softmax, and gradients are

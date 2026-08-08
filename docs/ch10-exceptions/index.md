@@ -3,12 +3,14 @@
 So far, every program in this book has lived in a friendly bubble: the input
 was hard-coded, nothing unexpected ever arrived, and when something *did* go
 wrong, Python printed a wall of red text and stopped. This chapter pops the
-bubble twice. First, your programs grow up into **command-line tools** —
-programs that a user launches from a terminal with arguments
-(`python add.py 3 4`), the way real utilities like `git` and `python` itself
-are launched. Second, you learn what that wall of red text actually is: an
-**exception**, an object describing a failure, travelling up through your
-function calls in search of someone prepared to handle it.
+bubble twice:
+
+- **Your programs grow up into command-line tools** — programs that a user
+  launches from a terminal with arguments (`python add.py 3 4`), the way real
+  utilities like `git` and `python` itself are launched.
+- **You learn what that wall of red text actually is** — an **exception**, an
+  object describing a failure, travelling up through your function calls in
+  search of someone prepared to handle it.
 
 The two topics arrive together for a reason. The moment a program accepts
 arguments from a stranger, "the input is always valid" stops being true —

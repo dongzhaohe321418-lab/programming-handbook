@@ -2,10 +2,11 @@
 
 A binary tree becomes a binary *search* tree the moment you add one rule
 about where values may live — and that single rule turns "find my value"
-from a full scan into a walk down one short path. This section states the
-rule precisely (including the subtle way beginners get it wrong), then
-builds a working BST one operation at a time: insert, search, min and max,
-and — honestly, all three cases — delete.
+from a full scan into a walk down one short path.
+
+This section states the rule precisely, including the subtle way beginners
+get it wrong. Then it builds a working BST one operation at a time: insert,
+search, min and max, and — honestly, all three cases — delete.
 
 ## The invariant: left is smaller, right is larger, *everywhere*
 
@@ -26,9 +27,11 @@ flowchart TD
 ```
 
 Check any node you like: everything left of 50 (namely 30, 20, 40) is below
-50; everything right (70) is above; 30's own little family obeys too. Now
-the classic trap — a tree that looks sorted *locally* but is wrong
-*globally*:
+50; everything right (70) is above; 30's own little family obeys too.
+
+### The classic trap: locally sorted, globally broken
+
+Now the trap — a tree that looks sorted *locally* but is wrong *globally*:
 
 ```mermaid
 flowchart TD
@@ -42,10 +45,17 @@ flowchart TD
 Node by node it seems fine: 60 is greater than 30, so it sits correctly to
 30's right; 20 sits correctly to 30's left. But 60 lives in the **left
 subtree of 50**, and the invariant says everything in that subtree must be
-*below 50*. Search for 60 and the bug bites: at the root, $60 > 50$ sends
-you right — and 60 isn't there. A BST with one misplaced value is not
-"mostly sorted"; it is broken, because every operation trusts the invariant
-completely.
+*below 50*.
+
+Search for 60 and the bug bites: at the root, $60 > 50$ sends you right —
+and 60 isn't there.
+
+!!! note "One misplaced value breaks the whole tree"
+    A BST with a single value on the wrong side is not "mostly sorted"; it
+    is broken. Every operation trusts the invariant completely, so a search
+    will confidently walk away from a value that is sitting right there.
+
+### What the invariant buys
 
 The reward for maintaining it: at any node, one comparison discards one
 whole subtree. Every operation below is a walk from the root down a single
@@ -74,17 +84,20 @@ print(root.value, "has left child", root.left.value,
 ```
 
 This prints `50 has left child 30 and right child 70` — a three-node BST
-wired by hand. Hand-wiring does not scale, and nothing stops us from wiring
-it *wrong*; the whole point of the `BST` class we now build is that its
-operations preserve the invariant automatically.
+wired by hand.
+
+Hand-wiring does not scale, and nothing stops us from wiring it *wrong*.
+The whole point of the `BST` class we now build is that its operations
+preserve the invariant automatically.
 
 ## Insert: walk down, attach at a leaf
 
 To insert a value, play "higher or lower" from the root: go left if the new
 value is smaller, right if larger — and when the pointer you would follow
-is `None`, that hole is exactly where the value belongs. New values always
-enter as **leaves**; a BST is grown at its fringe, never rewired in the
-middle.
+is `None`, that hole is exactly where the value belongs.
+
+New values always enter as **leaves**. A BST is grown at its fringe, never
+rewired in the middle.
 
 Watch the tree grow as we insert `50, 30, 70, 20, 40` into an empty tree:
 
@@ -207,9 +220,11 @@ print(contains(tree, 65))     # walk: 50 -> 70 -> off the tree. not found
 
 The two new lines are `True` and `False`. Searching for 65 never looked at
 30, 20, or 40 — the first comparison at the root discarded the entire left
-subtree. On five nodes that saves little; on many nodes it is everything.
-Let's count the work on a 1000-value tree and compare it with scanning a
-list, the way [Chapter 8](../ch08-grids/03-first-algorithms.md) would:
+subtree.
+
+On five nodes that saves little; on many nodes it is everything. Let's count
+the work on a 1000-value tree and compare it with scanning a list, the way
+[Chapter 8](../ch08-grids/03-first-algorithms.md) would:
 
 ```python
 # continues
@@ -287,8 +302,9 @@ flowchart TD
     f70 --- f80((80))
 ```
 
-**Case 1 — a leaf.** Deleting 20: nothing hangs below it, so snip the
-parent's reference. Done.
+### Case 1 — a leaf
+
+Deleting 20: nothing hangs below it, so snip the parent's reference. Done.
 
 ```mermaid
 flowchart LR
@@ -301,10 +317,14 @@ flowchart LR
     end
 ```
 
-**Case 2 — one child.** Now delete 30, which has only the child 40 left.
-Splice it out: the parent adopts the orphan directly — 50's left pointer
-skips the dead node and grabs 40. The invariant survives because everything
-in 30's left-over subtree was already on 50's left side.
+### Case 2 — one child
+
+Now delete 30, which has only the child 40 left. Splice it out: the parent
+adopts the orphan directly — 50's left pointer skips the dead node and grabs
+40.
+
+The invariant survives because everything in 30's left-over subtree was
+already on 50's left side.
 
 ```mermaid
 flowchart LR
@@ -317,13 +337,18 @@ flowchart LR
     end
 ```
 
-**Case 3 — two children.** Delete 50, the root itself, with full subtrees
-on both sides. We cannot splice — two orphaned subtrees, one parent
-pointer. The trick: **do not remove the node; replace its value.** The
-replacement must keep the invariant: bigger than everything left, smaller
-than everything else right. Exactly one value on the right qualifies: the
-*smallest value in the right subtree*, called the **in-order successor**
-(here: start at 70, hug left, arrive at 60).
+### Case 3 — two children
+
+Delete 50, the root itself, with full subtrees on both sides. We cannot
+splice — two orphaned subtrees, one parent pointer.
+
+The trick: **do not remove the node; replace its value.** The replacement
+must keep the invariant, so it has to be bigger than everything on the left
+and smaller than everything else on the right. Exactly one value on the
+right qualifies: the *smallest value in the right subtree*, called the
+**in-order successor** (here: start at 70, hug left, arrive at 60).
+
+Three steps:
 
 1. Find the successor: minimum of the right subtree → 60.
 2. Copy the successor's value into the node being "deleted": the root now
@@ -348,9 +373,11 @@ flowchart LR
     end
 ```
 
-Here is the complete class — everything this section built, with `delete`
-written recursively (the [Chapter 17](../ch17-recursion/index.md) payoff:
-"delete from a subtree" is the same problem, smaller):
+### The complete class
+
+Here is everything this section built, with `delete` written recursively
+(the [Chapter 17](../ch17-recursion/index.md) payoff: "delete from a
+subtree" is the same problem, smaller):
 
 ```python
 class Node:
@@ -452,9 +479,11 @@ contains 60? True
 
 Trace the final shape against the diagrams: 40 was spliced up under the
 root, and the root's value became 60 — the in-order successor — leaving a
-valid BST at every step. In the code, notice how Case 1 needs no line of
-its own: a leaf is just a node whose "only child" is `None`, so
-`return node.right` returns `None` and snips it.
+valid BST at every step.
+
+In the code, notice how Case 1 needs no line of its own. A leaf is just a
+node whose "only child" is `None`, so `return node.right` returns `None`
+and snips it.
 
 ## The bill: everything is $O(h)$
 
@@ -467,9 +496,15 @@ its own: a leaf is just a node whose "only child" is `None`, so
 
 Every row says the same thing: the height $h$ *is* the price of a BST. If
 $h \approx \log_2 n$, everything is fast; if the tree degenerates into a
-chain, $h = n - 1$ and every promise collapses. What controls $h$? The
-*order* in which values arrive — and that story, with measurements, is
-[the next section](03-traversals-balance.md).
+chain, $h = n - 1$ and every promise collapses.
+
+What controls $h$? The *order* in which values arrive — and that story, with
+measurements, is [the next section](03-traversals-balance.md).
+
+The cure comes later, in [Chapter 35](../ch35-balanced-trees/index.md),
+where `insert` and `delete` grow one extra step — a **rotation** — that
+repairs the height on the way back up and turns $O(h)$ into a guaranteed
+$O(\log n)$.
 
 !!! warning "Common mistakes"
 

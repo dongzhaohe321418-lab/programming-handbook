@@ -1,9 +1,56 @@
 # Exercises
 
-The first three exercises need only pencil and paper (verify with code
-afterwards); the rest grow your own tree toolkit. Several solutions share
-this minimal kit — a `Node` class and an `insert`/`build` pair — which is
-repeated in each solution so every block runs on its own.
+## The chapter in brief
+
+- A **tree** is a hierarchy with one root, one parent per node, and no
+  loops — the shape of file systems, org charts, and brackets
+  ([20.1](01-tree-vocab.md)).
+- **Depth** belongs to a node (edges up to the root); **height** belongs to
+  the whole tree (edges down its longest path), and the empty tree has
+  height $-1$ by convention.
+- Trees are **recursive**: every node is the root of a subtree, so nearly
+  every tree algorithm is one base case plus two recursive calls.
+- A **perfect** binary tree of height $h$ holds $2^{h+1} - 1$ nodes, so $n$
+  nodes fit inside a height of only about $\log_2 n$.
+- The **BST invariant** constrains whole *subtrees*, not just parent–child
+  pairs — which is why a "locally sorted" tree can still be broken
+  ([20.2](02-bst-ops.md)).
+- `insert` walks down and attaches at a leaf; `contains` is the same walk
+  without attaching; `find_min`/`find_max` just hug one wall.
+- `delete` has three cases: snip a leaf, splice out a one-child node, or —
+  for two children — copy the **in-order successor**'s value up and delete
+  that successor.
+- Every BST operation costs $O(h)$, so the tree's height *is* its price
+  list.
+- Pre-order, in-order, and post-order are one function with the visit in a
+  different place; level-order needs a queue ([20.3](03-traversals-balance.md)).
+- **In-order traversal of a BST always emits sorted order** — and pre-order
+  is the one to save if you want to rebuild the same *shape*.
+- Sorted input degrades a BST into a chain of height $n - 1$, turning every
+  $O(\log n)$ promise into $O(n)$.
+- **Self-balancing** trees (AVL, red-black) rotate on every write to
+  guarantee $O(\log n)$ regardless of input order — built in
+  [Chapter 35](../ch35-balanced-trees/index.md).
+
+### Key terms
+
+| Term | What it means |
+| --- | --- |
+| [root](../concept-index.md#r) | the one node with no parent |
+| [leaf](../concept-index.md#l) | a node with no children |
+| [subtree](../concept-index.md#s) | a node together with all its descendants |
+| [depth](../concept-index.md#d) | edges from a *node* up to the root |
+| [height](../concept-index.md#h) | edges on the tree's longest root-to-leaf path |
+| [binary search tree](../concept-index.md#b) | binary tree where left < node < right, in every subtree |
+| [invariant](../concept-index.md#i) | a promise the structure keeps between every operation |
+| in-order successor | smallest value in a node's right subtree — the legal stand-in when deleting |
+| [traversal](../concept-index.md#t) | a systematic visit of every node |
+| [rotation](../concept-index.md#r) | $O(1)$ re-link that shortens a leaning subtree without breaking the invariant |
+
+Now put it to work. The first three exercises need only pencil and paper
+(verify with code afterwards); the rest grow your own tree toolkit. Several
+solutions share this minimal kit — a `Node` class and an `insert`/`build`
+pair — which is repeated in each solution so every block runs on its own.
 
 ### Exercise 20.1 — Read the tree ●
 

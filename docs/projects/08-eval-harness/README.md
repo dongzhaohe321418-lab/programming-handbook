@@ -26,6 +26,7 @@ t04   format     regex        1.00    12   0.21
 t06   code       execution    1.00    42   0.35
 t08   support    judge        0.50    39   0.33  partial
 t09   support    judge        0.00    23   0.25  wrong
+...
 
 accuracy  85.0%   strict pass rate  80.0%   (10 tasks)
 by category  code 100%   format 100%   knowledge 100%   math 100%   support 25%
@@ -60,15 +61,15 @@ broken date format, because one gain cancelled one regression exactly.
 - [33.3 LLM-as-a-judge](../../ch33-eval/03-llm-as-judge.md) — pairwise
   against a frozen reference, judged in both orders, with the biases
   measured before the judge is trusted.
-- [33.1 Benchmarks and metrics](../../ch33-eval/01-benchmarks.md) — why
+- [33.1 Benchmarks and what they measure](../../ch33-eval/01-benchmarks.md) — why
   exact match is a *family* of metrics and normalisation is a design choice.
 - [Chapter 11 · Files](../../ch11-files/index.md) — the dataset and the
   baseline both live on disk, written then read back, because an eval you
   cannot check into a repository is not an eval.
-- [24.2 Testing](../../ch24-practice/02-testing.md) — a regression gate is
+- [24.2 Testing beyond the basics](../../ch24-practice/02-testing.md) — a regression gate is
   regression-test discipline applied to a component with no compiler.
 - [Chapter 12 · Writing Your Own Classes](../../ch12-classes/index.md) and
-  [15.3 Interfaces](../../ch15-inheritance/03-interfaces.md) — one model
+  [15.3 Interfaces and abstract classes](../../ch15-inheritance/03-interfaces.md) — one model
   interface, many providers; one scorer signature, many scorers.
 
 ## Milestones
@@ -296,7 +297,8 @@ re-average, take the 2.5th and 97.5th percentiles — reported for each model,
 and then the same interval applied to the *per-task difference*.
 
 **Done when...** each model's own interval is tens of points wide on ten
-tasks; the paired interval on the difference is narrower than either; and
+tasks; the paired interval on the difference sits clear of zero even where the two
+  separate intervals overlap; and
 your comparison prints an explicit verdict, `significant` or
 `inside the noise`, alongside a win/loss/tie count.
 
@@ -325,7 +327,7 @@ your comparison prints an explicit verdict, `significant` or
 
     The two separate intervals — `[0.55, 0.825]` and `[0.80, 0.975]` — still
     overlap, so read on their own they say "possibly better, cannot tell".
-    The paired interval on the difference is `[0.075, 0.325]`: half as wide
+    The paired interval on the difference is `[0.075, 0.325]`: it excludes zero,
     and nowhere near zero, because the shared difficulty of the tasks
     cancels out. Same +20 points either way; only one of the three intervals
     answers the question you asked.
@@ -945,6 +947,6 @@ the baseline and see what a checked-in eval actually looks like.
   single change that keeps a gate switched on.
 - **Adopt a real harness.** Once you can write these four hundred lines,
   spend a morning with **lm-evaluation-harness** (EleutherAI), **Inspect**
-  (UK AI Safety Institute), or **promptfoo**, and port two of your tasks
+  (UK AI Security Institute), or **promptfoo**, and port two of your tasks
   into it. You will read their source much faster having built yours, and
   when a number looks wrong you will know where to look.

@@ -2,11 +2,13 @@
 
 Every algorithm in this chapter maximises a number. Sections 31.2 and 31.3
 taught you how to maximise it efficiently; this section is about where the
-number comes from, and it is the part practitioners lose sleep over. An RL run
-does not learn what you want — it learns what you *measured*, with a
-thoroughness no human employee would ever apply. So the reward function is not
-a configuration detail. It is the specification, and it is where almost all the
-real failures live.
+number comes from, and it is the part practitioners lose sleep over.
+
+!!! warning "An RL run does not learn what you want"
+
+    It learns what you **measured**, with a thoroughness no human employee would
+    ever apply. So the reward function is not a configuration detail. It is the
+    specification, and it is where almost all the real failures live.
 
 ## Humans compare; they do not score
 
@@ -18,19 +20,31 @@ Absolute scores are **uncalibrated**: the number depends on the rater as much as
 on the response.
 
 Comparisons are far more robust. "Is A better than B?" removes the scale
-entirely; there is nothing to calibrate. It is faster, it has higher
-inter-annotator agreement, and — as [31.3](03-dpo-grpo.md) showed — it is
-exactly the form that Bradley-Terry and DPO consume. That is why essentially all
-preference data is pairwise. The cost is real: a comparison carries at most one
-bit, and it tells you nothing about *how much* better A was.
+entirely; there is nothing to calibrate.
 
-Good annotation guidelines are the other half. They must state the priority
-order when criteria conflict (is a correct-but-rude answer better than a
-polite-but-wrong one?), define ties, and give worked examples of hard cases.
+| | Absolute rating (1–10) | Pairwise comparison |
+| --- | --- | --- |
+| **Needs calibration?** | yes, per rater and per day | no — there is no scale |
+| **Agreement between raters** | low | much higher |
+| **Speed** | slower | faster |
+| **Information per judgement** | a whole number | at most one bit |
+| **Tells you *how much* better?** | in principle | no |
+| **Consumed directly by** | nothing standard | Bradley-Terry and DPO ([31.3](03-dpo-grpo.md)) |
+
+That is why essentially all preference data is pairwise, and the cost — one bit,
+with no magnitude — is real.
+
+**Good annotation guidelines are the other half.** They must:
+
+- state the priority order when criteria conflict (is a correct-but-rude answer
+  better than a polite-but-wrong one?),
+- define what counts as a tie,
+- and give worked examples of the hard cases.
+
 Without an explicit ordering, annotators silently apply their own, and your
 reward model learns the average of several incompatible value systems.
 
-Then you measure whether the annotators agree, and raw agreement is a trap.
+### Measuring agreement: why raw agreement is a trap
 
 ```python
 def cohens_kappa(a, b, labels=("A", "B")):
@@ -55,13 +69,18 @@ for name, x, y in [("balanced, thoughtful", balanced_1, balanced_2),
     print(f"{name:<22}{po:>15.3f}{pe:>12.3f}{k:>9.3f}")
 ```
 
-Both pairs agree on 18 of 20 items — identical raw agreement of 0.900. But the
-second pair agrees because they both click the same button almost every time:
-chance alone predicts 0.905 agreement, so their **Cohen's kappa** is $-0.053$,
-meaning they are doing very slightly *worse* than coin-flipping annotators with
-their marginal habits. The first pair's kappa is 0.800. Kappa above roughly 0.6
-is usually considered acceptable for preference work, above 0.8 good; if you are
-below 0.4 your guidelines are the problem, not your model.
+Both pairs agree on 18 of 20 items — **identical raw agreement of 0.900**.
+
+But the second pair agrees because they both click the same button almost every
+time. Chance alone predicts 0.905 agreement, so their **Cohen's kappa** is
+$-0.053$: very slightly *worse* than coin-flipping annotators with their
+marginal habits. The first pair's kappa is 0.800.
+
+| Kappa | Read it as |
+| --- | --- |
+| above 0.8 | good |
+| roughly 0.6–0.8 | usually acceptable for preference work |
+| below 0.4 | **your guidelines are the problem, not your model** |
 
 ## Training a reward model: Bradley-Terry
 
@@ -72,6 +91,16 @@ the probability that $y_w$ is preferred to $y_l$ is a sigmoid of the gap:
 $$
 P(y_w \succ y_l) = \sigma\big(r_\phi(x, y_w) - r_\phi(x, y_l)\big)
 $$
+
+In words: *the bigger the score gap, the more certain the preference; an equal
+gap of zero means a coin flip.*
+
+| Symbol | Meaning |
+| --- | --- |
+| $\phi$ | the reward model's parameters |
+| $r_\phi(x, y)$ | the score the reward model gives response $y$ for prompt $x$ |
+| $y_w,\ y_l$ | the **w**inning and **l**osing responses |
+| $\sigma$ | the logistic sigmoid, turning a gap into a probability |
 
 Fitting by maximum likelihood gives the loss every RLHF pipeline uses:
 
@@ -145,12 +174,17 @@ for name, wt, wl in zip(FEATURES, W_TRUE, w):
 ```
 
 The reward model works: 73.3% held-out accuracy on comparisons it has never
-seen, against a 50% baseline, from 180 noisy pairs. Look at the last row
-though. We wanted length to count for nothing, and the model learned a weight of
-$+1.205$ for it — because that is genuinely what the annotators did. **The
-reward model is not wrong. It is an accurate model of a biased labelling
-process**, and no amount of held-out accuracy will tell you that, because the
-held-out data has the same bias.
+seen, against a 50% baseline, from 180 noisy pairs.
+
+Now look at the last row. We wanted length to count for nothing, and the model
+learned a weight of $+1.205$ for it — because that is genuinely what the
+annotators did.
+
+!!! note "The reward model is not wrong"
+
+    It is an **accurate model of a biased labelling process**. No amount of
+    held-out accuracy will tell you that, because the held-out data carries the
+    identical bias.
 
 !!! note "What is toy, what is faithful"
     Toy: twelve responses described by four hand-written features, 180 pairs,
@@ -163,8 +197,13 @@ held-out data has the same bias.
 ## Reward hacking, made visible
 
 Now hand that reward model to an optimiser and let it run. The policy is a
-softmax over the twelve responses; we ascend expected reward and watch two
-numbers — the proxy the optimiser can see, and the true quality it cannot.
+softmax over the twelve responses, we ascend expected reward, and we watch two
+numbers:
+
+- **The proxy** — what the reward model says, which is all the optimiser can
+  see.
+- **True quality** — what we actually wanted, which the optimiser cannot see and
+  in a real run neither can you.
 
 ```python
 # continues
@@ -213,22 +252,30 @@ ax.legend(fontsize=8)
 fig.tight_layout()
 ```
 
-There it is. The proxy climbs from 3.028 to 4.913 and never stops looking
-healthy. True quality rises for the first thirteen steps — to 1.992, a real
-improvement — and then *falls*, ending at 1.608, **below where it started**. The
-optimiser found `rambling with example`: incorrect, but long and polite, which
-the reward model was taught to love. Mean response length went from 1.22 to 2.88.
+There it is, in three numbers:
+
+- **The proxy** climbs from 3.028 to 4.913 and never stops looking healthy.
+- **True quality** rises for the first thirteen steps — to 1.992, a real
+  improvement — and then *falls*, ending at 1.608, **below where it started**.
+- **Mean response length** went from 1.22 to 2.88.
+
+The optimiser found `rambling with example`: incorrect, but long and polite,
+which the reward model was taught to love.
 
 This is **Goodhart's law**:
 
 > When a measure becomes a target, it ceases to be a good measure.
 
+### Why the reward curve cannot tell you when to stop
+
 The vertical line at step 13 is the part that should worry you. If you had
-stopped there you would have shipped a genuine improvement. The reward curve
-gives you no signal at all about where that line is — it looks identical either
-side. That is why the only trustworthy stopping signal is an *independent*
-evaluation the optimiser cannot see: a held-out human eval, a different reward
-model, a rule-based check.
+stopped there you would have shipped a genuine improvement, and **the reward
+curve gives you no signal at all about where that line is** — it looks identical
+either side.
+
+So the only trustworthy stopping signal is an *independent* evaluation the
+optimiser cannot see: a held-out human eval, a different reward model, or a
+rule-based check.
 
 !!! warning "Reward hacking is not a bug in the optimiser"
     The optimiser did exactly what it was told, perfectly. Every reward-hacking
@@ -239,19 +286,28 @@ model, a rule-based check.
 
 ## Three mitigations
 
-**KL anchoring** you already have: [31.2](02-policy-gradient-ppo.md) showed
-that $\beta$ bounds how far the policy can travel from the reference, which
-bounds how deep into the hole it can fall. It is a limit on the damage, not a
-fix for the measurement.
+### 1 — KL anchoring
 
-**Reward ensembles**: train several reward models on different data splits or
-seeds and take the minimum (pessimism) or the mean. Exploits tend to be specific
-to one model's quirks, so a response that games all five is rarer than one that
-games any one of them.
+You already have this one. [31.2](02-policy-gradient-ppo.md) showed that $\beta$
+bounds how far the policy can travel from the reference, which bounds how deep
+into the hole it can fall. It is a limit on the *damage*, not a fix for the
+measurement.
 
-**Length normalisation** attacks the most common leak directly. The practical
-recipe is to fit how much of the reward is explained by length, then subtract
-that component — the same debiasing idea behind length-controlled evaluations.
+### 2 — Reward ensembles
+
+Train several reward models on different data splits or seeds, and take the
+minimum (pessimism) or the mean. Exploits tend to be specific to one model's
+quirks, so a response that games all five is rarer than one that games any one
+of them.
+
+### 3 — Length normalisation
+
+This attacks the most common leak directly. The recipe is two steps:
+
+1. Fit how much of the reward is explained by length (a least-squares line).
+2. Subtract that component.
+
+The same debiasing idea sits behind length-controlled evaluations.
 
 ```python
 # continues
@@ -276,19 +332,31 @@ print(f"   mean length  {ln2[0]:.2f} -> {ln2[-1]:.2f}   (was {ln[-1]:.2f})")
 print(f"   converged on {NAMES[int(policy2.argmax())]!r}")
 ```
 
-The fix works and it is worth being precise about how much. Optimising the raw
-reward ended at true quality 1.608; optimising the length-debiased reward ends at
-3.584, which is 99.6% of the best possible 3.6, and the mean response length
-*falls* from 1.22 to 0.60 instead of climbing to 2.88. One least-squares fit and
-a subtraction. It is not a general solution — it only removes the leak you
-thought to look for — but "measure the correlation with the suspected confounder
-and subtract it" is a technique you will use repeatedly.
+The fix works, and it is worth being precise about how much:
+
+| | Raw reward | Length-debiased |
+| --- | --- | --- |
+| final true quality | 1.608 | **3.584** — 99.6% of the best possible 3.6 |
+| mean response length | climbed 1.22 → 2.88 | *fell* 1.22 → 0.60 |
+
+One least-squares fit and a subtraction. It is not a general solution — it only
+removes the leak you thought to look for — but **"measure the correlation with
+the suspected confounder and subtract it"** is a technique you will use
+repeatedly.
 
 ## Outcome versus process supervision
 
-An **outcome reward model** (ORM) scores the final answer. A **process reward
-model** (PRM) scores each intermediate step. The difference matters most exactly
-where RL is most useful: multi-step reasoning.
+| | Outcome reward model (ORM) | Process reward model (PRM) |
+| --- | --- | --- |
+| **Scores** | the final answer only | every intermediate step |
+| **Signal per trace** | one number | one number per step |
+| **Labels needed** | final answers | step-level judgements — far more expensive |
+| **Blind to** | a right answer reached by cancelling errors | nothing, in principle |
+| **Punishes** | every step of a failed attempt equally | only the step that was wrong |
+| **Hackable?** | yes, if learned | yes, if learned — a policy can emit steps that *look* sound |
+
+The difference matters most exactly where RL is most useful: **multi-step
+reasoning.**
 
 Consider: *14 boxes of 3 pens each, plus 8 loose pens, minus 5 defective ones.*
 The answer is 45. Here are three worked solutions.
@@ -333,32 +401,46 @@ for name, trace in TRACES.items():
           f"{sum(pr) / len(pr):>10.2f}  {pr}")
 ```
 
-Read the ORM column: `sound` and `lucky` are indistinguishable. Both get 1.0,
-because both end at 45. But `lucky` computed $14 \times 3 = 40$ and then
+**Read the ORM column: `sound` and `lucky` are indistinguishable.** Both get
+1.0, because both end at 45. But `lucky` computed $14 \times 3 = 40$ and then
 subtracted 3 defective pens instead of 5 — two errors that happened to cancel.
 Train on outcome reward and you have just reinforced "$14 \times 3 = 40$".
 
-The PRM column separates them: 1.00 versus 0.67, and its per-step list points at
+The PRM column separates them, 1.00 versus 0.67, and its per-step list points at
 step 0 as the failure. It also rescues `slipped`, which the ORM gives a flat
-zero despite two perfectly correct steps followed by one slip — under outcome
-supervision, every good step in a failed attempt is punished identically to the
-bad one. That is the credit-assignment problem in miniature, and it is why
-process supervision helps most on long chains.
+zero despite two perfectly correct steps followed by one slip.
 
-The costs are real. Step-level labels are far more expensive to collect than
-final-answer labels, and a *learned* PRM is a reward model like any other, with
-the same holes and the same hackability — a policy can learn to emit steps that
-look sound to the PRM. Our `step_is_valid` is a hand-written checker, not a
-learned model, and it is deliberately coarse: it accepts `48 - 3 = 45` because 3
-is a number in the problem, even though 3 is the wrong number to subtract. A
-real PRM would need to judge intent, which is exactly the part that is hard.
+Under outcome supervision, every good step in a failed attempt is punished
+identically to the bad one. That is the credit-assignment problem in miniature,
+and it is why process supervision helps most on long chains.
+
+### What process supervision costs
+
+Two honest costs:
+
+- **Step-level labels are far more expensive** to collect than final-answer
+  labels.
+- **A *learned* PRM is a reward model like any other**, with the same holes and
+  the same hackability — a policy can learn to emit steps that merely *look*
+  sound to it.
+
+And our `step_is_valid` is a hand-written checker, deliberately coarse: it
+accepts `48 - 3 = 45` because 3 is a number in the problem, even though 3 is the
+wrong number to subtract. A real PRM would need to judge *intent*, which is
+exactly the part that is hard.
 
 ## The most reliable reward is not a model at all
 
-When the task has a checkable answer, skip the learned reward entirely. A test
-suite is a reward function: deterministic, un-hackable in the ways a neural
-network is hackable, and free to evaluate. This is the reward that
-[31.3](03-dpo-grpo.md)'s GRPO section called *verifiable*, and it is
+When the task has a checkable answer, skip the learned reward entirely. **A test
+suite is a reward function**, and a good one:
+
+- **deterministic** — the same candidate always scores the same;
+- **un-hackable** in the ways a neural network is hackable — it cannot be
+  flattered;
+- **free to evaluate**, in unlimited quantity.
+
+This is the reward that [31.3](03-dpo-grpo.md)'s GRPO section called
+*verifiable*, and it is
 [Chapter 24's testing discipline](../ch24-practice/02-testing.md) pointed at a
 model instead of at a developer.
 
@@ -394,22 +476,32 @@ for name, fn in [("median_a", median_a), ("median_b", median_b),
 ```
 
 Three candidate solutions, three different rewards, no annotators and no
-training. The signal is dense enough to rank near-misses (`median_b` gets 0.8,
-not 0) and it cannot be flattered. The catch is coverage: a model optimised
-against your tests will satisfy exactly your tests, so a weak suite produces a
-weak model — `median_a` would score 1.0 if every case were already sorted with
-an odd length. Reward hacking has not disappeared; it has turned into the very
-old problem of writing tests that pin down the behaviour you meant.
+training. The signal is dense enough to rank near-misses — `median_b` gets 0.8,
+not 0.
+
+The catch is **coverage**. A model optimised against your tests will satisfy
+exactly your tests, so a weak suite produces a weak model: `median_a` would
+score 1.0 if every case were already sorted with an odd length.
+
+Reward hacking has not disappeared. It has turned into the very old problem of
+writing tests that pin down the behaviour you meant.
 
 ## RLAIF and Constitutional AI
 
 Human comparisons are the bottleneck: slow, expensive, and inconsistent.
 **RLAIF** — reinforcement learning from AI feedback — replaces the annotator
 with a model asked to make the same comparison against written criteria.
-Anthropic's **Constitutional AI** work is the best-known instance: a written set
-of principles (the "constitution") drives a *critique-and-revise* loop that
-produces improved responses without human labels for the harm dimension, and the
-resulting comparisons then train a preference model.
+
+Anthropic's **Constitutional AI** work is the best-known instance. A written set
+of principles (the "constitution") drives a loop:
+
+1. **Draft** a response.
+2. **Critique** it against the constitution: which principles does it break?
+3. **Revise** to fix the first violation.
+4. **Repeat** until nothing is violated.
+
+The `(draft, final)` pairs that fall out then train a preference model, with no
+human labels for the harm dimension.
 
 The loop is small enough to write out. Ours uses a deterministic rule-based
 stand-in for the model, as everywhere in Part V — a real system would send each
@@ -457,11 +549,13 @@ print(f"violations remaining: {len(fake_llm_critique(draft))}")
 ```
 
 Three rounds, three fixes, and the pair `(draft, final)` is now a training
-example that no human wrote. Two honest caveats. The model doing the critiquing
-must actually be able to tell — asking a model to judge a capability it does not
-have produces confident noise. And the critic's blind spots become the policy's
-blind spots systematically rather than randomly, which is a worse failure mode
-than human inconsistency: humans at least disagree in different directions.
+example that no human wrote. Two honest caveats:
+
+- **The critic must actually be able to tell.** Asking a model to judge a
+  capability it does not have produces confident noise.
+- **The critic's blind spots become the policy's blind spots** — systematically
+  rather than randomly. That is a *worse* failure mode than human
+  inconsistency: humans at least disagree in different directions.
 
 ## Credit assignment over a trajectory
 
@@ -502,24 +596,35 @@ for label, credit in [("uniform", uniform), ("discounted", discounted),
           f"steps that mattered")
 ```
 
-**Uniform** attribution — what plain REINFORCE with a single end-of-episode
+**Uniform attribution** — what plain REINFORCE with a single end-of-episode
 reward does — sends 25% of the credit to the right places and 75% to `scroll`,
 `scroll`, and `check permissions`. Those steps are now more likely next time.
-**Discounting** barely helps — 28.0% against uniform's 25.0% — and it helps for
-the wrong reason: step 10 happens to sit near the end, so it collects 14.9%,
-while step 2 (the one that found the error code and made everything after it
-possible) collects 4.1%, *less* than the uniform scheme gave it. Meanwhile
-`confirm recovery`, which did nothing but observe, takes the single largest
-share at 17.5%. Discounting encodes "later is more responsible", which is a
-guess about causality, not a measurement of it.
 
-**Step-level** attribution puts 100% where it belongs, and the catch is in the
-name of the variable: `DECISIVE` was hand-written. Producing that set
-automatically for a real trajectory is the open research problem. Current
-approaches — Monte-Carlo rollouts from each intermediate state to estimate how
-much that state was worth, learned PRMs, or asking a strong model to grade each
-step — are all expensive, noisy, or both. This is one of the genuine frontiers
-of agent training, and anyone who tells you it is solved is selling something.
+**Discounting barely helps**, 28.0% against uniform's 25.0%, and it helps for
+the wrong reason:
+
+- Step 10 happens to sit near the end, so it collects 14.9%.
+- Step 2 — the one that found the error code and made everything after it
+  possible — collects 4.1%, *less* than the uniform scheme gave it.
+- `confirm recovery`, which did nothing but observe, takes the single largest
+  share at 17.5%.
+
+Discounting encodes "later is more responsible", which is a *guess* about
+causality, not a measurement of it.
+
+**Step-level attribution** puts 100% where it belongs — and the catch is in the
+name of the variable: `DECISIVE` was hand-written.
+
+Producing that set automatically for a real trajectory is the open research
+problem. Current approaches are all expensive, noisy, or both:
+
+- Monte-Carlo rollouts from each intermediate state, to estimate how much that
+  state was worth.
+- Learned PRMs.
+- Asking a strong model to grade each step.
+
+This is one of the genuine frontiers of agent training, and anyone who tells you
+it is solved is selling something.
 
 !!! warning "Common mistakes"
     - **Reporting raw annotator agreement.** Two annotators who both always

@@ -10,16 +10,18 @@ was not in the room when it was born (often: you, six months later). The
 craft of surviving that is called software engineering, and its core
 practices fit in one chapter.
 
-We cover three of them. **Version control as a team sport**: Chapter 1
-taught you solo commits; here you meet branches, merges, pull requests, the
-anatomy of a merge conflict, and the unglamorous art of the commit message.
-**Testing as a discipline**: Chapter 8 introduced `assert`; here you learn
-the arrange–act–assert pattern, table-driven tests, edge-case checklists,
-and how real test frameworks — pytest and JUnit — organize the same ideas,
-including a full test suite for a data structure from Part III. **Reading
-and being read**: naming, small functions, comments that explain *why*,
-style rules that formatters can enforce, and how to review code — your own
-and other people's — with a checklist instead of vibes.
+We cover three of them:
+
+- **Version control as a team sport.** Chapter 1 taught you solo commits;
+  here you meet branches, merges, pull requests, the anatomy of a merge
+  conflict, and the unglamorous art of the commit message.
+- **Testing as a discipline.** Chapter 8 introduced `assert`; here you learn
+  the arrange–act–assert pattern, table-driven tests, edge-case checklists,
+  and how real frameworks — pytest and JUnit — organize the same ideas,
+  including a full test suite for a data structure from Part III.
+- **Reading and being read.** Naming, small functions, comments that explain
+  *why*, style rules that formatters can enforce, and how to review code —
+  your own and other people's — with a checklist instead of vibes.
 
 None of this requires new language features, and almost every example runs
 right on the page. What it requires is a change of audience: you stop

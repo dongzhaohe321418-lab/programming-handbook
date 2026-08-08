@@ -1,8 +1,63 @@
 # Chapter 37 · Exercises
 
-Graphs reward drawing. For most of these, sketch the vertices and edges on
-paper first, run the algorithm with a finger, write down your answer — *then*
-open the solution and run the code. The exercises are ordered from
+## The chapter in brief
+
+- A graph is just **vertices and edges**, which is why one set of algorithms
+  serves roads, friendships, prerequisites, hyperlinks, and build files
+  ([37.1](01-representations.md)).
+- The vocabulary — degree, path, cycle, DAG, connected versus strongly
+  connected, sparse versus dense — all reads off a single small drawing.
+- An **adjacency matrix** costs $O(V^2)$ whatever the graph contains; an
+  **adjacency list** costs $O(V + E)$ and is the default, because algorithms
+  ask for neighbours far more often than for a single edge.
+- An **edge list** is the wrong shape for traversal and exactly right for
+  Kruskal, Bellman-Ford, and every file format you will be handed.
+- BFS and DFS are **the same loop with a different container** — a queue
+  versus a stack — and the `visited` set is what makes both terminate and stay
+  linear ([37.2](02-traversal.md)).
+- One traversal answers a surprising number of questions: connected
+  components, 2-colouring, cycle detection, topological order, and
+  fewest-edge paths.
+- **Weights break BFS**, because "fewest hops" and "cheapest route" are
+  different questions ([37.3](03-shortest-paths.md)).
+- **Dijkstra** is BFS with a priority queue, and its greedy invariant holds
+  only while every weight is non-negative.
+- On a negative edge Dijkstra returns a confident, silent, wrong answer;
+  **Bellman-Ford** relaxes every edge $V-1$ times instead and detects negative
+  cycles for free.
+- **A\*** is Dijkstra plus a heuristic, and it stays optimal exactly while
+  that heuristic is **admissible** — never an overestimate.
+- A **minimum spanning tree** is the cheapest way to connect everything, has
+  exactly $V-1$ edges, and both greedy algorithms are justified by the same
+  **cut property** ([37.4](04-mst.md)).
+- **Prim** grows one blob with a heap, **Kruskal** merges a forest with
+  union-find, and union-find's cost is near-constant but honestly
+  $O(\alpha(n))$, not $O(1)$.
+
+### Key terms
+
+| Term | What it means |
+| --- | --- |
+| [vertex / edge](../concept-index.md#v) | the things, and the pairs of things that are related |
+| [degree](../concept-index.md#d) | edges touching a vertex; in- and out- versions when directed |
+| [DAG](../concept-index.md#d) | directed acyclic graph — the shape of prerequisites and builds |
+| [adjacency list](../concept-index.md#a) | vertex → its neighbours; $O(V+E)$ space, the usual choice |
+| [adjacency matrix](../concept-index.md#a) | $V \times V$ grid; $O(1)$ edge test, $O(V^2)$ space |
+| [BFS](../concept-index.md#b) | queue-driven traversal in rings; gives fewest-edge paths |
+| [DFS](../concept-index.md#d) | stack- or recursion-driven traversal; gives cycles and orderings |
+| visited set | the $O(1)$ membership test that makes traversal terminate |
+| [topological sort](../concept-index.md#t) | a listing of a DAG in which every edge points forwards |
+| [Dijkstra's algorithm](../concept-index.md#d) | cheapest paths from one source, non-negative weights only |
+| [Bellman-Ford](../concept-index.md#b) | $V-1$ relaxation passes; handles negative weights, detects cycles |
+| [admissible heuristic](../concept-index.md#a) | an estimate that never overestimates the remaining cost |
+| [minimum spanning tree](../concept-index.md#m) | cheapest set of $V-1$ edges connecting every vertex |
+| [cut property](../concept-index.md#c) | the cheapest edge across any cut belongs to some MST |
+| [union-find](../concept-index.md#u) | disjoint sets with `find` and `union`; Kruskal's cycle test |
+| [$O(V + E)$](../appendix/B-big-o.md) | the currency every cost in this chapter is quoted in |
+
+Now put it to work. Graphs reward drawing: for most of these, sketch the
+vertices and edges on paper first, run the algorithm with a finger, write down
+your answer — *then* open the solution and run the code. The exercises go from
 representation choices through traversal to the two greedy algorithms, and the
 last one is a small research project with a measurable payoff.
 

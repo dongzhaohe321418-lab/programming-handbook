@@ -11,10 +11,11 @@ We start with the `while` loop, the most general form: *keep going as long as
 a condition holds*. You will learn the initialize–test–update discipline that
 keeps loops correct, the classic counter, accumulator, and sentinel patterns,
 and — because everyone writes one eventually — how to recognise and fix an
-infinite loop. Then comes the `for` loop and Python's `range`, the tool of
-choice whenever you know in advance how many repetitions you need, followed
-by nested loops, `break`, and `continue` for shaping exactly *which*
-repetitions happen.
+infinite loop.
+
+Then comes the `for` loop and Python's `range`, the tool of choice whenever
+you know in advance how many repetitions you need. Nested loops, `break`, and
+`continue` follow, for shaping exactly *which* repetitions happen.
 
 The chapter closes with two topics that travel alongside loops in a typical
 first-semester course: **bitwise operators**, which manipulate the individual

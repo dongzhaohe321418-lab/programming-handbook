@@ -1,20 +1,24 @@
 # 24.3 Style, reviews, and readable code
 
-Here is the empirical fact this whole section stands on: code is **read**
-far more often than it is written — around ten times more, by most
-estimates, and the ratio only grows as software lives longer. Every line
-you write tonight will be re-read during debugging, re-read during review,
-re-read by a teammate extending it, and re-read by you in six months with
-no memory of writing it. The interpreter doesn't care how the code looks;
-every reader after the interpreter cares about almost nothing else. So we
-optimize for the common case: we write for readers.
+Here is the empirical fact this whole section stands on: code is **read** far
+more often than it is written — around ten times more, by most estimates, and
+the ratio only grows as software lives longer.
+
+Every line you write tonight will be re-read during debugging, re-read during
+review, re-read by a teammate extending it, and re-read by you in six months
+with no memory of writing it.
+
+The interpreter doesn't care how the code looks; every reader after the
+interpreter cares about almost nothing else. So we optimize for the common
+case: we write for readers.
 
 ## Names that reveal intention
 
-The single highest-leverage readability decision is what you call things.
-A good name answers the reader's question *before it is asked*; a bad name
-is a small tax charged on every single read, forever. Try to work out what
-this function does before running it:
+The single highest-leverage readability decision is what you call things. A
+good name answers the reader's question *before it is asked*; a bad name is a
+small tax charged on every single read, forever.
+
+Try to work out what this function does before running it:
 
 ```python
 def chk(l, n):
@@ -103,12 +107,17 @@ for line in do_it(order):
 ```
 
 It works. It is also a trap: to change *any* rule you must first
-reverse-engineer *all* of them (quick — what is `x[3]`? what are the two
-`0.1` and `0.05` for? why `- 5`?). The refactor splits it along its three
-jobs — *price one line*, *format one line*, *assemble the receipt* — and
-promotes the magic numbers to named constants. At the end, we prove the
-behavior didn't change by checking against the exact five lines the tangle
-printed:
+reverse-engineer *all* of them. (Quick — what is `x[3]`? What are the `0.1`
+and the `0.05` for? Why `- 5`?)
+
+The refactor does two things:
+
+- **splits the function along its three jobs** — *price one line*, *format
+  one line*, *assemble the receipt*;
+- **promotes every magic number to a named constant.**
+
+At the end, we prove the behavior didn't change by checking against the exact
+five lines the tangle printed:
 
 ```python
 SALE_DISCOUNT = 0.10          # storewide sale price cut
@@ -154,14 +163,20 @@ expected = ["notebook: $13.5", "pen: $12.31", "desk lamp: $79.98",
 print("matches the tangle's output exactly:", build_receipt(order) == expected)
 ```
 
-Same output, different future. Now "change the sale discount" is a
-one-constant edit; "test the pricing rules" means testing `line_price` in
-isolation ([Section 24.2](02-testing.md)); and each function is small
-enough to *name honestly* — which is the real test of "one job": if an
-accurate name needs "and" in it, split the function. Parameters follow the
-same budget: past three or four, readers lose track of what goes where —
-bundle related values into a class
-([Chapter 12](../ch12-classes/index.md)) or dataclass instead.
+Same output, different future:
+
+- "Change the sale discount" is now a one-constant edit.
+- "Test the pricing rules" now means testing `line_price` in isolation
+  ([Section 24.2](02-testing.md)).
+- Each function is small enough to *name honestly*.
+
+!!! tip "The real test of one job"
+    If an accurate name for the function needs the word "and" in it, split
+    the function.
+
+Parameters follow the same budget: past three or four, readers lose track of
+what goes where. Bundle related values into a class
+([Chapter 12](../ch12-classes/index.md)) or a dataclass instead.
 
 ## Comments: why, not what
 
@@ -186,12 +201,16 @@ def monthly_price(annual_price):
 print(monthly_price(120.0))
 ```
 
-Without that comment, `/ 10` looks exactly like a bug, and some
-well-meaning reader eventually "corrects" it. With it, the code is safe
-from helpfulness. The hierarchy of goodness: first make the code so clear
-it needs no comment (that is what the naming and function rules were for);
-then comment the *why* that remains. A `WHY` comment ages well because
-reasons change more slowly than mechanics.
+Without that comment, `/ 10` looks exactly like a bug, and some well-meaning
+reader eventually "corrects" it. With it, the code is safe from helpfulness.
+
+The hierarchy of goodness, in order:
+
+1. **Make the code so clear it needs no comment** — that is what the naming
+   and function rules were for.
+2. **Comment the *why* that remains.**
+
+A *why* comment ages well, because reasons change more slowly than mechanics.
 
 ## Consistent style: let robots end the arguments
 
@@ -209,23 +228,27 @@ close cousin). The essentials:
 | Max line length | 79 (teams often 88–100) | 100 |
 | Spacing | `x = f(a, b)` — spaces around `=`, after commas | same idea |
 
-None of these choices matters much; *sharing* them matters enormously —
-and arguing about them in code review is the biggest waste of goodwill in
-software. So teams delegate the whole topic to robots: **formatters**
-rewrite code into the standard shape (Python: `black`; Java:
-`google-java-format`), and **linters** flag suspicious patterns beyond
-formatting — unused variables, shadowed names, over-long functions
-(Python: `ruff`, `flake8`; Java: `checkstyle`). A typical setup runs them
-automatically on every commit or in CI
-([Section 24.1](01-git-workflow.md)), which retires the entire category
-of "you used the wrong quotes" review comments. The robot is strict,
-instant, and impossible to offend.
+None of these choices matters much; *sharing* them matters enormously — and
+arguing about them in code review is the biggest waste of goodwill in
+software. So teams delegate the whole topic to robots:
+
+- **Formatters** rewrite code into the standard shape. Python: `black`.
+  Java: `google-java-format`.
+- **Linters** flag suspicious patterns beyond formatting — unused variables,
+  shadowed names, over-long functions. Python: `ruff`, `flake8`. Java:
+  `checkstyle`.
+
+A typical setup runs both automatically on every commit or in CI
+([Section 24.1](01-git-workflow.md)), which retires the entire category of
+"you used the wrong quotes" review comments. The robot is strict, instant, and
+impossible to offend.
 
 ## The self-review checklist
 
-The cheapest code review is the one you give yourself. Before every
-commit, read your own diff — not the files, the *diff* — as if a stranger
-wrote it, against a fixed list. Ours:
+The cheapest code review is the one you give yourself.
+
+Before every commit, read your own diff — not the files, the *diff* — as if a
+stranger wrote it, against a fixed list. Ours:
 
 - [ ] Do all names say what they mean? Any `data2`, `temp`, `flag`, `x`
       left behind?
@@ -260,11 +283,13 @@ Reading code is a learnable skill with a technique, and the technique is
    and see what breaks; add a `print`; step through in a debugger; write
    down each question and its answer. Active reading sticks.
 
-And when you find something baffling, hold the humility rule: assume it
-made sense to someone, find out why it's there (`git log` and its commit
-messages — [Section 24.1](01-git-workflow.md) — exist for exactly this),
-*then* judge. Half the time the weird code is guarding a bug you haven't
-met yet; the comment explaining it is the one its author skipped writing.
+And when you find something baffling, hold the humility rule: assume it made
+sense to someone, find out why it's there, *then* judge. (`git log` and its
+commit messages — [Section 24.1](01-git-workflow.md) — exist for exactly
+this.)
+
+Half the time the weird code is guarding a bug you haven't met yet, and the
+comment explaining it is the one its author skipped writing.
 
 !!! warning "Common mistakes"
 

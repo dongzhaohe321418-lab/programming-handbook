@@ -11,13 +11,18 @@ every version of everything without drowning in copies named `final_v2_REAL`.
 Strictly speaking you need none of this to read on: every Python example in
 this handbook runs in your browser with the **Run** button. But the goal is
 not to read about programming — it is to become someone who programs, and
-real programs live on real machines. The three tools here look plain, even
-old-fashioned: text in, text out, no buttons. That plainness is the point.
-Text commands can be typed faster than menus can be clicked, repeated
-exactly, saved in scripts, and sent over a network to a server on the other
-side of the world. Every professional tool you will meet later — compilers,
-test runners, package managers, deployment systems — assumes you can use
-them.
+real programs live on real machines.
+
+The three tools here look plain, even old-fashioned: text in, text out, no
+buttons. That plainness is the point. A text command can be:
+
+- **typed faster** than a menu can be clicked;
+- **repeated exactly**, with no chance of a mis-click;
+- **saved in a script** and replayed a hundred times;
+- **sent over a network** to a server on the other side of the world.
+
+Every professional tool you will meet later — compilers, test runners,
+package managers, deployment systems — assumes you can use them.
 
 A practical note on how to read this chapter: sections
 [1.1](01-command-line.md) and [1.3](03-git.md) teach concepts you can

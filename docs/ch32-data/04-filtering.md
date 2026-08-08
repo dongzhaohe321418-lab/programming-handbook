@@ -9,6 +9,18 @@ in that order and you can answer the only question that matters when quality
 drops: *which stage changed?* This section builds the whole thing on one corpus,
 end to end, and prints the funnel.
 
+Three families of filter do the work, and the order they run in is set by what
+they cost:
+
+| Family | How it decides | Cost per record | Catches | Misses |
+| --- | --- | --- | --- | --- |
+| **Heuristic** | hand-written predicates over the surface form | microseconds | empty, truncated, symbol soup, boilerplate | anything grammatical that says nothing |
+| **Model-based** | a small classifier scores the text | one forward pass | mediocrity: well-formed records with no content | topics its reference set never contained |
+| **Verifier-based** | the claim is executed or recomputed | a test run | confident, well-formatted, *wrong* answers | anything with no checkable answer |
+
+Cheapest first, always. Every record a heuristic kills is a verifier run you
+never pay for.
+
 ## One corpus, with the defects put in on purpose
 
 Everything below runs on the same 1,200-record synthetic instruction corpus.
@@ -346,14 +358,19 @@ records appearing more than once: 197 distinct texts
 ```
 
 Thirty-five percent of the surviving corpus was a byte-for-byte repeat, and only
-5% of it was injected as a deliberate copy. The rest is **template collision** —
+5% of it was injected as a deliberate copy. The rest is **template collision**:
 eight prose topics crossed with three question phrasings and five closing
-sentences give 120 possible prose records, so 400 draws produce collisions by
-the pigeonhole principle. This is the effect [32.2](02-synthetic-data.md)
-predicted from the diversity metrics, now measured in records deleted.
+sentences give 120 possible prose records, so 400 draws produce collisions by the
+pigeonhole principle.
 
-Hashing costs $O(1)$ per record and one pass, so there is no reason ever to skip
-this stage. What it cannot do is notice that two records differ by one word.
+The code and junk generators collide the same way, for the same reason — a small
+template crossed with a small parameter set is a small set. This is the effect
+[32.2](02-synthetic-data.md) predicted from the diversity metrics, now measured
+in records deleted.
+
+Hashing costs one pass over each record plus an expected-$O(1)$ set lookup, so
+there is no reason ever to skip this stage. What it cannot do is notice that two
+records differ by one word.
 
 ## Near-duplicates: shingles, MinHash, and LSH
 
@@ -362,24 +379,33 @@ is $5 \times 10^{11}$ comparisons, which is not a tuning problem but an
 impossibility. The standard answer is three ideas stacked, and it is worth
 understanding each separately.
 
-**Shingles.** Represent a document as the *set* of its overlapping word
-$k$-grams. Two documents that share most of their shingles say nearly the same
-thing in nearly the same order. Similarity is the **Jaccard index**
+### Shingles, and the Jaccard index
+
+Represent a document as the *set* of its overlapping word $k$-grams. Two
+documents that share most of their shingles say nearly the same thing in nearly
+the same order. Similarity is the **Jaccard index**
 
 $$
 J(A, B) = \frac{|A \cap B|}{|A \cup B|}
 $$
 
-**MinHash.** Storing every shingle set is expensive and intersecting them is
-slow. Instead, apply $N$ different hash functions to a set and keep only the
-minimum value under each. The magic fact: for a random hash function, the
-probability that two sets have the *same* minimum is exactly their Jaccard
-index. So the fraction of matching positions in two $N$-length signatures is an
-unbiased estimate of $J$, with standard error about $1/\sqrt{N}$.
+### MinHash
 
-**LSH banding.** Split each signature into $b$ bands of $r$ rows and hash each
-band. Two documents become *candidates* if any band hashes identically. The
-probability of that is
+Storing every shingle set is expensive and intersecting them is slow. Instead,
+apply $N$ different hash functions to a set and keep only the minimum value
+under each.
+
+The magic fact: for a random hash function, the probability that two sets have
+the *same* minimum is exactly their Jaccard index. So the fraction of matching
+positions in two $N$-length signatures is an unbiased estimate of $J$, with
+standard error $\sqrt{J(1-J)/N}$ — at most $1/(2\sqrt{N})$, and smaller when $J$
+is near 0 or 1.
+
+### LSH banding
+
+Split each signature into $b$ bands of $r$ rows and hash each band. Two
+documents become *candidates* if any band hashes identically. The probability of
+that is
 
 $$
 P(\text{candidate}) = 1 - \left(1 - s^{r}\right)^{b}
@@ -388,7 +414,9 @@ $$
 which is an S-curve with its steep part near $s \approx (1/b)^{1/r}$. Choosing
 $b$ and $r$ *is* choosing the similarity threshold.
 
-Here is all three on six documents chosen to sit at different distances from the
+### All three, on six documents
+
+The six documents below sit at deliberately different distances from the
 original.
 
 ```python
@@ -488,27 +516,35 @@ LSH S-curve for b=42, r=3 (threshold approx 0.29):
 Three things to take from that table.
 
 **The estimator works.** MinHash reports 0.444 where the true Jaccard is 0.464 —
-an error of 0.020, comfortably inside the $1/\sqrt{126} \approx 0.089$ standard
-error you should expect from 126 hashes. And it got there by comparing 126
+an error of 0.020, comfortably inside the
+$\sqrt{0.464 \times 0.536 / 126} \approx 0.044$ standard error you should expect
+from 126 hashes. And it got there by comparing 126
 integers instead of intersecting two shingle sets.
 
 **Document D is the whole reason this stage exists.** It is the same explanation
 with "map" for "table", "buckets" for "slots", and one sentence moved. Its
 canonical digest differs from A's, so exact dedup lets it straight through;
-MinHash puts it at 0.46 and LSH surfaces it as a candidate in 5 of the 42 bands.
+MinHash estimates it at 0.44 against a true 0.46, and LSH surfaces it as a
+candidate in 5 of the 42 bands.
+
 Multiply that by a corpus scraped from mirrored sites and lightly-rewritten
-content farms and you have the single largest category of duplicate in real
+content farms, and you have the single largest category of duplicate in real
 data.
 
 **Document E is the honest limit.** It says exactly the same thing in entirely
 different words, and MinHash scores it **0.000** — no shared 3-gram at all. Word
-overlap cannot detect paraphrase. Catching E requires embeddings (the vector
-machinery of [Chapter 29](../ch29-memory-rag/index.md)) and a nearest-neighbour
-index, which costs a forward pass per document instead of a few hashes. Most
-pipelines run MinHash on everything and semantic dedup only on the survivors, or
-not at all — and their dataset cards should say which.
+overlap cannot detect paraphrase.
 
-Now run it over the corpus. The candidate-pair count is the payoff.
+Catching E requires embeddings (the vector machinery of
+[Chapter 29](../ch29-memory-rag/index.md)) and a nearest-neighbour index, which
+costs a forward pass per document instead of a few hashes. Most pipelines run
+MinHash on everything and semantic dedup only on the survivors, or not at all —
+and their dataset cards should say which.
+
+### Running it over the corpus
+
+Now the same machinery on all 715 survivors. The candidate-pair count is the
+payoff.
 
 ```python
 # continues
@@ -561,13 +597,16 @@ actually have.
 
 ## Model-based quality scoring
 
-Heuristics catch garbage. They do not catch *mediocrity* — the 80 thin records
-still in our corpus are well-formed and say nothing. The standard tool is a
+Heuristics catch garbage. They do not catch *mediocrity* — the thin records
+still in our corpus (43 of the 548 that survived deduplication) are well-formed
+and say nothing. The standard tool is a
 small **quality classifier**: train a cheap model to distinguish a set of
 reference documents you consider good from a set you consider bad, then score
 everything with it. Real pipelines use fastText or a small transformer; the
 mechanism is identical, and here it is a logistic regression over six features
 so every number is visible.
+
+### The threshold sweep
 
 The critical discipline is the **threshold sweep**. A quality score is not a
 verdict, it is a knob, and picking a threshold without plotting what each one
@@ -702,19 +741,24 @@ at threshold 0.2: 548 -> 505
 
 Look at the sweep before the weights. Between 0.20 and 0.25 the corpus falls off
 a cliff: 92% kept becomes 32% kept, and 327 records that were **not** low
-quality are destroyed to remove zero additional junk. Every one of those 327 is
-a correct, verified math or code record. A threshold of 0.5 — the number you
-would have picked without looking, because 0.5 feels like the middle — throws
-away two thirds of a good corpus.
+quality are destroyed to remove zero additional junk.
+
+Every one of those 327 passed all of the heuristic filters — there is nothing
+wrong with their surface form. A threshold of 0.5 — the number you would have
+picked without looking, because 0.5 feels like the middle — throws away two
+thirds of a good corpus.
+
+### What the weights actually learned
 
 Now the weights, because they explain the cliff. `technical=+3.26` dominates
 everything else, so the classifier has learned "contains data-structure
 vocabulary". That is exactly the failure mode to be paranoid about: **a lexical
-quality classifier is a topic classifier wearing a disguise.** Ours was trained
-on ten computer-science paragraphs, so it rates a flawless poem, a medical note
-or a French sentence as garbage. Real pipelines have shipped this bug at scale;
-it is one mechanism by which quality filtering narrows a corpus to whatever the
-reference set happened to contain.
+quality classifier is a topic classifier wearing a disguise.**
+
+Ours was trained on ten computer-science paragraphs, so it rates a flawless poem,
+a medical note or a French sentence as garbage. Real pipelines have shipped this
+bug at scale; it is one mechanism by which quality filtering narrows a corpus to
+whatever the reference set happened to contain.
 
 The defence is not a better feature list, it is a habit: sweep the threshold,
 read the records at each end, and check the *composition* of what survives
@@ -729,12 +773,15 @@ anything with a checkable answer, check it. This is the same argument
 [31.4](../ch31-rl/04-reward-models.md) makes for verifiable rewards, applied one
 stage earlier: a checker you wrote cannot be talked into agreeing with you.
 
-Two verifier styles appear below, and the difference is worth naming. The math
-verifier is **independent** — it re-derives the answer from the instruction and
-never looks at what the record claims. The code verifier runs the **shipped
-test** that came with the record, HumanEval style. Independent verifiers are
-stronger; shipped tests are the only option when the answer is not
-re-derivable.
+Two verifier styles appear below, and the difference is worth naming.
+
+| Style | Where the truth comes from | Why it is strong | Why you might not get it |
+| --- | --- | --- | --- |
+| **Independent** (the math verifier) | re-derived from the instruction, ignoring what the record claims | the record cannot influence its own verdict | only possible when the answer is re-derivable |
+| **Shipped test** (the code verifier) | a test that travelled with the record, HumanEval style | works on anything executable | a weak test passes a wrong program |
+
+Independent verifiers are stronger; shipped tests are the only option when the
+answer is not re-derivable.
 
 ```python
 # continues
@@ -1069,8 +1116,8 @@ limitations before the users did.
 !!! warning "Common mistakes"
 
     - **Running the expensive stages first.** Verification on 1,200 records
-      costs far more than heuristics on 1,200 records, and 780 of them were
-      going to be deleted anyway. Order the pipeline cheapest-first.
+      costs far more than heuristics on 1,200 records, and 695 of them were
+      already gone by the time verification ran. Order the pipeline cheapest-first.
     - **Picking a quality threshold without sweeping it.** Our 0.5 — the
       "obvious" middle — would have destroyed 331 good records to remove zero
       extra junk. Print the trade before you choose the point on it.

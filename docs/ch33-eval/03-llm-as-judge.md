@@ -30,14 +30,18 @@ Response: {response}
 Score:
 ```
 
-Every problem with LLM judging is visible in those four lines. "Quality" is
-undefined, so the model supplies its own definition and it will not be yours.
-The 1–10 scale has no anchors, so the scores pile up on 7 and 8 and stop
-discriminating. There is nothing to reason about before committing, so the score
-is a first-token guess. The output format is unconstrained, so half the replies
-begin "Sure! Here's my assessment:" and your parser drops them. And the criteria
-are fused into a single number, so a factually wrong but beautifully written
-answer and a correct but terse one both land on 6.
+Every problem with LLM judging is visible in those four lines.
+
+- **"Quality" is undefined**, so the model supplies its own definition, and it
+  will not be yours.
+- **The 1–10 scale has no anchors**, so the scores pile up on 7 and 8 and stop
+  discriminating.
+- **There is nothing to reason about before committing**, so the score is a
+  first-token guess.
+- **The output format is unconstrained**, so half the replies begin "Sure!
+  Here's my assessment:" and your parser drops them.
+- **The criteria are fused into a single number**, so a factually wrong but
+  beautifully written answer and a correct but terse one both land on 6.
 
 The repaired version:
 
@@ -88,8 +92,8 @@ cannot produce calibrated absolute scores. Neither can judges, and for a related
 reason: an absolute score requires an internal, stable notion of what a 7 is,
 whereas a comparison only requires noticing a difference. In practice, asking
 "is A better than B?" gives higher agreement with humans, is more robust across
-prompt rewordings, and — decisively — does not drift when you re-run it next
-month against a new candidate.
+prompt rewordings, and — decisively — drifts less when you re-run it next month
+against a new candidate, because the baseline is re-graded every time.
 
 | | Absolute scoring | Pairwise comparison |
 | --- | --- | --- |
@@ -214,9 +218,11 @@ which answer was pasted in first, moves the reported win rate by 25 points — a
 most dangerous bias because it is invisible: nothing in the output looks wrong,
 and if you always build the prompt the same way (your system first, baseline
 second, because that is how the loop was written) it is a constant thumb on the
-scale. The fix is complete and costs one extra call: **judge every pair in both
-orders and average**, which lands at 63.0%. Pairs that disagree between orders
-are genuine ties, and treating them as half a win is the right accounting.
+scale.
+
+The fix is complete and costs one extra call: **judge every pair in both orders
+and average**, which lands at 63.0%. Pairs that disagree between orders carry no
+reliable signal, so current practice is to count them as ties — half a win each.
 
 **Verbosity bias: 63.0% versus 53.5%.** Once position is handled, our system
 still "wins" 63% of comparisons it should win 52.5% of. The whole remaining gap
@@ -240,6 +246,15 @@ bullet points is worth 13.5 points. Headings, bold text, and numbered structure
 all read as effort. If your product needs prose, a judge that rewards markdown
 is measuring the wrong thing entirely.
 
+All four at a glance, with what each one costs and what actually removes it:
+
+| Bias | Measured here | The fix that works |
+| --- | --- | --- |
+| **Position** | 25 points of win rate; 25.0% of pairs flip winner | judge both orders and average; count disagreements as ties |
+| **Verbosity** | +8.1 points of win rate per extra 100 words | match lengths, or regress win rate on the length difference |
+| **Self-preference** | 13 points for a label, with the text unchanged | judge with a different model family from the one under test |
+| **Formatting** | 13.5 points for the same content set in bullets | normalise formatting before the pair reaches the judge |
+
 !!! warning "You cannot prompt these away"
     "Ignore length and formatting" in the judge prompt reduces these effects and
     does not remove them — the same structural point [30.4](../ch30-agents/04-frameworks.md)
@@ -250,9 +265,18 @@ is measuring the wrong thing entirely.
 ## Validation: agreement with humans is the only ground truth
 
 A judge is a measuring instrument, and an uncalibrated instrument is decoration.
-Before you let one gate a release, label 100–200 items by hand and measure how
-often the judge agrees — and, as [31.4](../ch31-rl/04-reward-models.md) insisted
-for annotators, correct that agreement for chance.
+Before you let one gate a release, validate it — in five steps:
+
+1. **Sample 100–200 items** from the distribution the judge will actually see,
+   not from a convenient corner of it.
+2. **Label them by hand**, using the same rubric and the same tie rule the judge
+   is given.
+3. **Run the judge** over the identical items, under the identical protocol.
+4. **Compare the label distributions.** A judge that never uses one of your
+   labels is already broken, whatever its agreement rate.
+5. **Compute Cohen's kappa**, not raw agreement — as
+   [31.4](../ch31-rl/04-reward-models.md) insisted for annotators, agreement has
+   to be corrected for chance.
 
 ```python
 """Validating a judge: agreement with humans, corrected for chance."""
@@ -288,16 +312,21 @@ for name, seq in (("judge 1", JUDGE_1), ("judge 2", JUDGE_2)):
 ```
 
 Judge 1 agrees with the human **70.0%** of the time, which sounds usable, and
-has a **kappa of 0.46**, which is not. The label counts explain why: the human
-used A 14 times, B 11 and tie 5; judge 1 said A 23 times and never once called a
-tie. It agrees mostly by guessing the majority class. Judge 2 reproduces the
-human's label distribution and reaches 93.3% agreement with **kappa 0.89**.
+has a **kappa of 0.46**, which is not.
 
-The rule, and it is not negotiable: **validate the judge before you trust it.**
-Using the bands from 31.4, kappa above roughly 0.6 is workable for preference
-work and above 0.8 is good; below 0.4 the problem is your rubric, not the model.
-Re-validate whenever you change the judge model, the judge prompt, or the task
-distribution — all three are silent changes to your measuring instrument.
+The label counts explain why. The human used A 14 times, B 11 and tie 5; judge 1
+said A 23 times and never once called a tie, so it agrees mostly by guessing the
+majority class. Judge 2 reproduces the human's label distribution and reaches
+93.3% agreement with **kappa 0.89**.
+
+!!! note "Validate the judge before you trust it"
+
+    This rule is not negotiable, and it is step 5 that decides. Using the bands
+    from [31.4](../ch31-rl/04-reward-models.md): a kappa above roughly 0.6 is
+    workable for preference work and above 0.8 is good, while below 0.4 the
+    problem is your rubric rather than the model. Re-validate whenever you
+    change the judge model, the judge prompt, or the task distribution — all
+    three are silent changes to your measuring instrument.
 
 !!! note "Ties are a real category, and judges hate them"
     Judge 1's refusal to use "tie" is the single most common calibration
@@ -425,8 +454,8 @@ Sampling 200 of 5000 outputs costs **$2.00** instead of $50.00 and gives you an
 answer good to **±5.4 points**. That is plenty for "did the release get
 dramatically worse" and useless for "did we gain 2 points", and the table lets
 you pick deliberately instead of by accident. Note the shape you have now seen
-three times: 500 items halve the interval of 200, and 1000 barely halve it
-again. Precision is bought at $1/\sqrt{n}$, forever.
+three times: 200 items halve the interval of 50, and it would take about 800 to
+halve it again. Precision is bought at $1/\sqrt{n}$, forever.
 
 The two-tier arrangement — a cheap judge on everything, escalating the cases it
 is unsure about to the strong judge — costs $12.50 against $50.00 for full

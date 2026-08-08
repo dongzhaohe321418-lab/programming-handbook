@@ -17,7 +17,7 @@ that. This chapter refuses to do that. Each of the four tools here has one
 central idea — word splitting and exit codes for the shell, key pairs and
 tunnels for SSH, a dependency graph plus timestamps for Make, a registry of
 functions plus a runner for JUnit — and each of those ideas is small enough
-to build in Python in fifty lines. So every page here does both: it shows the
+to build in Python in around a hundred lines. So every page here does both: it shows the
 real tool as you will actually type it, in fences with no Run button, *and*
 it hands you a runnable model of the mechanism underneath, so the real tool
 stops being magic.

@@ -5,11 +5,13 @@ agent loops, DPO. Every one of those is a *lever*, and every one of them is
 now roughly standardised across the field — the architecture of a modern
 open-weights model is a handful of well-known choices, and anyone can copy
 them in an afternoon. What is not standardised, not copyable, and not
-published in full by anyone is the corpus. This section argues that at a
-fixed compute budget, the data pipeline is where the remaining quality
-lives, shows you the shape that data takes on disk, and hands you three
-runnable tools — a schema validator, a mixture sampler, and a contamination
-detector — that every data engineer writes in their first week.
+published in full by anyone is the corpus.
+
+This section argues that **at a fixed compute budget, the data pipeline is
+where the remaining quality lives.** It then shows you the shape that data
+takes on disk, and hands you three runnable tools — a schema validator, a
+mixture sampler, and a contamination detector — that every data engineer
+writes in their first week.
 
 ## The thesis, argued with mechanisms
 
@@ -36,7 +38,8 @@ the system at all.
 
 **Every token you spend on one thing is a token you did not spend on
 another.** Compute-optimal training (the Chinchilla line of work, Hoffmann
-et al.) fixed the number of tokens you can afford. If 82% of that budget is
+et al.) tells you how to split a fixed compute budget between parameters and
+tokens — and so how many tokens you get to spend. If 82% of that budget is
 generic web text, then the fraction reaching mathematics is what it is,
 regardless of how clever the attention variant is. Changing the *mixture*
 changes what the model is good at, and it costs nothing extra to train.
@@ -44,14 +47,18 @@ changes what the model is good at, and it costs nothing extra to train.
 This is the shift the field calls **data-centric AI** — a term Andrew Ng
 popularised around 2021 for the practice of holding the model fixed and
 iterating on the data instead of the reverse. Its footprints are everywhere
-in modern LLM work: careful public pretraining corpora (The Pile, C4,
-RedPajama, Dolma, FineWeb) that are as much *filtering* projects as
-collection projects; the "Textbooks Are All You Need" line of small models
-trained on curated and synthetic textbook-style text; and LIMA (Zhou et al.),
-which fine-tuned on roughly **1,000** carefully hand-curated examples and
-argued that alignment is largely a matter of surfacing behaviour the base
-model already has. We are deliberately not quoting leaderboard deltas here:
-those numbers age in months, and the mechanism above does not.
+in modern LLM work:
+
+- **The public pretraining corpora** — The Pile, C4, RedPajama, Dolma,
+  FineWeb — which are as much *filtering* projects as collection projects.
+- **The "Textbooks Are All You Need" line** of small models trained on
+  curated and synthetic textbook-style text.
+- **LIMA** (Zhou et al.), which fine-tuned on roughly **1,000** carefully
+  hand-curated examples and argued that alignment is largely a matter of
+  surfacing behaviour the base model already has.
+
+We are deliberately not quoting leaderboard deltas here: those numbers age in
+months, and the mechanism above does not.
 
 !!! note "What is settled and what is current practice"
     Settled: loss is computed on the corpus, so the corpus defines the
@@ -90,6 +97,16 @@ filter it.
 
 Part V has already met all of these in passing. Here they are as records on
 disk, which is how you will actually meet them.
+
+| Record type | One record holds | Loss is computed on | Comes from |
+| --- | --- | --- | --- |
+| **Pretraining text** | one unlabelled document | every token of the document | scraping, then filtering |
+| **SFT instruction pair** | a prompt and one target response | the response tokens only | humans, or [32.2](02-synthetic-data.md) |
+| **Preference pair** | one prompt and two responses, one marked better | both responses, through the [DPO](../ch31-rl/03-dpo-grpo.md) objective | annotators, or a judge model |
+| **Trajectory** | a whole Thought–Action–Observation episode plus its outcome | the assistant turns, once the episode is rendered | recorded agent runs ([32.3](03-trajectories.md)) |
+
+Now the same four as JSON, because a schema is easier to argue with than a
+sentence.
 
 **Pretraining text** — unlabelled documents. There is no "answer"; the
 training signal is next-token prediction over the whole string.
@@ -412,7 +429,9 @@ Common Crawl dump two years later.
 The standard defence is **n-gram overlap decontamination**: build the set of
 $n$-grams in your training corpus, and drop any evaluation item that shares
 too many of them. Here $n = 8$ words, a common choice — long enough that
-coincidental matches are rare, short enough to catch light paraphrase.
+coincidental matches are rare, short enough to catch a single copied sentence
+inside an otherwise-new item. It does not catch paraphrase; the third test item
+below shows why.
 
 ```python
 import re
@@ -469,15 +488,21 @@ training set has 32 distinct 8-grams
          2    69.2%        9  CONTAMINATED
 ```
 
-Item 0 is a verbatim copy: every one of its 15 8-grams is in training. Item
-2 is the interesting case — only its *first sentence* leaked, and the
-detector still flags it at 69.2% overlap, because a copied sentence produces
-many overlapping windows. Item 1 asks the same thing in different words and
-correctly scores zero; n-gram overlap does not catch semantic duplication,
-which is a real limitation we return to in
-[Section 32.4](04-filtering.md), where the same detector becomes a pipeline
-stage. The rule is simple and admits no exceptions: **decontaminate against
-every eval you intend to report**, and say in the write-up that you did.
+Read the three verdicts one at a time.
+
+- **Item 0 — caught, as it should be.** It is a verbatim copy, so every one
+  of its 15 8-grams is in training.
+- **Item 2 — the interesting case.** Only its *first sentence* leaked, and
+  the detector still flags it at 69.2% overlap, because a copied sentence
+  produces many overlapping windows.
+- **Item 1 — the hole in the method.** It asks the same thing in different
+  words and correctly scores zero. N-gram overlap does not catch semantic
+  duplication, a limitation we return to in
+  [Section 32.4](04-filtering.md), where the same detector becomes a
+  pipeline stage.
+
+The rule is simple and admits no exceptions: **decontaminate against every
+eval you intend to report**, and say in the write-up that you did.
 
 ## Licensing, provenance, and PII — the honest section
 
@@ -540,19 +565,22 @@ doc 2: 2 redaction(s)
    after : Order [PHONE] shipped; tracking number [PHONE] is on the label.
 ```
 
-Document 0 works. The other two are the lesson. Document 1 contains **two**
-pieces of real PII and the scrubber found **zero**: an obfuscated email
-("grace dot hopper at navy dot mil") that people write specifically to
-defeat regexes, and a UK phone number whose grouping does not match the
-North American pattern. Document 2 is the mirror-image failure: two
-**false positives**, an order ID and a tracking number that happen to look
-like phone numbers, now destroyed.
+Document 0 works. The other two are the lesson, and they fail in opposite
+directions.
+
+- **Document 1: two false negatives.** It contains two pieces of real PII and
+  the scrubber found zero — an obfuscated email ("grace dot hopper at navy dot
+  mil") that people write specifically to defeat regexes, and a UK phone
+  number whose grouping does not match the North American pattern.
+- **Document 2: two false positives.** An order ID and a tracking number
+  happen to look like phone numbers, and both were destroyed.
 
 So a regex scrubber is a *floor*, not a solution. Real pipelines stack it
 with a named-entity model, allow-lists for known-safe formats, and — the
-part no tool replaces — a human reading a random sample of the output. Say
-in your dataset card exactly which scrubber ran, and never claim the corpus
-is PII-free. Claim that these patterns were removed.
+part no tool replaces — a human reading a random sample of the output.
+
+Say in your dataset card exactly which scrubber ran, and never claim the
+corpus is PII-free. Claim that these patterns were removed.
 
 !!! warning "Common mistakes"
     - **Validating after training instead of before.** A schema check costs

@@ -62,12 +62,14 @@ And the same arithmetic for a test suite:
 ```
 
 At ten files nobody cares. At four hundred — a small project by professional
-standards — rebuilding everything costs you two and a half *hours* of waiting
-per day, and the 2 000-file row is more waiting than there are working hours,
-which is a polite way of saying that no large project has ever been built
-that way. The waiting is also worse than the clock suggests: a five-minute
-build is long enough to lose your train of thought and check your messages,
-so the real cost is measured in broken concentration rather than seconds.
+standards — rebuilding everything costs you two and two-thirds *hours* of
+waiting per day, and the 2 000-file row is more waiting than there are working
+hours, which is a polite way of saying that no large project has ever been
+built that way.
+
+The waiting is also worse than the clock suggests: a five-minute build is long
+enough to lose your train of thought and check your messages, so the real cost
+is measured in broken concentration rather than seconds.
 
 ## The idea: a dependency graph plus timestamps
 
@@ -91,17 +93,25 @@ flowchart LR
 
 Two rules turn that picture into a build system.
 
-**Order.** A file must be built after everything it depends on. That is
-precisely a **topological sort** —
-[Section 37.2's](../ch37-graphs/02-traversal.md) "list the vertices so that
-every edge points forwards" — and the graph *must* be acyclic for such an
-order to exist, which is why a dependency cycle is a fatal error rather than
-a warning.
+### Rule 1 — order
 
-**Staleness.** A target needs rebuilding if it does not exist, or if any of
-its prerequisites has a newer modification time. That single comparison is
-the whole caching strategy: `make` never looks inside your files, it only
-compares timestamps.
+A file must be built after everything it depends on. That is precisely a
+**topological sort** — [Section 37.2's](../ch37-graphs/02-traversal.md) "list
+the vertices so that every edge points forwards" — and the graph *must* be
+acyclic for such an order to exist, which is why a dependency cycle is a fatal
+error rather than a warning.
+
+### Rule 2 — staleness
+
+Walking that order, `make` decides what to run by asking three questions about
+each target, in this sequence:
+
+1. **Does the target exist?** If not, run its recipe.
+2. **Has any prerequisite a newer modification time?** If so, run its recipe.
+3. **Otherwise, skip it** — and print nothing.
+
+That single timestamp comparison is the whole caching strategy: **`make` never
+looks inside your files.**
 
 Notice that staleness *propagates*. Touching `math.c` makes `math.o` stale;
 rebuilding `math.o` gives it a new timestamp, which makes `libmath.a` stale;
@@ -120,6 +130,8 @@ target: prerequisite1 prerequisite2
 	another command
 ```
 
+### The tab
+
 The indentation of a recipe line **must be a real tab character**. Not four
 spaces, not eight. This is the single most notorious wart in the tool, it
 dates from 1976, and its author has publicly called it a mistake. Getting it
@@ -134,9 +146,16 @@ Makefile:5: *** missing separator.  Stop.
 editors can be told to keep literal tabs in `Makefile`s; do that once and
 forget about it.
 
-**Variables** avoid repetition. `=` defines a variable expanded at the moment
-of use, `:=` expands immediately at the point of definition (usually what you
-want), `?=` sets a default only if unset, and `+=` appends:
+### Variables
+
+Variables avoid repetition, and there are four assignment operators:
+
+| Written | Means |
+|---|---|
+| `=` | expanded at the moment of *use* |
+| `:=` | expanded immediately, at the point of definition — usually what you want |
+| `?=` | set a default, only if the variable is unset |
+| `+=` | append to what is already there |
 
 ```makefile
 CC      := cc
@@ -146,8 +165,10 @@ OBJS    := $(SRCS:.c=.o)          # main.o util.o math.o
 PREFIX  ?= /usr/local             # overridable: make PREFIX=~/.local install
 ```
 
-**Automatic variables** are set by `make` inside each recipe and are what
-make rules reusable:
+### Automatic variables
+
+These are set by `make` inside each recipe, and they are what make rules
+reusable:
 
 | Variable | Means |
 |---|---|
@@ -157,7 +178,9 @@ make rules reusable:
 | `$?` | only the prerequisites newer than the target |
 | `$*` | the *stem* — the part a pattern rule's `%` matched |
 
-**Pattern rules** state a recipe once for a whole class of files. `%` is a
+### Pattern rules
+
+A pattern rule states a recipe once for a whole class of files. `%` is a
 wildcard that must match the same text on both sides:
 
 ```makefile
@@ -169,9 +192,11 @@ Read it as: "any `.o` file can be built from the `.c` file with the same
 stem, by compiling the first prerequisite (`$<`) into the target (`$@`)".
 That one rule replaces one rule per source file.
 
-**`.PHONY`** marks targets that are not files. Without it, a target called
-`clean` would be considered up to date the moment a *file* named `clean`
-existed in the directory — a genuinely confusing bug:
+### `.PHONY`
+
+`.PHONY` marks targets that are not files. Without it, a target called `clean`
+would be considered up to date the moment a *file* named `clean` existed in
+the directory — a genuinely confusing bug:
 
 ```makefile
 .PHONY: all clean test install
@@ -260,10 +285,11 @@ first move whenever a Makefile is unfamiliar or a target is called `deploy`.
 `-j` is the payoff for having a graph rather than a script. Two targets with
 no path between them cannot affect each other, so they can be built
 simultaneously. In the graph above, `main.o`, `util.o`, and `math.o` are
-mutually independent — three cores, one third of the time. A shell script
-that ran the same commands in a fixed order could not do this, because a
-script encodes an *order* while a Makefile encodes *constraints*, and
-constraints leave the tool free to fill in the schedule.
+mutually independent — three cores, one third of the time.
+
+A shell script that ran the same commands could not do this: **a script
+encodes an *order*, while a Makefile encodes *constraints*** — and constraints
+leave the tool free to fill in the schedule.
 
 The catch is that parallelism exposes dependencies you forgot to declare. If
 `util.c` is generated by a script and you never said so, a serial build might
@@ -385,13 +411,15 @@ $ make app          # nothing changed
   make: 'app' is up to date.
 ```
 
-Three details are worth pausing on. `topological_order` is a depth-first
-search that appends each node **after** visiting its prerequisites — the
-post-order trick from
-[Section 37.2](../ch37-graphs/02-traversal.md). The `rebuilt` set makes
-staleness propagate correctly even in a dry run, where no timestamp is
-updated. And the second `make` prints the sentence every developer has seen a
-thousand times, produced by exactly the logic you just read.
+Three details are worth pausing on:
+
+- **`topological_order` is a depth-first search** that appends each node
+  *after* visiting its prerequisites — the post-order trick from
+  [Section 37.2](../ch37-graphs/02-traversal.md).
+- **The `rebuilt` set makes staleness propagate** correctly even in a dry run,
+  where no timestamp is updated.
+- **The second `make` prints the sentence every developer has seen a thousand
+  times**, produced by exactly the logic you just read.
 
 ### Touch one file, and watch the subgraph
 
@@ -433,13 +461,15 @@ $ make app
   cc -o app main.o util.o libmath.a     # app older than main.o, util.o
 ```
 
-That is the whole value proposition on four lines of output. Touching
-`math.c` rebuilds three of the five targets and leaves `main.o` and `util.o`
-alone — and the reason column shows the staleness propagating up the chain
-one edge at a time. Touching the *header* `util.h` is more expensive, because
-two object files include it. This is why experienced C programmers care about
-which header includes which: a widely included header turns every edit into a
-full rebuild, and no build system can save you from a graph shaped like that.
+That is the whole value proposition in one block of output. Touching `math.c`
+rebuilds three of the five targets and leaves `main.o` and `util.o` alone —
+and the reason column shows the staleness propagating up the chain one edge at
+a time.
+
+Touching the *header* `util.h` is more expensive, because two object files
+include it. This is why experienced C programmers care about which header
+includes which: **a widely included header turns every edit into a full
+rebuild, and no build system can save you from a graph shaped like that.**
 
 ### The dry run, and why it must reason ahead
 
@@ -499,11 +529,12 @@ make: dependency cycle: report.pdf -> figures.tex -> report.pdf
 
 The detection is the classic three-colour DFS: a node currently on the
 recursion stack is marked `"visiting"`, and reaching such a node again means
-the edge just followed closes a loop. Carrying the `path` list along costs a
-little memory and buys an error message that names the cycle instead of
-saying "cycle detected somewhere". Real `make` prints
-`Circular report.pdf <- figures.tex dependency dropped`, which is the same
-diagnosis in fewer words.
+the edge just followed closes a loop.
+
+Carrying the `path` list along costs a little memory and buys an error message
+that names the cycle instead of saying "cycle detected somewhere". Real `make`
+prints `Circular report.pdf <- figures.tex dependency dropped`, which is the
+same diagnosis in fewer words.
 
 ## The modern landscape
 
@@ -520,14 +551,23 @@ replaced it is solving the same two problems — *what depends on what*, and
 | **uv**, **Poetry**, **pip-tools** | Python | Environment and dependency management with a lockfile so a build is reproducible; not a compiler-style task graph |
 | **Bazel**, **Buck**, **Pants** | Very large repos | Hermetic builds keyed by *content hashes* rather than timestamps, with distributed caching and remote execution — a cache hit means someone else's machine already built it |
 
-The distinction worth carrying away is **timestamps versus content hashes**.
-`make` asks "is the input newer?"; Bazel and Gradle ask "have I ever built
-this exact input before?". Content hashing is slower to compute and
-dramatically more reliable: it survives clock skew, it does not rebuild after
-a `git checkout` restores an identical file with a new timestamp, and it lets
-a whole team share one cache. `make`'s timestamp model is the reason for the
-occasional "it says it is up to date but it is not" — the fix is
-`make clean`, and the deeper fix is a build system that hashes.
+### Timestamps versus content hashes
+
+That is the distinction worth carrying away. `make` asks "is the input
+newer?"; Bazel and Gradle ask "have I ever built this exact input before?".
+
+| | Timestamps (`make`) | Content hashes (Bazel, Gradle) |
+|---|---|---|
+| The question asked | is the prerequisite newer than the target? | have I built *this exact content* before? |
+| Cost of the check | one `stat` call — nearly free | read and hash every input |
+| Clock skew, NFS, CI runners | can silently break it | irrelevant |
+| `git checkout` restoring an identical file | rebuilds it | correctly skips it |
+| Sharing a cache across a team | impossible | the normal case — a hit means someone else already built it |
+| Typical failure | "it says it is up to date but it is not" | slower first build |
+
+`make`'s timestamp model is the reason for that occasional false "up to date".
+The immediate fix is `make clean`; the deeper fix is a build system that
+hashes.
 
 None of this changes the mental model. Whatever the tool, you are declaring a
 graph and letting it skip the parts that cannot have changed.

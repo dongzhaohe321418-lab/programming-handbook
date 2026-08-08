@@ -13,14 +13,17 @@ you will not just *read* class diagrams, you will *write* them.
 
 ## Why draw before you code
 
-A diagram earns its keep three ways. **Cost**: moving a responsibility
-between boxes takes seconds; moving it between written classes means
-editing constructors, call sites, and tests. **Communication**: a diagram
-shows the whole design at once, in a form a teammate (or your future
-self) absorbs far faster than code. **Honesty**: a class that is hard to
-draw — arrows everywhere — is usually a class that is hard to use, and
-the diagram says so *before* you invest a week in it. The habit to build:
-three or more classes, sketch first.
+A diagram earns its keep three ways:
+
+- **Cost.** Moving a responsibility between boxes takes seconds; moving it
+  between written classes means editing constructors, call sites, and tests.
+- **Communication.** A diagram shows the whole design at once, in a form a
+  teammate — or your future self — absorbs far faster than code.
+- **Honesty.** A class that is hard to draw, with arrows everywhere, is
+  usually a class that is hard to use, and the diagram says so *before* you
+  invest a week in it.
+
+The habit to build: three or more classes, sketch first.
 
 ## Anatomy of a class box
 
@@ -267,11 +270,16 @@ classDiagram
     Member --> Book : borrows
 ```
 
-Translating is mechanical. Each box becomes a `class`; each attribute
-line becomes an assignment in `__init__` (with `-` members getting the
-underscore); each operation becomes a `def`. The aggregation arrows tell
-us books and members are created *outside* the library and added to it;
-the association tells us a member will hold references to borrowed books.
+Translating is mechanical:
+
+1. **Each box becomes a `class`.**
+2. **Each attribute line becomes an assignment in `__init__`** — members
+   marked `-` get the leading underscore.
+3. **Each operation becomes a `def`.**
+4. **Each arrow decides where the objects come from.** The aggregations tell
+   us books and members are created *outside* the library and added to it;
+   the association tells us a member holds references to the books it has
+   borrowed.
 
 ```python
 class Book:
@@ -353,11 +361,16 @@ orch.hire(mara)
 print(orch.tune_up("Main Hall"))
 ```
 
-Work attribute by attribute. `Orchestra._musicians` holds `Musician`
-objects that were created outside and passed to `hire` — aggregation.
-`Musician.instrument` is a lasting reference to a peer — association.
-`hall` is only a parameter of `tune_up`, never stored — a dependency at
-most, and since it is a plain string we simply leave it off the diagram:
+Work attribute by attribute:
+
+- **`Orchestra._musicians`** holds `Musician` objects that were created
+  outside and passed to `hire` — aggregation.
+- **`Musician.instrument`** is a lasting reference to a peer — association.
+- **`hall`** is only a parameter of `tune_up` and is never stored — a
+  dependency at most, and since it is a plain string we simply leave it off
+  the diagram.
+
+The result:
 
 ```mermaid
 classDiagram

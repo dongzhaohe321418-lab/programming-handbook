@@ -11,7 +11,7 @@ log-analysis tools. It is the highest-leverage small language a programmer
 can learn.
 
 The catch is that regex has a reputation, and it is partly deserved. A
-pattern is dense — `^\d{4}-\d{2}-\d{2}$` is a whole program in eighteen
+pattern is dense — `^\d{4}-\d{2}-\d{2}$` is a whole program in nineteen
 characters — and dense notation read too fast becomes noise. This chapter
 therefore refuses to show you a pattern you have not seen run. Every single
 construct on these pages is executed against real strings with its matches

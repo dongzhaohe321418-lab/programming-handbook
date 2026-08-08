@@ -23,7 +23,9 @@ far talks through `print`; real applications talk through windows,
 buttons, and events. You will see how graphical programs are structured
 around an **event loop**, why that flips the flow of control upside
 down, and what other directions — the web, games, data science, audio —
-are now within your reach with the foundations you have built.
+are now within your reach with the foundations you have built. (Two of
+them, the web and the desktop window, are taken up properly later in this
+book, in [Chapter 42](../ch42-web-gui/index.md).)
 
 **After this chapter you can …**
 

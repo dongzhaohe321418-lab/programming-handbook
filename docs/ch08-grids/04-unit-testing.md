@@ -3,11 +3,12 @@
 You have just written `linear_search` and `selection_sort`. How do you
 *know* they work? Running them once and eyeballing the output proves
 almost nothing — and next week, when you "improve" the code, how will
-you know you didn't break it? The professional answer is the **unit
-test**: a small piece of code that checks one fact about one function,
-automatically, in milliseconds. A suite of unit tests is a safety net
-you can re-run after every change, and — used well — a design tool that
-sharpens your thinking *before* you write the code.
+you know you didn't break it?
+
+The professional answer is the **unit test**: a small piece of code that
+checks one fact about one function, automatically, in milliseconds. A suite of
+unit tests is a safety net you can re-run after every change — and, used well,
+a design tool that sharpens your thinking *before* you write the code.
 
 ## Why tests exist
 
@@ -37,11 +38,14 @@ assert total == 4, "arithmetic is broken"    # optional failure message
 print("both asserts passed, silently")
 ```
 
-Anatomy: `assert` *condition* `,` *optional message*. If the condition
-is true, the statement does nothing at all — silence is success. If it
-is false, Python raises an `AssertionError` (with your message, if you
-gave one) and the program stops. Watch a failure catch a real bug —
-here a mean function accidentally written with integer division:
+Anatomy: `assert` *condition* `,` *optional message*.
+
+- **Condition true** — the statement does nothing at all. Silence is success.
+- **Condition false** — Python raises an `AssertionError`, carrying your
+  message if you gave one, and the program stops.
+
+Watch a failure catch a real bug — here a mean function accidentally written
+with integer division:
 
 ```python
 # raises AssertionError
@@ -178,27 +182,33 @@ ok    test_sort_typical
 10 passed, 0 failed
 ```
 
-Three habits to copy from this suite. Each test checks **one fact** and
-says so in its name — when `test_search_duplicates_first_wins` fails,
-the name alone tells you what broke. Tests build their **own fresh
-data** — sort tests each create their own list, so no test can
-contaminate another. And the driver **keeps going after a failure** —
-the `try`/`except` catches each `AssertionError` so one red test can't
-hide the others. Try it: change `return -1` to `return 0` in
-`linear_search`, re-run, and watch exactly two tests go red.
+Three habits to copy from this suite:
+
+- **Each test checks one fact, and says so in its name.** When
+  `test_search_duplicates_first_wins` fails, the name alone tells you what
+  broke.
+- **Each test builds its own fresh data.** The sort tests each create their
+  own list, so no test can contaminate another.
+- **The driver keeps going after a failure.** The `try`/`except` catches each
+  `AssertionError`, so one red test cannot hide the others.
+
+Try it: change `return -1` to `return 0` in `linear_search`, re-run, and
+watch exactly two tests go red.
 
 ## Edge cases first
 
 Look at the *order* of those tests: empty list, single element,
 missing target, duplicates — the weird inputs come before the typical
-one. That is deliberate. Bugs live at the **edges**: the empty list
-that makes `values[0]` explode, the single element that a loop skips,
-the duplicate that breaks a "first occurrence" promise, the
-already-sorted input that tempts an algorithm into a corner-cutting
-error. A test on a typical input mostly re-proves what your eyeball
-test already suggested; a test on an edge asks a question you probably
-never tried by hand. For any function taking a list, run down this
-checklist:
+one. That is deliberate.
+
+Bugs live at the **edges**: the empty list that makes `values[0]` explode, the
+single element that a loop skips, the duplicate that breaks a "first
+occurrence" promise, the already-sorted input that tempts an algorithm into a
+corner-cutting error.
+
+A test on a typical input mostly re-proves what your eyeball test already
+suggested; a test on an edge asks a question you probably never tried by hand.
+For any function taking a list, run down this checklist:
 
 | Edge case | The question it asks |
 |---|---|
@@ -212,10 +222,12 @@ checklist:
 
 Our `run_tests()` driver works, but notice the drudgery: we listed
 every test by hand, and the report is bare-bones. Professional test
-frameworks automate exactly that. **pytest**, the de-facto Python
-standard, *discovers* every `test_*` function in your project by
-itself, runs each in isolation, and on failure prints the values on
-both sides of the failing `==` — no message string needed:
+frameworks automate exactly that. **pytest**, the de-facto Python standard:
+
+- **discovers** every `test_*` function in your project by itself;
+- **runs each one in isolation**;
+- **prints the values on both sides of a failing `==`** — no message string
+  needed.
 
 ```console
 $ pytest test_algorithms.py
@@ -227,11 +239,13 @@ test_algorithms.py ..........                                    [100%]
 ========================== 10 passed in 0.03s ==========================
 ```
 
-Frameworks also add **fixtures** (shared, reusable setup — a fresh
-database, a temporary file — created before each test and cleaned up
-after), coverage reports, and ways to run only the tests that touch
-what you just changed. Your Java course's equivalent is **JUnit**,
-where each test is a method marked with the `@Test` annotation:
+Frameworks also add **fixtures** — shared, reusable setup such as a fresh
+database or a temporary file, created before each test and cleaned up
+afterwards — plus coverage reports, and ways to run only the tests that touch
+what you just changed.
+
+Your Java course's equivalent is **JUnit**, where each test is a method marked
+with the `@Test` annotation:
 
 === "Python (pytest style)"
 
@@ -268,20 +282,29 @@ where each test is a method marked with the `@Test` annotation:
 Same idea in both: plainly named checks, one fact each, discovered and
 run by the framework. The concepts you practised with bare `assert`
 transfer directly; more in
-[testing beyond the basics](../ch24-practice/02-testing.md).
+[testing beyond the basics](../ch24-practice/02-testing.md), and the full
+JUnit treatment — every annotation, fixtures, parameterized tests, test
+doubles, and running the suite in CI — in
+[Section 40.4](../ch40-toolchain/04-junit.md).
 
 ## Test-first: tests as a design tool
 
 The deepest use of tests is writing them **before** the code —
-*test-driven development* (TDD). The rhythm is **red, then green**: write
-tests that state the spec, watch them fail (proving they can fail),
-then write the simplest code that passes. Let's do one for real.
+*test-driven development* (TDD). The rhythm is **red, then green**:
+
+1. **Write tests that state the spec.**
+2. **Watch them fail** — that is what proves they *can* fail.
+3. **Write the simplest code that makes them pass.**
+
+Let's do one for real.
 
 **Spec:** `clamp(value, low, high)` returns `value` limited to the
 range — `low` if `value` is below it, `high` if above, else `value`
 itself.
 
-**Red.** Translate the spec into tests, with only a stub behind them:
+### Red — write the tests and watch them fail
+
+Translate the spec into tests, with only a stub behind them:
 
 ```python
 # raises AssertionError
@@ -294,13 +317,18 @@ assert clamp(99, 0, 10) == 10                            # above
 ```
 
 The second assert fails — `AssertionError: got -3` — and that failure
-is *good news twice*: it proves the test is actually capable of
-detecting a wrong answer, and it hands us a to-do list. While writing
-the asserts we were forced to decide the boundary behaviour (is
-`clamp(10, 0, 10)` equal to 10? yes — the range is inclusive) — a
-design decision made cheaply, before any implementation existed.
+is *good news twice*:
 
-**Green.** Now write code whose only job is to turn that red to green:
+- **It proves the test can tell a wrong answer from a right one.**
+- **It hands us a to-do list.**
+
+Writing the asserts also forced us to decide the boundary behaviour: is
+`clamp(10, 0, 10)` equal to 10? Yes — the range is inclusive. That is a design
+decision made cheaply, before any implementation existed.
+
+### Green — write the simplest code that passes
+
+Now write code whose only job is to turn that red to green:
 
 ```python
 def clamp(value, low, high):

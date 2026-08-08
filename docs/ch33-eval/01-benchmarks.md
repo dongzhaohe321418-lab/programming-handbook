@@ -12,13 +12,17 @@ tests, and the ways a number produced by one can be flatly untrue.
 
 ## The shape of the problem
 
-A benchmark is four things bolted together: a **dataset** of inputs, a
-**reference** for each input, a **metric** that compares an output to the
-reference, and a **protocol** — the prompt format, the decoding settings, the
-number of examples shown. Change any one of the four and the number changes.
-Most disputes about "model A beats model B" are really disputes about the third
-and fourth, which is why this section spends more time on metrics and protocols
-than on datasets.
+A benchmark is four things bolted together:
+
+1. a **dataset** of inputs;
+2. a **reference** for each input;
+3. a **metric** that compares an output to the reference;
+4. a **protocol** — the prompt format, the decoding settings, the number of
+   examples shown.
+
+Change any one of the four and the number changes. Most disputes about "model A
+beats model B" are really disputes about the third and fourth, which is why this
+section spends more time on metrics and protocols than on datasets.
 
 Here is the landscape, described by what each benchmark actually asks a model
 to do. Treat the *descriptions* as durable and any leaderboard position you see
@@ -35,14 +39,15 @@ elsewhere as a snapshot with a short shelf life.
 | **Tool-use / function-calling** suites | given tool schemas, emit the right call with the right arguments | schema-valid call rate, argument accuracy, task success | the behaviour [Chapter 28](../ch28-tools-mcp/index.md) built | their tool inventory is not yours; a model tuned to their schemas may not transfer |
 | **Safety / refusal** suites | harmful, borderline, and benign-but-scary prompts | refusal rate *and* over-refusal rate | both failure directions at once | narrow coverage; culturally specific; trivially gamed by refusing more |
 
-Two structural distinctions cut across the table and matter more than the
-names. First, **execution-verified versus reference-compared**: SWE-bench,
-HumanEval and MBPP run code, so the grader is a program and cannot be
-sweet-talked; MMLU and GAIA compare strings, so the grader is only as good as
-its normalization rules. Second, **single-turn versus agentic**: an MMLU item
-is one forward pass, a SWE-bench instance is a whole episode with a budget, a
-scaffold, and dozens of tool calls — which means SWE-bench measures your agent,
-not just your model.
+Two structural distinctions cut across that table and matter more than the
+names.
+
+- **Execution-verified versus reference-compared.** SWE-bench, HumanEval and
+  MBPP run code, so the grader is a program and cannot be sweet-talked. MMLU and
+  GAIA compare strings, so the grader is only as good as its normalization rules.
+- **Single-turn versus agentic.** An MMLU item is one forward pass. A SWE-bench
+  instance is a whole episode with a budget, a scaffold, and dozens of tool
+  calls — which means SWE-bench measures your agent, not just your model.
 
 ## Exact match is not one metric — it is a family
 
@@ -116,7 +121,7 @@ the normalization chain that essentially every QA benchmark uses. Nothing about
 the model changed. If a paper reports 91.7% and you reproduce 16.7%, the
 disagreement is entirely in code that nobody wrote about.
 
-Now read the last two lines of the output more carefully. The model actually
+Now read the `+ drop punctuation` row of the output more carefully. The model actually
 answered ten of the twelve correctly, so its honest score is 83.3%. The
 punctuation step accepted `"3.14"` against a gold of `"314"` — normalization
 does not only recover deserved credit, it also hands out undeserved credit, and
@@ -150,6 +155,13 @@ $$
 where $c$ is the number of the $n$ samples that passed. The fraction is exactly
 "choose $k$ from the failures" over "choose $k$ from everything", which is the
 chance of drawing an all-failing subset.
+
+Computing a benchmark's pass@k is four steps:
+
+1. **Sample $n$ completions per task**, with $n$ comfortably larger than $k$.
+2. **Run the tests** on each, and count how many passed. That count is $c$.
+3. **Apply the formula above** once per task, giving a per-task probability.
+4. **Average across tasks.** That average is the reported pass@k.
 
 ```python
 """pass@k: the unbiased estimator, the tempting shortcut, and the truth."""
@@ -237,6 +249,17 @@ scoring** appends each option to the prompt and compares the model's total
 log-probability for the continuation; nothing is generated and no parsing is
 needed. **Generation scoring** lets the model write an answer and then parses a
 letter out of it, which is what a user would actually experience.
+
+Six scorers appear below — three of each kind:
+
+| Scorer | What it ranks options by | Known bias | Reach for it when |
+| --- | --- | --- | --- |
+| `acc` (summed log-prob) | total log-probability of the option text | prefers short options | you want the cheapest possible signal |
+| `acc_norm` (per byte) | log-probability per byte | prefers long, fluent options | the options differ a lot in length |
+| `pmi` (minus the prior) | how much the *question* raised the option | costs a second scoring pass per option | some options are simply common English |
+| generate + strict parse | a bare letter, nothing else | scores a fully-correct chatty model near zero | you constrain the output format |
+| generate + lenient parse | any letter appearing in the reply | can pick up an incidental letter | the model usually names a letter |
+| generate + text fallback | letter first, then option text | most forgiving, so most likely to over-credit | the reply may answer in words only |
 
 The log-probabilities below are scripted, standing in for what a real model
 would return — the arithmetic on them is exactly what a real harness does. The
@@ -440,8 +463,8 @@ for label, removed in [("reported score", set()),
 ```
 
 The model reports **83.3%**. Its real ability on unseen questions is **66.7%**,
-and the three decontamination policies land at 83.3%, 80.0% and 75.0% — every
-one of them an over-estimate. Follow the failures:
+and the reported score plus the two n-gram policies land at 83.3%, 80.0% and
+75.0% — every one of them an over-estimate. Follow the failures:
 
 - At $n = 8$, the question *"Which planet has the shortest year?"* is only six
   words long, so it has no 8-grams at all and cannot be flagged. Short items are
@@ -504,7 +527,8 @@ print(f"the benchmark's maximum possible score is {measured(1.0):.0%}, "
 
 With 4% label error the ceiling is **96%**, and a genuine four-point improvement
 in ability registers as **3.79 points** of reported score. Once the field is at
-90% reported — 9.5 points of headroom left — most of the remaining gap is noise,
+90% true ability — 86.5% reported, 9.5 points of headroom left — most of the
+remaining gap is noise,
 not capability, and the benchmark has stopped being able to rank the models you
 care about. That is **saturation**, and it is why benchmarks are retired and
 replaced rather than improved.

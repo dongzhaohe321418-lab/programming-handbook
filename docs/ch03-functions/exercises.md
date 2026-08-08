@@ -1,5 +1,54 @@
 # Exercises
 
+## The chapter in brief
+
+- Every Python value is an **object**: data plus the behaviour that makes
+  sense for it, called with dot notation ([3.1](01-using-objects.md)).
+- A **method** belongs to the object left of the dot; a **module function**
+  like `math.sqrt` belongs to a library and takes everything through its
+  parentheses.
+- `None` is the object meaning "no useful value" — and using one as if it
+  were data is what produces `'NoneType' object has no attribute …`.
+- `dir(x)` lists what an object can do and `help(x)` explains one item, so
+  you can read a library instead of memorising it.
+- **Strings are immutable**: every method returns a *new* string, so the
+  result must be captured — `word = word.upper()` ([3.2](02-strings.md)).
+- Indexing takes one character (`s[0]`, `s[-1]`) and slicing takes a
+  substring (`s[start:stop:step]`), with `stop` always excluded.
+- The daily string methods group into five jobs: change case, search, clean
+  up, split and join, replace and test.
+- Comparison uses character code numbers, which is why `"Zebra" < "apple"` is
+  `True` — lower-case with `.lower()` for human-style ordering.
+- A `def` gives a computation a name; **parameters** are the slots in the
+  definition and **arguments** are the values a call supplies
+  ([3.3](03-writing-functions.md)).
+- `return` hands a value back to the caller and `print` only displays it — a
+  function without `return` hands back `None`.
+- Variables assigned inside a function are **local** and vanish when the call
+  ends; assigning to a global name inside a function causes
+  `UnboundLocalError`.
+- **f-strings** splice expressions into text, and a format spec after the
+  colon (`:.2f`, `:>8`, `:,`) controls decimals, width, and grouping
+  ([3.4](04-output-formatting.md)).
+
+### Key terms
+
+| Term | What it means |
+| --- | --- |
+| [**object**](../concept-index.md#o) | A value that bundles data together with its own behaviour |
+| [**method**](../concept-index.md#m) | A function belonging to an object, called with dot notation |
+| **`None`** | The object standing for "no useful value at all" |
+| [**string**](../concept-index.md#s) | Python's text type, `str` — immutable and rich in methods |
+| **immutable** | Cannot be changed after creation; operations return new values |
+| [**index**](../concept-index.md#i) | A character's numbered position, counting from 0 (or from `-1`) |
+| [**slicing**](../concept-index.md#s) | `s[start:stop:step]` — a substring, with `stop` excluded |
+| [**function**](../concept-index.md#f) | A named, reusable computation defined with `def` |
+| [**parameter**](../concept-index.md#p) vs [**argument**](../concept-index.md#a) | The name in the definition vs the value supplied by the call |
+| **`return`** | Hands a value back to the caller, ending the function immediately |
+| **scope** | The region where a name means something — local or global |
+| **docstring** | The triple-quoted first line of a body, stating the contract |
+| [**f-string**](../concept-index.md#f) | `f"…{expr:spec}…"` — a string literal that evaluates expressions |
+
 Nine problems covering the whole chapter: string surgery, writing functions
 from written specifications, formatting tables, and predicting what code does
 before you run it. They start gentle and get sharper. For each one, write

@@ -2,13 +2,14 @@
 
 Every retrieval system starts with the same question: *given a query, which
 stored items are relevant?* For fifty years the answer was "the ones
-containing the query's words". That answer breaks the moment a user writes
-"automobile" and the document says "car". This section builds the modern
-answer from scratch — meaning as a *direction in space*, similarity as an
-angle, and search as a numerical operation — and then makes it fast, because
-comparing a query against ten million vectors one at a time is exactly the
-kind of $O(n)$ problem [Section 16.1](../ch16-complexity/01-big-o.md) taught
-you to be suspicious of.
+containing the query's words", and that answer breaks the moment a user writes
+"automobile" and the document says "car".
+
+This section builds the modern answer from scratch — meaning as a *direction in
+space*, similarity as an angle, and search as a numerical operation — and then
+makes it fast. Comparing a query against ten million vectors one at a time is
+exactly the kind of $O(n)$ problem
+[Section 16.1](../ch16-complexity/01-big-o.md) taught you to be suspicious of.
 
 ## Where keyword search gives up
 
@@ -127,15 +128,31 @@ $$
 \lVert\mathbf{a}\rVert=\sqrt{\sum_i a_i^2}
 $$
 
-Read it in two steps, because that is how it is implemented:
+The symbols, named:
 
-1. **Normalize**: divide each vector by its own length, producing a *unit
+| Symbol | Meaning |
+| --- | --- |
+| $\mathbf{a}, \mathbf{b}$ | the two vectors being compared |
+| $\mathbf{a}\cdot\mathbf{b}$ | their **dot product** — multiply matching entries, add the results |
+| $\lVert\mathbf{a}\rVert$ | the **length** (norm) of $\mathbf{a}$ — Pythagoras in $d$ dimensions |
+| $\theta$ | the angle between the two vectors |
+
+Read the formula in two steps, because that is how it is implemented:
+
+1. **Normalize.** Divide each vector by its own length, producing a *unit
    vector* — same direction, length exactly 1.
-2. **Dot product**: multiply the two unit vectors element-wise and add up.
+2. **Dot product.** Multiply the two unit vectors element-wise and add up.
 
-The result lies in $[-1, 1]$: 1 means "same direction", 0 means "at right
-angles, unrelated", $-1$ means "opposite". (Embeddings with only non-negative
-coordinates, like our toy space, can never actually reach $-1$.)
+The result lies in $[-1, 1]$:
+
+| Cosine | Means |
+| --- | --- |
+| $1$ | same direction — as similar as the metric can say |
+| $0$ | at right angles: unrelated |
+| $-1$ | opposite directions |
+
+(Embeddings with only non-negative coordinates, like our toy space, can never
+actually reach $-1$.)
 
 ```python
 import numpy as np
@@ -204,6 +221,10 @@ it ignores length and gets it right. That is why retrieval systems default to
 cosine, or, equivalently, to a plain dot product on vectors that were
 normalized once at insert time.
 
+Note the corollary. Once every vector has length 1,
+$\lVert a-b\rVert^{2} = 2 - 2\cos\theta$, so Euclidean distance and cosine rank
+*identically*. The disagreement above is entirely a disagreement about length.
+
 !!! tip "Normalize once, not every query"
 
     On unit vectors, cosine similarity *is* the dot product. Production
@@ -216,20 +237,31 @@ normalized once at insert time.
 Hand-assigning coordinates does not scale past a blackboard. Before neural
 embeddings existed, information retrieval used a computable recipe that turns
 any document into a vector — and it is still the backbone of half of
-production search. Start from a **bag of words**: one dimension per vocabulary
-word, and the value is how often that word occurs (order is thrown away —
-hence "bag"). Raw counts are dominated by "the" and "of", so we weight each
-count by how *rare* the word is across the corpus:
+production search.
+
+### The recipe: counts, weighted by rarity
+
+Start from a **bag of words**: one dimension per vocabulary word, and the value
+is how often that word occurs. Order is thrown away — hence "bag".
+
+Raw counts are dominated by "the" and "of", so we weight each count by how
+*rare* the word is across the corpus:
 
 $$
 \text{tf-idf}(w, d) \;=\; \underbrace{\text{count of } w \text{ in } d}_{\text{term frequency}}
 \;\times\; \underbrace{\left(\ln\frac{1+N}{1+\text{df}(w)} + 1\right)}_{\text{inverse document frequency}}
 $$
 
-where $N$ is the number of documents and $\text{df}(w)$ is how many documents
-contain $w$. The second factor is the clever half: a word appearing in every
-document gets a weight near 1, while a rare word gets a large one. Rare words
-carry the signal.
+Two symbols to name:
+
+| Symbol | Meaning |
+| --- | --- |
+| $N$ | how many documents there are in total |
+| $\text{df}(w)$ | the **document frequency** of $w$ — how many documents contain it at least once |
+
+The second factor is the clever half. A word appearing in every document gets a
+weight near 1, while a rare word gets a large one. **Rare words carry the
+signal.**
 
 ```python
 import re
@@ -296,8 +328,12 @@ the weight. (A word present in *every* document would score exactly 1.0.)
 
 That is a working search engine, ranked by cosine similarity. `'cold weather
 battery'` puts the cold-battery sentence first at 0.5224 and the cold-yeast
-sentence second at 0.3338 — reasonable. But read the other two queries in the
-output and you will see both of its limits:
+sentence second at 0.3338 — reasonable.
+
+### Where lexical vectors run out
+
+Read the other two queries in the output and you will see both of TF-IDF's
+limits:
 
 - `'why does dough rise'` ranks the dough sentences first — but only because
   of the word *dough*. The query word `rise` never matches the document word
@@ -315,12 +351,20 @@ machinery and replace the vectorizer.
 
 An embedding model is a neural network — usually a transformer encoder, the
 same family of machinery you built in
-[Section 26.2](../ch26-llm-internals/02-attention.md). You feed it text; it
-produces one hidden-state vector per token; a **pooling** step collapses those
-into a single vector for the whole text (mean-pooling across tokens, or the
-hidden state of one special leading token). Training pushes vectors of texts
-that *should* match toward each other and everything else apart, which is why
-the resulting geometry lines up with meaning.
+[Section 26.2](../ch26-llm-internals/02-attention.md). Using one is three
+steps:
+
+1. **Feed it text.** The text is tokenized exactly as in
+   [Section 26.1](../ch26-llm-internals/01-tokenization.md).
+2. **Read out one hidden-state vector per token.** That is one vector per
+   *token*, not yet one per document.
+3. **Pool.** A **pooling** step collapses those into a single vector for the
+   whole text — mean-pooling across tokens, or the hidden state of one special
+   leading token.
+
+Training is what makes the geometry mean something: it pushes vectors of texts
+that *should* match toward each other and everything else apart. Nobody chooses
+what an axis means, and after training nobody can say.
 
 Practical facts worth memorising:
 
@@ -354,36 +398,51 @@ hand-made table. That is why we can teach all of it offline.
 Our `search` did one dot product per document. With $n$ documents of $d$
 dimensions each that is $O(n \cdot d)$ arithmetic per query, plus $O(n \log n)$
 to sort the scores — or $O(n \log k)$ if you keep the best $k$ in a heap, the
-trick from [Section 21.2](../ch21-heaps/02-priority-queues.md). At $n = 12$
-that is instant. At $n = 50{,}000{,}000$ and $d = 1536$ it is roughly
-$7.7 \times 10^{10}$ multiply-adds *per query*, which no amount of numpy will
-make interactive.
+trick from [Section 21.2](../ch21-heaps/02-priority-queues.md).
+
+At $n = 12$ that is instant. At $n = 50{,}000{,}000$ and $d = 1536$ it is
+roughly $7.7 \times 10^{10}$ multiply-adds *per query*, which no amount of
+numpy will make interactive.
 
 The escape is the same trade you have made since
 [Section 16.1](../ch16-complexity/01-big-o.md) — spend memory and
-preprocessing to buy query time — with one new twist: we also give up
-*exactness*. **Approximate nearest neighbour** (ANN) indexes return *almost
-always the right* top-$k$, orders of magnitude faster. The metric for "almost
-always" is **recall@k**: of the $k$ true nearest neighbours, what fraction did
-we actually return?
+preprocessing to buy query time — with one new twist: **we also give up
+*exactness*.** **Approximate nearest neighbour** (ANN) indexes return *almost
+always the right* top-$k$, orders of magnitude faster.
 
-Two families dominate.
+The metric for "almost always" is **recall@k**: of the $k$ true nearest
+neighbours, what fraction did we actually return?
+
+### Two families of index
 
 **IVF (inverted file)** clusters the vectors once, with k-means, and keeps one
 list per cluster. At query time you compare the query against the few hundred
-*centroids*, then scan only the closest one or two lists. Search cost drops by
-roughly the number of clusters. The tunable knob is `nprobe`: how many lists
-to scan.
+*centroids*, then scan only the closest one or two lists.
+
+Search cost drops by roughly the number of clusters — until the centroid scan
+itself starts to dominate, which happens once the cluster count approaches
+$\sqrt{n}$. The tunable knob is `nprobe`: how many lists to scan.
 
 **HNSW (hierarchical navigable small world)** builds a *graph* — the structure
 of [Section 37.1](../ch37-graphs/01-representations.md) — in which every
 vector is a vertex linked to a handful of near neighbours, plus a few
-long-range "express" links, arranged in layers. Searching is greedy walking:
-start at an entry point, repeatedly hop to whichever neighbour is closer to
-the query, drop a layer, repeat. The long-range links are what keep the path
-short — the "small world" effect behind six-degrees-of-separation. HNSW is
-usually the fastest at high recall; it costs more memory and is awkward to
-update in bulk.
+long-range "express" links, arranged in layers.
+
+Searching it is greedy walking: start at an entry point, repeatedly hop to
+whichever neighbour is closer to the query, drop a layer, repeat. The
+long-range links are what keep the path short — the "small world" effect behind
+six-degrees-of-separation.
+
+| | Brute force (flat) | IVF | HNSW |
+| --- | --- | --- | --- |
+| **Structure** | none — one array of vectors | k-means clusters, one list each | layered proximity graph |
+| **Query work** | every vector, $O(n \cdot d)$ | centroids, then `nprobe` lists | a greedy walk of a few hundred hops |
+| **Exact?** | yes | no | no |
+| **Recall knob** | — | `nprobe` (lists scanned) | `ef_search` (candidates kept) |
+| **Build cost** | zero | one k-means pass | high — the graph is built incrementally |
+| **Memory** | the vectors | vectors plus centroids | vectors plus the edge lists, noticeably more |
+| **Updates** | trivial | fine, until clusters drift | awkward in bulk |
+| **Use it when** | up to a few million vectors | large corpora, memory matters | you need the fastest search at high recall |
 
 ### A tiny IVF index, with the trade-off printed
 
@@ -444,14 +503,17 @@ for nprobe in (1, 2, 3):
           f"speedup={len(DATA) / mean_cmp:.1f}x")
 ```
 
-There is the whole ANN bargain in three lines of output. Probing one cluster
-compares 174.9 vectors instead of 1200 — **6.9× cheaper** — and finds
-**89.4%** of the true neighbours. Probing two gets recall to 0.982 at 3.8×.
-Probing three finds all of them (recall 1.000) but saves only 2.5×. The misses
-at `nprobe=1` are the queries that land near a cluster *boundary*, where some
-true neighbours live on the other side of the line. Every ANN index has a knob
-like this — `nprobe` for IVF, `ef_search` for HNSW — and tuning it is tuning
-exactly this curve.
+There is the whole ANN bargain in three lines of output:
+
+- **`nprobe=1`** compares 174.9 vectors instead of 1200 — **6.9× cheaper** —
+  and finds **89.4%** of the true neighbours.
+- **`nprobe=2`** lifts recall to 0.982, at 3.8×.
+- **`nprobe=3`** finds all of them (recall 1.000) but saves only 2.5×.
+
+The misses at `nprobe=1` are the queries that land near a cluster *boundary*,
+where some true neighbours live on the other side of the line. Every ANN index
+has a knob like this — `nprobe` for IVF, `ef_search` for HNSW — and tuning it
+is tuning exactly this curve.
 
 !!! warning "1200 vectors do not need an index"
 
@@ -483,23 +545,37 @@ those are [Section 29.2](02-rag-pipeline.md).
 
 Two features separate a demo from a product.
 
+### Metadata filtering
+
 **Metadata filtering** attaches structured fields to each vector — author,
 date, language, tenant, permissions — and restricts search to matching rows.
-It is not optional: in a multi-user system, "only search documents this user
-is allowed to read" is a correctness requirement, not a feature. Note the
-subtlety, because it is the thing to interrogate when you evaluate a vector
-database: filtering *before* the ANN search can wreck the index's assumptions
-(the graph may have no path through the surviving vertices), while filtering
-*after* the search may leave you with three results when you asked for ten.
+
+It is not optional. In a multi-user system, "only search documents this user is
+allowed to read" is a correctness requirement, not a feature.
+
+There is one subtlety, and it is the thing to interrogate when you evaluate a
+vector database — *when* the filter is applied:
+
+- **Filter first, then search.** Can wreck the index's assumptions: the HNSW
+  graph may have no path at all through the surviving vertices.
+- **Search first, then filter.** Safe for the index, but may leave you with
+  three results when you asked for ten.
+
+### Hybrid search
 
 **Hybrid search** runs two retrievers and merges them, because lexical and
-semantic search fail in *different* directions. Lexical search — BM25, the
-industrial refinement of TF-IDF — is unbeatable on exact rare tokens: product
-codes, error numbers, surnames, function names. Semantic search is unbeatable
-on paraphrase. Below we run both. Our "semantic" retriever is a hand-built
-topic embedding, a small lexicon mapping words onto three topic axes, which
-stands in for a real model exactly the way our 3-D animal space did. The
-*fusion* code is what matters, and it is identical in production.
+semantic search fail in *different* directions:
+
+- **Lexical search** — BM25, the industrial refinement of TF-IDF — is
+  unbeatable on exact rare tokens: product codes, error numbers, surnames,
+  function names.
+- **Semantic search** is unbeatable on paraphrase, where the words differ and
+  the meaning does not.
+
+Below we run both. Our "semantic" retriever is a hand-built topic embedding — a
+small lexicon mapping words onto three topic axes — which stands in for a real
+model exactly the way our 3-D animal space did. The *fusion* code is what
+matters, and it is identical in production.
 
 ```python
 import re
@@ -607,6 +683,8 @@ search:
   batteries. Fusion promotes the electric-car sentence (rrf 0.0320) above the
   yeast sentence (0.0313), which is the answer a human would have given.
 
+### Reciprocal rank fusion
+
 **Reciprocal rank fusion** (RRF) is the merge rule, and it is startlingly
 simple:
 
@@ -615,13 +693,24 @@ $$
 \qquad k \approx 60
 $$
 
-It uses only *ranks*, never scores. That is the point: BM25 scores are
-unbounded and depend on corpus statistics, cosine scores live in $[-1, 1]$,
-and any attempt to add them requires a calibration that drifts the moment you
-change a model. Ranks are always comparable — being first means the same thing
-in both lists. The constant $k$ (60 is the conventional default) damps the
-influence of the very top ranks, so a document ranked 1st by one retriever and
-40th by the other does not automatically win.
+In words: *for each ranked list, give the document one over sixty-plus-its-rank
+points, and add the points up.* A document that is 1st in both lists scores
+twice $1/61$; a document that appears in neither scores nothing.
+
+| Symbol | Meaning |
+| --- | --- |
+| $d$ | one document, being scored |
+| $\text{rank}_r(d)$ | where $d$ finished in ranked list $r$ — 1 for first place |
+| $k$ | a damping constant, conventionally 60 |
+
+**RRF uses only *ranks*, never scores, and that is the whole point.** BM25
+scores are unbounded and depend on corpus statistics; cosine scores live in
+$[-1, 1]$. Any attempt to add them requires a calibration that drifts the
+moment you change a model.
+
+Ranks are always comparable — being first means the same thing in both lists.
+The constant $k$ damps the influence of the very top ranks, so a document
+ranked 1st by one retriever and 40th by the other does not automatically win.
 
 !!! warning "Common mistakes"
 

@@ -1,11 +1,12 @@
 # 24.2 Testing beyond the basics
 
 [Chapter 8](../ch08-grids/04-unit-testing.md) gave you `assert` and the idea
-that programs should check themselves. Professionals build a whole
-discipline on that seed: tests with a standard shape, organized by
-convention, run by frameworks, and accumulated over years into a safety net
-that lets a stranger change your code *without fear* — converting "I hope
-this still works" into "run the suite and know."
+that programs should check themselves. Professionals build a whole discipline
+on that seed: tests with a standard shape, organized by convention, run by
+frameworks, and accumulated over years into a safety net.
+
+That net is what lets a stranger change your code *without fear* — it
+converts "I hope this still works" into "run the suite and know."
 
 ## Arrange, act, assert
 
@@ -34,15 +35,23 @@ print("test passed")
 ```
 
 One test, one behavior — that is the discipline. When a test with seven
-asserts fails, you know *something* broke; when this test fails, you know
-big orders stopped shipping free. Small tests are diagnostic precision.
+asserts fails, you know *something* broke; when this test fails, you know big
+orders stopped shipping free.
+
+!!! tip "Small tests are diagnostic precision"
+    A failing test should not send you hunting. Its *name* should already be
+    the bug report.
 
 ## How pytest organizes this (and a mirror you can run)
 
 The de-facto standard Python test framework is **pytest**. It cannot run in
-this page's sandbox, but its conventions take one screen to learn. You put
-tests in files named `test_*.py`, in functions named `test_*`, using plain
-`assert`; pytest finds them, runs them, and reports:
+this page's sandbox, but its conventions take one screen to learn:
+
+- tests live in files named `test_*.py`,
+- in functions named `test_*`,
+- using plain `assert` — no special assertion methods.
+
+pytest finds them, runs them, and reports:
 
 ```console
 $ pytest                      # discover and run everything
@@ -107,10 +116,11 @@ print()
 print(passed, "passed,", failed, "failed")
 ```
 
-Change `>= 50` to `> 50` in `shipping_fee` and run again: the threshold
-test flips to FAIL and the summary tells you instantly. That feedback loop
-— break something, *see it immediately* — is what a test suite feels like
-from inside.
+Change `>= 50` to `> 50` in `shipping_fee` and run again: the threshold test
+flips to FAIL and the summary tells you instantly.
+
+That feedback loop — break something, *see it immediately* — is what a test
+suite feels like from inside.
 
 ## Table-driven tests: parametrized thinking
 
@@ -144,9 +154,10 @@ print(f"\n{len(cases) - failures} of {len(cases)} cases passed")
 ```
 
 Adding a case is now one line — so you add more of them, especially around
-the interesting spots. pytest has this built in as
-`@pytest.mark.parametrize(...)`, and JUnit as `@ParameterizedTest`; the
-table is the idea, the decorators are packaging.
+the interesting spots.
+
+pytest has this built in as `@pytest.mark.parametrize(...)`, and JUnit as
+`@ParameterizedTest`. The table is the idea; the decorators are packaging.
 
 ## The edge-case checklist
 
@@ -161,10 +172,13 @@ predictable. For any function, walk this checklist:
 | Order | Sorted, reversed, shuffled input? | items added in any order |
 | Invalid input | What *should* wrong input do — and does it? | negative total → `ValueError` |
 
-That last row deserves emphasis: the error path is part of the contract,
-so it needs tests too ([Chapter 10](../ch10-exceptions/02-exceptions.md)
-taught you the raising side; this is the checking side). Raw, the error
-path looks like this:
+### Testing the error path
+
+That last row deserves emphasis: the error path is part of the contract, so it
+needs tests too. ([Chapter 10](../ch10-exceptions/02-exceptions.md) taught you
+the raising side; this is the checking side.)
+
+Raw, the error path looks like this:
 
 ```python
 # raises ValueError
@@ -263,9 +277,13 @@ print(passed, "passed,", failed, "failed")
 ```
 
 Note what the suite pins down that the *code* never states outright:
-`peek` doesn't remove; a failed `pop` has no side effects; LIFO order.
-Tests are executable documentation — the only documentation that
-complains when it goes stale.
+
+- `peek` doesn't remove;
+- a failed `pop` has no side effects;
+- pops come out last-in, first-out.
+
+Tests are executable documentation — the only documentation that complains
+when it goes stale.
 
 In your Java course, the same suite looks like this under **JUnit 5**:
 
@@ -310,12 +328,15 @@ instead of bare `assert` — vocabulary, not concept.
 
 ## What coverage proves — and what it can't
 
-**Coverage** tools measure which lines your tests executed; "87% coverage"
-means 13% of lines never ran under test — that code could be deleted and
-no test would notice, which *is* worth knowing. But the number seduces
-people into a fatal inversion: 100% coverage does **not** mean the code is
-correct. Executing a line is not the same as checking it, and no line of
-code exists for the input you forgot:
+**Coverage** tools measure which lines your tests executed. "87% coverage"
+means 13% of lines never ran under test — that code could be deleted and no
+test would notice, which *is* worth knowing.
+
+But the number seduces people into a fatal inversion:
+
+!!! warning "100% coverage does not mean the code is correct"
+    Executing a line is not the same as checking it — and no line of code
+    exists for the input you forgot.
 
 ```python
 def average(numbers):
@@ -332,21 +353,39 @@ except ZeroDivisionError:
     print("average([]) still crashes - a bug living happily at full coverage")
 ```
 
-Use coverage the way it deserves: *low* coverage is a reliable alarm;
-*high* coverage is not a certificate. The edge-case checklist finds what
-the percentage cannot.
+Use coverage the way it deserves. *Low* coverage is a reliable alarm; *high*
+coverage is not a certificate. The edge-case checklist finds what the
+percentage cannot.
 
 ## Regression tests: every bug becomes a test
 
-The most valuable tests you will ever write are born from bugs. The
-protocol, forever: when a bug is found, first write a test that fails
-*because of* the bug, then fix the code, then watch the test pass — and
-leave the test in the suite permanently. You saw one above:
-`test_failed_pop_does_not_corrupt_length` exists because some past version
-did corrupt state on a failed pop. That bug can never return unannounced;
-the suite is a ratchet that only tightens — and, closing the loop with
-[Section 24.1](01-git-workflow.md), it is exactly what CI runs on every
-push before a PR may merge.
+The most valuable tests you will ever write are born from bugs. The protocol,
+forever:
+
+1. **Write a test that fails** *because of* the bug — before touching the
+   code.
+2. **Fix the code.**
+3. **Watch the test pass.**
+4. **Leave the test in the suite permanently.**
+
+You saw one above: `test_failed_pop_does_not_corrupt_length` exists because
+some past version did corrupt state on a failed pop. That bug can never return
+unannounced.
+
+The suite is a ratchet that only tightens — and, closing the loop with
+[Section 24.1](01-git-workflow.md), it is exactly what CI runs on every push
+before a PR may merge.
+
+!!! tip "The framework version of this section"
+    Everything here is the *thinking*; a framework supplies the plumbing.
+    [Section 40.4](../ch40-toolchain/04-junit.md) is the full JUnit 5
+    treatment — `@Test`, `assertThrows`, `assertAll`, the
+    `@BeforeEach`/`@AfterEach` fixture lifecycle, `@ParameterizedTest` for
+    the tables above, running the suite from the command line and in CI, and
+    **test doubles** (stub, mock, fake) for the awkward cases: code that
+    talks to a clock, a network, or a database. It also rebuilds a
+    JUnit-style assertion library in runnable Python, so the annotations stop
+    looking like magic.
 
 !!! warning "Common mistakes"
 

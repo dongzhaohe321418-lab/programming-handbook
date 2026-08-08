@@ -202,10 +202,17 @@ Running this produces a **traceback** ending in:
 TypeError: unsupported operand type(s) for +: 'int' and 'str'
 ```
 
-Note the trade-off: Java tells you about the mistake before the program ever
-runs, but makes you declare everything; Python lets you write faster, but a
-type mistake can hide until the guilty line finally executes. Neither
-approach is "better" — you will grow fluent in both.
+Side by side, the trade-off is easy to see:
+
+| | **Python — dynamic typing** | **Java — static typing** |
+| --- | --- | --- |
+| Must you declare a type? | no | yes, for every variable |
+| When are types checked? | while the program runs | at compile time |
+| Can a name change type? | yes, freely | never |
+| When does a mistake surface? | when the guilty line executes | before the program runs at all |
+| The cost | a type bug can hide for a long time | more typing, more ceremony |
+
+Neither approach is "better" — you will grow fluent in both.
 
 ## Reassignment and multiple assignment
 
@@ -261,11 +268,18 @@ The output:
 -3
 ```
 
-Two behaviours deserve a second look. First, `int()` on a float
-**truncates** — it discards the fractional part rather than rounding, so
-`int(3.99)` is `3`. If you want proper rounding, that is `round()`'s job
-([section 2.4](04-math-input.md)). Second, not every string can convert, and
-a failed conversion stops the program:
+Two behaviours deserve a second look.
+
+### `int()` truncates — it does not round
+
+`int()` on a float discards the fractional part rather than rounding, so
+`int(3.99)` is `3` and `int(-3.99)` is `-3` (always toward zero). If you want
+proper rounding, that is `round()`'s job
+([section 2.4](04-math-input.md)).
+
+### A failed conversion stops the program
+
+Not every string can convert, and Python refuses rather than guessing:
 
 ```python
 # raises ValueError
@@ -274,8 +288,11 @@ int("3.7")   # a float-looking string is not valid for int()
 
 The message is `ValueError: invalid literal for int() with base 10: '3.7'`.
 A `ValueError` means the *type* of the argument was fine (a string) but its
-*value* was unusable. If you genuinely need `"3.7"` as a whole number,
-convert in two steps: `int(float("3.7"))` gives `3`.
+*value* was unusable.
+
+!!! tip "Converting a decimal string to a whole number"
+    Do it in two steps: `int(float("3.7"))` gives `3`. The `float()` reads
+    the decimal point, and the `int()` then truncates.
 
 !!! warning "Common mistakes"
     - **Using a name before assigning it.** `print(total)` before any

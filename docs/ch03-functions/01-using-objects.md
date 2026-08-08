@@ -119,10 +119,12 @@ print(winner.upper())    # None is not a string — it has no .upper method
 ```
 
 The error message is worth memorising, because you will see it often:
-`AttributeError: 'NoneType' object has no attribute 'upper'`. Whenever an
-error message mentions `NoneType`, the real question is never "what is
-`NoneType`?" — it is "*which variable unexpectedly became `None`, and where?*"
-Track the variable backwards until you find the operation that produced it.
+`AttributeError: 'NoneType' object has no attribute 'upper'`.
+
+Whenever an error message mentions `NoneType`, the real question is never
+"what is `NoneType`?" — it is "*which variable unexpectedly became `None`,
+and where?*" Track that variable backwards until you find the operation that
+produced it.
 
 === "Python"
 
@@ -176,24 +178,26 @@ The Python block prints:
 HI
 ```
 
-The two lines look similar — both use a dot — but they mean different things.
-`math.sqrt(16.0)` calls a function that lives in the `math` module; the value
-`16.0` is just an input passed in through the parentheses. `"hi".upper()`
-calls a method that belongs to the string `"hi"` itself; the object to the
-left of the dot *is* the main input.
+The two lines look similar — both use a dot — but they mean different things:
+
+| | **Module function** `math.sqrt(16.0)` | **Method** `"hi".upper()` |
+| --- | --- | --- |
+| What is left of the dot | the module — a library of functions | the object doing the work |
+| Where the main input goes | inside the parentheses | it *is* the thing left of the dot |
+| Do you need `import`? | yes, for anything outside the built-ins | no — it comes with the object |
+| Java's equivalent | a `static` method, e.g. `Math.sqrt` | an instance method, e.g. `toUpperCase` |
 
 Java draws exactly this line with the keyword `static`. A **static method**
 like `Math.sqrt` belongs to a class as a whole — you call it on the class
 name, and it works only with the inputs you pass it. An **instance method**
 like `toUpperCase` belongs to one particular object — you call it on that
-object, and it works with that object's own data. Python's module functions
-play the role of Java's static methods; Python's methods correspond to Java's
-instance methods.
+object, and it works with that object's own data.
 
-A rule of thumb: if the operation is *about one particular value's own data*
-("this string, uppercased"), expect a method. If it is a general-purpose
-computation ("the square root of whatever you give me"), expect a module
-function.
+!!! tip "Which one should you expect?"
+    If the operation is *about one particular value's own data* ("this
+    string, uppercased"), expect a **method**. If it is a general-purpose
+    computation ("the square root of whatever you give me"), expect a
+    **module function**.
 
 ## A worked example: the random module
 
@@ -221,13 +225,17 @@ print(random.choice(["red", "green", "blue"]))   # pick one item
 green
 ```
 
-Four functions, four jobs: `seed` fixes the starting point, `randint(a, b)`
-gives a whole number with **both endpoints included** (unusual for Python —
-most ranges exclude the end), `random()` gives a float in $[0, 1)$, and
-`choice` picks one element from a sequence. Run the block twice: because of
-the seed, you get identical output both times. Delete the `seed` line and
-each run differs — fine for a game, terrible for a reproducible experiment or
-a test.
+Four functions, four jobs:
+
+- **`seed(n)`** — fixes the starting point of the sequence.
+- **`randint(a, b)`** — a whole number with **both endpoints included**
+  (unusual for Python, where most ranges exclude the end).
+- **`random()`** — a float in $[0, 1)$: zero is possible, one is not.
+- **`choice(sequence)`** — picks one element out of a sequence.
+
+Run the block twice: because of the seed, you get identical output both
+times. Delete the `seed` line and each run differs — fine for a game,
+terrible for a reproducible experiment or a test.
 
 Notice the shape of what you just did: *import the module, call its functions
 by their documented names, respect their documented rules* (like "both ends
@@ -257,9 +265,13 @@ help(str.strip)
 This prints the method's documentation — its **docstring** — straight from
 the source code: the method's signature and a short description ("Return a
 copy of the string with leading and trailing whitespace removed", plus what
-the optional argument does). The `help`/`dir` pair works on everything:
-`dir(math)` lists a module's contents, `help(random.randint)` explains one
-function, `help(str)` dumps the documentation for the entire string type.
+the optional argument does).
+
+The `help`/`dir` pair works on everything:
+
+- `dir(math)` lists a whole module's contents;
+- `help(random.randint)` explains one function;
+- `help(str)` dumps the documentation for the entire string type.
 
 ## How to read API documentation
 

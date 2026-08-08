@@ -1,5 +1,61 @@
 # Exercises
 
+## The chapter in brief
+
+- Numbers have limits because a processor register is a fixed row of bits, and
+  32-bit two's complement therefore tops out at $2^{31}-1$
+  ([5.1](01-numeric-pitfalls.md)).
+- Java's `int` wraps silently past that top, Python's `int` grows without
+  limit, and NumPy's `int32` reproduces the Java behaviour — with no warning
+  at all for array arithmetic.
+- A `float` is an IEEE-754 double, so most decimals are rounded when stored:
+  that is why `0.1 + 0.2 == 0.3` is `False`, and why computed floats need
+  `math.isclose` or an explicit tolerance instead of `==`.
+- Money belongs in `decimal`, built from *strings*, because `Decimal(0.1)`
+  faithfully imports the float's error.
+- Floats saturate to `inf` rather than wrapping, and `nan` is the one value
+  not equal to itself — test it with `math.isnan`.
+- `and` and `or` stop the moment the answer is known, which is what makes the
+  guard idiom work: the safety check goes on the **left**
+  ([5.2](02-shortcuts-gotchas.md)).
+- `+=` and its family read, compute, then rebind — and Python has no `++`, so
+  `++x` is legal, silent, and changes nothing.
+- Java's dangling `else` binds to the nearest unmatched `if` whatever the
+  indentation suggests, a bug Python cannot have because indentation *is* the
+  syntax.
+- Names live in frames on the **call stack**, objects live in the **heap**,
+  and assignment copies the arrow rather than the object
+  ([5.3](03-stack-heap.md)).
+- `id(x)` and `is` reveal whether two names share one object, and the garbage
+  collector — reference counting in CPython, tracing in Java — reclaims
+  whatever nothing can reach.
+- Python has no method overloading: a second `def` silently replaces the
+  first, and default plus keyword arguments cover every variant instead
+  ([5.4](04-overloading-imports.md)).
+- A chain only works while each link returns an object, so never chain onto a
+  mutator that returns `None` — and never write `from module import *`.
+
+### Key terms
+
+| Term | One-line reminder |
+| --- | --- |
+| [overflow](../concept-index.md#o) | a fixed-width integer wrapping past its largest value |
+| [two's complement](../concept-index.md#t) | the encoding in which one step past the top lands on the most negative value |
+| [floating point](../concept-index.md#f) | IEEE-754's binary approximation of a fractional number |
+| [infinity and `NaN`](../concept-index.md#i) | the saturating and the meaningless results of float arithmetic |
+| [short-circuit evaluation](../concept-index.md#s) | `and`/`or` skipping the right side once the answer is settled |
+| guard idiom | the cheap check on the left of `and`, the risky expression on the right |
+| compound assignment | `+=`, `//=`, `**=`, … — read the variable, compute, rebind |
+| [call stack](../concept-index.md#c) | the tower of frames, one per function call still running |
+| [frame (stack)](../concept-index.md#f) | one call's workspace: its local names plus a return bookmark |
+| [heap (memory region)](../concept-index.md#h) | the pool where every object actually lives |
+| [reference](../concept-index.md#r) | the arrow from a name to an object; assignment copies the arrow |
+| [garbage collection](../concept-index.md#g) | automatic reclaiming of objects nothing can still reach |
+| [method overloading](../concept-index.md#m) | Java's several-methods-one-name, replaced in Python by defaults |
+| [keyword argument](../concept-index.md#k) | naming a parameter at the call site, as in `brew(size="small")` |
+
+## The exercises
+
 These exercises rehearse the chapter's reflexes: predicting what fixed-width
 and floating-point arithmetic really do, exploiting short-circuits, drawing
 the stack and the heap before trusting your intuition, and designing flexible

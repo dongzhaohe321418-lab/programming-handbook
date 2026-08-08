@@ -4,7 +4,9 @@ Ask your computer to show a folder and you are looking at a tree. Ask who
 reports to whom at a company, how a tournament narrows to a champion, how
 this handbook divides into parts, chapters, and sections — trees, all of
 them. Hierarchy is one of the commonest shapes in the world, and the tree is
-its data structure. Before we can build the binary search tree in
+its data structure.
+
+Before we can build the binary search tree in
 [section 20.2](02-bst-ops.md), we need its vocabulary — a small set of words
 that every book, interview, and library API uses with exact meanings.
 
@@ -31,10 +33,17 @@ flowchart TD
     sales --- rep["Account Rep"]
 ```
 
-Notice what makes these *trees* rather than arbitrary diagrams: one node at
-the top, every other node reachable from it by exactly one downward route,
-and no loops. (Computer scientists draw trees upside down — the root at the
-top, the leaves at the bottom. Botanists have learned to look away.)
+Notice what makes these *trees* rather than arbitrary diagrams. Three rules,
+all visible in both pictures:
+
+- **One node at the top.** Exactly one node has no parent — the root.
+- **Exactly one route to each node.** Every other node is reachable from
+  the root by one downward path, and only one.
+- **No loops.** Follow edges downward as long as you like; you can never
+  arrive back where you started.
+
+(Computer scientists draw trees upside down — the root at the top, the
+leaves at the bottom. Botanists have learned to look away.)
 
 ## The naming of parts
 
@@ -60,19 +69,24 @@ flowchart TD
 | **path** | a sequence of edges walked downward | A → B → E |
 | **subtree** | a node plus all its descendants | B, D, E form the subtree rooted at B |
 
+### Depth versus height
+
 Two measurements cause endless beginner confusion, so nail them now:
 
-- The **depth of a node** is how many edges lie between it and the root.
+- **Depth of a node** — how many edges lie between it and the root.
   Depth of A: 0. Depth of B: 1. Depth of E: 2.
-- The **height of a tree** is the depth of its deepest node — equivalently,
-  the number of edges on the longest root-to-leaf path. This tree has
-  height 2. A tree with a single node has height 0, and by convention the
-  *empty* tree has height $-1$ (a convenient base case for recursion, as
-  you will see).
+- **Height of a tree** — the depth of its deepest node, equivalently the
+  number of edges on the longest root-to-leaf path. This tree has height 2.
+  A tree with a single node has height 0, and by convention the *empty*
+  tree has height $-1$ (a convenient base case for recursion, as you will
+  see).
 
-Depth is measured *per node*, from the top. Height describes *the whole
-tree*, from the bottom. A node's depth plus the height of its subtree never
-exceeds the tree's height.
+!!! tip "The one-line way to keep them apart"
+    Depth is measured *per node*, from the top. Height describes *the whole
+    tree*, from the bottom.
+
+A node's depth plus the height of its subtree never exceeds the tree's
+height.
 
 ## Trees are recursive — this is why Chapter 17 came first
 
@@ -88,10 +102,12 @@ fact about trees:
 That is a recursive definition, exactly like
 [Chapter 17](../ch17-recursion/02-classic-recursion.md)'s recursive
 functions: a base case (the empty tree) and a self-referencing case (a root
-whose children are trees). Every algorithm in the rest of this chapter
-mirrors that shape — do something at the root, recurse left, recurse right,
-stop at `None`. If recursion felt abstract before, trees are where it starts
-feeling inevitable.
+whose children are trees).
+
+Every algorithm in the rest of this chapter mirrors that shape — do
+something at the root, recurse left, recurse right, stop at `None`. If
+recursion felt abstract before, trees are where it starts feeling
+inevitable.
 
 ## Binary trees: at most two children, and sides matter
 

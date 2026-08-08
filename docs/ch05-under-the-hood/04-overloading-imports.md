@@ -2,10 +2,11 @@
 
 A good API lets you say more with less: `greet("Ada")` when the default
 greeting will do, `greet("Ada", "Welcome")` when it won't. Java and Python
-reach that goal by opposite routes — Java writes several methods with one
-name, Python writes one function with flexible arguments — and knowing both
-routes will save you real confusion when you move between the languages. This
-section covers that split, then two everyday skills that grow out of it:
+reach that goal by opposite routes: Java writes several methods with one name;
+Python writes one function with flexible arguments. Knowing both routes will
+save you real confusion when you move between the languages.
+
+This section covers that split, then two everyday skills that grow out of it —
 chaining method calls, and importing modules without wrecking your namespace.
 
 ## Java overloads methods; Python uses defaults
@@ -92,13 +93,17 @@ medium tea, 1 shot(s), no milk
 ```
 
 Compare `brew("latte", milk=True, shots=2)` with the hypothetical positional
-call `brew("latte", "medium", True, 2)` — the keyword version documents
-itself; the positional version demands that every reader memorise the
-parameter order. Two grammar rules keep calls unambiguous: positional
-arguments must come *before* keyword arguments (`brew(drink="tea", 2)` is a
-syntax error), and each parameter may receive at most one value. In Java, an
-API this flexible would need four or more overloads — one per combination the
-designers anticipated; Python callers can mix and match freely.
+call `brew("latte", "medium", True, 2)`. The keyword version documents itself;
+the positional version demands that every reader memorise the parameter order.
+
+Two grammar rules keep such calls unambiguous:
+
+1. **Positional arguments must come before keyword arguments.**
+   `brew(drink="tea", 2)` is a syntax error.
+2. **Each parameter may receive at most one value.**
+
+In Java, an API this flexible would need four or more overloads — one per
+combination the designers anticipated. Python callers mix and match freely.
 
 ## Method chaining: reading a pipeline left to right
 
@@ -131,13 +136,14 @@ Output:
 
 Read a chain strictly left to right: `"   hi there   ".strip()` evaluates to
 `'hi there'`, and *that* string's `.upper()` is then called, giving
-`'HI THERE'`. Each link works because string methods **return a new string**
-(strings can never be modified in place — they are immutable, as
-[Chapter 3](../ch03-functions/02-strings.md) showed). Chaining is wonderful
-for short pipelines — clean-up-then-transform is everywhere in real code —
-but it has a booby trap: methods that return nothing. A method like
-`list.sort()` changes its object *in place* and returns `None`, so chaining
-onto it explodes:
+`'HI THERE'`. Each link works because string methods **return a new string** —
+strings can never be modified in place, being immutable, as
+[Chapter 3](../ch03-functions/02-strings.md) showed.
+
+Chaining is wonderful for short pipelines; clean-up-then-transform is
+everywhere in real code. But it has a booby trap: methods that return nothing.
+A method like `list.sort()` changes its object *in place* and returns `None`,
+so chaining onto it explodes:
 
 ```python
 # raises AttributeError
@@ -145,8 +151,11 @@ numbers = [3, 1, 2]
 numbers.sort().reverse()    # sort() returned None; None has no .reverse()
 ```
 
-Before chaining, know what each link returns. String methods: safe. Methods
-that mutate their object: usually `None`, chain over.
+Before chaining, know what each link returns:
+
+- **String methods are safe.** Every one of them hands back a new string.
+- **Methods that mutate their object usually return `None`.** There is nothing
+  to chain onto.
 
 ## Imports done right
 
@@ -156,8 +165,10 @@ file of Python definitions — `math.py` is the module `math` — and a
 a package containing dozens of modules). The `import` statement is how you
 bring them in, and there are three respectable forms.
 
-**Form 1 — `import module`.** You get one new name, the module itself, and
-reach everything inside it with a **qualified name**, `module.thing`:
+### Form 1 — `import module`
+
+You get one new name, the module itself, and reach everything inside it with a
+**qualified name**, `module.thing`:
 
 ```python
 import math
@@ -179,8 +190,10 @@ print(sqrt(16))         # ours:      (a very rough guess near 4)
 print(math.sqrt(16))    # the real one: 4.0 — no clash, thanks to math.
 ```
 
-**Form 2 — `from module import name`.** When you use one or two functions
-constantly, import just those names directly:
+### Form 2 — `from module import name`
+
+When you use one or two functions constantly, import just those names
+directly:
 
 ```python
 from math import sqrt, pi
@@ -193,9 +206,10 @@ Shorter calls, but note what you traded away: `sqrt` now lives in *your*
 namespace, so nothing stops a later `def sqrt(...)` from silently replacing
 it. Import names sparingly and deliberately.
 
-**Form 3 — `import module as alias`.** For long module names, the community
-settles on standard abbreviations — and you should use the standard ones, not
-invent your own:
+### Form 3 — `import module as alias`
+
+For long module names, the community settles on standard abbreviations — and
+you should use the standard ones, not invent your own:
 
 ```python
 import numpy as np      # THE standard alias, used in every tutorial on Earth

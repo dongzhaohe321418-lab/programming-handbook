@@ -11,10 +11,11 @@ options to f-string format specs to a fully aligned receipt.
 ## Fine-tuning `print`: `sep` and `end`
 
 You have been giving `print` several values at once for a while now. Two
-optional keyword arguments control how it joins and finishes them: `sep` is
-the text placed *between* values (default: one space), and `end` is the text
-printed *after* the last one (default: a newline, which is why each `print`
-normally starts a fresh line).
+optional keyword arguments control how it joins and finishes them:
+
+- **`sep`** — the text placed *between* the values. Default: one space.
+- **`end`** — the text printed *after* the last value. Default: a newline,
+  which is why each `print` normally starts a fresh line.
 
 ```python
 print("2026", "8", "7")
@@ -63,10 +64,16 @@ method call); anything cleverer belongs on its own line above.
 ## Format specs: controlling how values appear
 
 After the expression, a colon introduces a **format spec** — instructions
-for how to render the value. The pattern is `{expression:spec}`. Specs
-compose from a few parts, in this order: *alignment and width*, a *comma*
-for thousands, a *precision*, and a *type letter*. You will use a handful of
-combinations constantly.
+for how to render the value. The pattern is `{expression:spec}`, and the spec
+itself is built from four optional parts, always in this order:
+
+1. **Alignment and width** — `<`, `>`, or `^`, plus how many columns to fill.
+2. **A comma** — `,` to group thousands.
+3. **A precision** — `.2` for two digits after the decimal point.
+4. **A type letter** — `f` for fixed-point, `%` for percentage, `d` for
+   integer.
+
+You will use a handful of combinations constantly.
 
 ### Precision: `.2f` and friends
 
@@ -162,10 +169,15 @@ The combinations you will reach for most often:
 
 Alignment specs shine when every row uses the *same* column widths — the
 columns then line up automatically, like a spreadsheet. Here is a small
-receipt: item names left-aligned in 14 columns, quantities right-aligned in
-3, prices right-aligned in 7 and 8 with two decimals. Note the nested quotes:
-the f-string uses double quotes, so the string literals *inside* the braces
-use single quotes.
+receipt, built from four columns:
+
+- item names **left**-aligned in 14 columns;
+- quantities **right**-aligned in 3;
+- unit prices right-aligned in 7, with two decimals;
+- line totals right-aligned in 8, with two decimals.
+
+Note the nested quotes: the f-string uses double quotes, so the string
+literals *inside* the braces use single quotes.
 
 ```python
 print(f"{'MORNING MARKET':^32}")
@@ -192,10 +204,15 @@ TOTAL                      27.22
 ```
 
 Every row adds up to the same total width ($14 + 3 + 7 + 8 = 32$), so the
-ruled lines fit exactly. This is also your defence against floating-point
-noise from [Chapter 5](../ch05-under-the-hood/index.md): the raw `total` is
-actually `27.219999999999999`, but `:.2f` rounds it for display. Formatting
-fixes the *display*, not the stored value.
+ruled lines fit exactly.
+
+This is also your defence against floating-point noise from
+[Chapter 5](../ch05-under-the-hood/index.md): the raw `total` is actually
+`27.219999999999999`, but `:.2f` rounds it for display.
+
+!!! note "What formatting does and does not change"
+    A format spec changes the *display* only. The variable still holds its
+    full-precision value — rounding the value itself is `round()`'s job.
 
 ## The older styles you will still meet
 

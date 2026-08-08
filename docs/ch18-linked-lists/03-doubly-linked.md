@@ -1,15 +1,18 @@
 # 18.3 Doubly linked lists
 
 A singly linked list is a one-way street: from any node you can reach
-everything after it and nothing before it, which is why `delete` had to
-creep up on its target from behind. Give each node a second reference,
-`prev`, and the street runs both ways — you can walk backwards, remove a
-node you are standing on, and treat the two ends symmetrically, all in
-$O(1)$. The extra power costs one reference per node and, more
-interestingly, doubles the pointer surgery: every splice now updates *four*
-references, in an order you must get right. This section builds the
-structure, then introduces the **sentinel** — the trick that makes the
-trickiest part (edge cases) simply disappear.
+everything after it and nothing before it, which is why `delete` had to creep
+up on its target from behind.
+
+Give each node a second reference, `prev`, and the street runs both ways. You
+can walk backwards, remove a node you are standing on, and treat the two ends
+symmetrically — all in $O(1)$.
+
+The extra power has a price. One more reference per node, and, more
+interestingly, double the pointer surgery: every splice now updates *four*
+references, in an order you must get right. This section builds the structure,
+then introduces the **sentinel** — the trick that makes the trickiest part,
+the edge cases, simply disappear.
 
 ## Adding prev: nodes that know both neighbours
 
@@ -72,13 +75,20 @@ flowchart TB
     end
 ```
 
-Why this order? Steps 1–2 write into the *new* node, which nothing points
-at yet — always safe. Steps 3–4 overwrite `A.next` and `B.prev`, which is
-safe *here* because the old routes they held (`A.next` was `B`, `B.prev`
-was `A`) are still reachable through the local variables `A` and `B`. The
-discipline from last section, restated for four pointers: **capture both
-neighbours in variables first; then no assignment can strand you.** The
-classic bug is writing `A.next = N` *before* using `A.next` to find `B` —
+Why this order?
+
+- **Steps 1–2 are always safe.** They write into the *new* node, which
+  nothing points at yet, so no existing route can be destroyed.
+- **Steps 3–4 are safe *here*.** They overwrite `A.next` and `B.prev`, but the
+  old routes those held (`A.next` was `B`, `B.prev` was `A`) are still
+  reachable through the local variables `A` and `B`.
+
+!!! note "The discipline, restated for four pointers"
+
+    **Capture both neighbours in variables first; then no assignment can
+    strand you.**
+
+The classic bug is writing `A.next = N` *before* using `A.next` to find `B` —
 after the overwrite, `N.next = A.next` aims `N` at itself.
 
 Removal is the mirror image, and shows off `prev`'s superpower — a node can
@@ -108,11 +118,15 @@ opportunities — is `prev` `None`? is `next` `None`? — and every operation
 sprouts three or four `if` branches for first/last/empty situations.
 
 The **sentinel** (or *dummy node*) kills them all. Allocate one permanent
-value-less node when the list is created and link it into a circle with
-itself. The real first node lives at `sentinel.next`; the real last node at
-`sentinel.prev`; an empty list is the sentinel pointing at itself. Now
-**every** real node has a live node on both sides — there *is no* first/last
-special case, because the neighbourhood is never `None`:
+value-less node when the list is created, and link it into a circle with
+itself. Then three facts hold forever:
+
+- **The real first node is `sentinel.next`**, whatever it happens to be.
+- **The real last node is `sentinel.prev`.**
+- **An empty list is the sentinel pointing at itself** — a circle of one.
+
+Now **every** real node has a live node on both sides. There *is no*
+first-or-last special case, because the neighbourhood is never `None`:
 
 ```mermaid
 flowchart LR
@@ -198,13 +212,16 @@ print(d, "| length", len(d))
 print("pop():", d.pop(), "| popleft():", d.popleft(), "| left:", d)
 ```
 
-Study `append` on the *empty* list: `sentinel.prev` and `sentinel.next` are
-both the sentinel itself, so `_insert_between(value, sentinel, sentinel)`
+Study `append` on the *empty* list. Both `sentinel.prev` and `sentinel.next`
+are the sentinel itself, so `_insert_between(value, sentinel, sentinel)`
 splices the node into the circle of one — the same four assignments as any
-middle insertion. Empty, front, back: one code path. The only `if`s left in
-the whole class are the honest ones (refusing to pop from an empty list).
-That is what sentinels buy: fewer branches, fewer edge-case bugs, and
-pointer surgery that is *always* the general case.
+middle insertion.
+
+Empty, front, back: one code path. The only `if`s left in the whole class are
+the honest ones, refusing to pop from an empty list.
+
+That is what sentinels buy: fewer branches, fewer edge-case bugs, and pointer
+surgery that is *always* the general case.
 
 ## Walking both ways
 
@@ -290,10 +307,24 @@ behaviour and costs are the doubly-linked contract.)
 | walk backwards | $O(n)$ (easy) | not directly | $O(n)$ (easy) |
 | memory per item | value slot | value + 1 reference | value + 2 references |
 
-The bottom line for choosing: random access favours the array; heavy work
-at the two ends favours `deque`; and when you must unlink arbitrary known
-nodes in $O(1)$ (caches, schedulers), a doubly linked list is the classic
-answer.
+The bottom line for choosing:
+
+- **Random access by index** — the array wins.
+- **Heavy work at the two ends** — `deque` wins.
+- **Unlinking arbitrary nodes you already hold references to, in $O(1)$** —
+  caches and schedulers — the doubly linked list is the classic answer.
+
+That last row pays off twice in [Chapter 36](../ch36-hashing-tries/index.md).
+Its [exercises](../ch36-hashing-tries/exercises.md) build an **LRU cache**,
+which is exactly a hash table (to find a node in $O(1)$) wired to a
+sentinel-ended doubly linked list (to move that node to the front in $O(1)$) —
+neither structure can do the job alone.
+
+And [Section 36.4](../ch36-hashing-tries/04-skip-lists.md) stacks several
+linked lists on top of one another to build a **skip list**: an ordered
+structure that searches in expected $O(\log n)$ using coin flips instead of a
+tree's rebalancing, which makes it a genuine alternative to the balanced trees
+of [Chapter 35](../ch35-balanced-trees/index.md).
 
 !!! warning "Common mistakes"
     - **Updating only half of a link pair.** Setting `a.next = b` without

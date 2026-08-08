@@ -10,22 +10,31 @@ chapter is about the part of the work that is still nobody's commodity.
 
 The claim it argues is specific: **at a fixed compute budget, the data pipeline
 is where the remaining quality lives.** Not because "garbage in, garbage out" is
-a catchy phrase, but for three mechanical reasons — a model cannot learn a
-behaviour the corpus never demonstrates, it learns the corpus's errors with
-exactly the same enthusiasm as its truths, and every token spent on one domain
-is a token not spent on another. None of those is fixable by a better attention
-variant. All of them are fixable by better data.
+a catchy phrase, but for three mechanical reasons:
 
-So this chapter is a working pipeline rather than a survey. You will write a
-JSONL schema validator, a mixture sampler, an n-gram contamination detector, a
-PII scrubber and an honest account of what it misses; implement Self-Instruct
-and Evol-Instruct end to end with a deterministic `FakeLLM`; make model collapse
-happen on purpose and watch the rare words go extinct; record agent trajectories
-from an instrumented ReAct loop, design an environment worth collecting from,
-and convert the results into SFT records, preference pairs and process-reward
-labels; and finally build the filter stack — heuristics, exact dedup, MinHash
-and LSH, a quality classifier with a swept threshold, and verifiers — and print
-the funnel report that says how many records each stage removed.
+- **A model cannot learn a behaviour the corpus never demonstrates.** There is
+  no architectural substitute for an example.
+- **It learns the corpus's errors with exactly the same enthusiasm as its
+  truths.** The loss function has no opinion about which tokens are correct.
+- **Every token spent on one domain is a token not spent on another.** The
+  mixture decides what the model ends up good at.
+
+None of those is fixable by a better attention variant. All of them are fixable
+by better data.
+
+So this chapter is a working pipeline rather than a survey. You will:
+
+- write a JSONL schema validator, a mixture sampler, an n-gram contamination
+  detector, and a PII scrubber with an honest account of what it misses;
+- implement Self-Instruct and Evol-Instruct end to end with a deterministic
+  `FakeLLM`;
+- make model collapse happen on purpose, and watch the rare words go extinct;
+- record agent trajectories from an instrumented ReAct loop, design an
+  environment worth collecting from, and convert the results into SFT records,
+  preference pairs and process-reward labels;
+- build the filter stack — heuristics, exact dedup, MinHash and LSH, a quality
+  classifier with a swept threshold, verifiers — and print the funnel report
+  that says how many records each stage removed.
 
 **After this chapter you can …**
 
@@ -82,20 +91,23 @@ the funnel report that says how many records each stage removed.
 **Prerequisites.** [Chapter 11](../ch11-files/index.md) is the direct ancestor of
 everything here — a corpus is a file you stream, and
 [Section 11.2](../ch11-files/02-read-write.md) is the read/write pattern used on
-every page. From Part II you need dictionaries and sets
-([Chapter 9](../ch09-collections/index.md)); from Part III,
-[Section 16.1](../ch16-complexity/01-big-o.md), because the whole argument for
-LSH is that $O(n^2)$ is not available.
-[Section 24.2](../ch24-practice/02-testing.md) is the ancestor of verifier-based
-filtering: a passing test suite is a ground-truth label. In Part V,
-[Chapter 30](../ch30-agents/index.md) is required for 32.3 (trajectories are
-recordings of that loop) and [Chapter 31](../ch31-rl/index.md) for the formats —
-32.2 and 32.3 both produce the preference pairs
-[31.3](../ch31-rl/03-dpo-grpo.md) consumes and the step labels
-[31.4](../ch31-rl/04-reward-models.md) describes. From Part VI,
-[Section 36.1](../ch36-hashing-tries/01-hash-tables.md) explains the hash table
-under exact dedup and [Section 41.1](../ch41-regex/01-fundamentals.md) the
-pattern syntax used for scrubbing; both are useful but not required.
+every page. Beyond that:
+
+- **From Part II** — dictionaries and sets
+  ([Chapter 9](../ch09-collections/index.md)).
+- **From Part III** — [Section 16.1](../ch16-complexity/01-big-o.md), because the
+  whole argument for LSH is that $O(n^2)$ is not available.
+- **From Part IV** — [Section 24.2](../ch24-practice/02-testing.md), the ancestor
+  of verifier-based filtering: a passing test suite is a ground-truth label.
+- **From Part V** — [Chapter 30](../ch30-agents/index.md) is required for 32.3,
+  because trajectories are recordings of that loop, and
+  [Chapter 31](../ch31-rl/index.md) for the formats: 32.2 and 32.3 both produce
+  the preference pairs [31.3](../ch31-rl/03-dpo-grpo.md) consumes and the step
+  labels [31.4](../ch31-rl/04-reward-models.md) describes.
+- **From Part VI, useful but not required** —
+  [Section 36.1](../ch36-hashing-tries/01-hash-tables.md) explains the hash table
+  under exact dedup, and [Section 41.1](../ch41-regex/01-fundamentals.md) the
+  pattern syntax used for scrubbing.
 
 **Sections**
 

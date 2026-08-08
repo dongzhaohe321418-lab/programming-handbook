@@ -272,12 +272,13 @@ Read row 3 of the printed matrix — `0 1 1 0 1` — and `neighbours(3)` and
 `degree(3)` are just two different ways of summarising it. That is the
 matrix's charm: the data structure *is* the picture.
 
-It is also symmetric ($M = M^T$), because the graph is undirected: cell
-`(0,1)` and cell `(1,0)` are both 1. Half the storage is therefore redundant,
-and libraries that care store only the upper triangle. Note too the two costs
-written in the comments — `has_edge` is a single array access, but
-`neighbours` scans an entire row of $V$ cells even if the vertex has one
-neighbour. Hold on to that asymmetry; it decides everything below.
+It is also symmetric ($M = M^T$), because the graph is undirected: cell `(0,1)`
+and cell `(1,0)` are both 1. Half the storage is therefore redundant, and
+libraries that care store only the upper triangle.
+
+Note too the two costs written in the comments. `has_edge` is a single array
+access; `neighbours` scans an entire row of $V$ cells even if the vertex has
+one neighbour. Hold on to that asymmetry — it decides everything below.
 
 ## Representation 2 — the adjacency list
 
@@ -353,18 +354,19 @@ The two representations answer different questions cheaply.
 | Delete an edge | $O(1)$ | $O(\deg u)$ |
 | Add a vertex | $O(V^2)$ — reallocate | $O(1)$ |
 
-The decisive row is the last-but-one *pair*: almost every algorithm in this
-chapter spends its time asking "who are $u$'s neighbours?", never "is there an
-edge from $u$ to $v$?". BFS, DFS, Dijkstra, Prim, and topological sort all
-walk neighbour lists. That is why the adjacency list is the default, and why
-every complexity in this chapter is written $O(V + E)$ rather than $O(V^2)$ —
-those are the same thing only for dense graphs.
+The decisive row is `neighbours(u)`. Almost every algorithm in this chapter
+spends its time asking "who are $u$'s neighbours?", and almost never "is there
+an edge from $u$ to $v$?" — BFS, DFS, Dijkstra, Prim, and topological sort all
+walk neighbour lists.
+
+That is why the adjacency list is the default, and why every complexity in this
+chapter is written $O(V + E)$ rather than $O(V^2)$: those are the same thing
+only for dense graphs.
 
 Storing an adjacency list's neighbours in a `set` instead of a `list` buys
-$O(1)$ `has_edge` back, at the cost of more memory per vertex and losing the
-insertion order of the edges. That is the representation Python's own
-`dict`-of-`set`s idiom gives you, and it is a perfectly good default when you
-need both operations.
+$O(1)$ `has_edge` back, at the cost of more memory per vertex and the loss of
+edge insertion order. That is the representation Python's own `dict`-of-`set`s
+idiom gives you, and a perfectly good default when you need both operations.
 
 ## Measuring the waste
 
@@ -418,9 +420,10 @@ for p in (0.005, 0.05, 0.5):
 
 The matrix's size never changes — $600^2$ bytes, whatever the graph contains.
 The adjacency list grows with the number of edges, so it wins massively on the
-sparse graph, comfortably at 5% density, and loses on the dense one. The
-crossover sits somewhere near a density of a tenth or two, which in practice
-means: **use an adjacency list unless you know your graph is dense.**
+sparse graph, comfortably at 5% density, and loses on the dense one.
+
+The crossover sits somewhere near a density of a tenth or two, which in
+practice means: **use an adjacency list unless you know your graph is dense.**
 
 And the sparse row is where the real-world argument lives. A social network
 with a million users where everyone has 200 friends has $E \approx 10^8$
@@ -459,8 +462,9 @@ print("Crest ->", adj["Crest"])
 ```
 
 An edge list is terrible for "who are $u$'s neighbours?" — that question costs
-a full $O(E)$ scan — so it is useless for traversal. But it is exactly right
-in three situations:
+a full $O(E)$ scan — so it is useless for traversal.
+
+But it is exactly right in three situations:
 
 1. **As an interchange format.** Every graph file format on disk, and every
    graph you will be handed in an interview or a coding problem, arrives as a
@@ -541,25 +545,27 @@ for u, v, w in roads.edges():
     print(f"  {u} -- {v}: {w}")
 ```
 
-Two design notes worth stealing for your own code. First, `has_edge` is now
-$O(1)$ *and* `neighbours` is $O(\deg u)$, because the inner container is a
-`dict` rather than a `list` — we get the matrix's fast edge test without the
-matrix's memory. Second, `add_edge` returns `self`, so calls can be chained;
-that is a small ergonomic touch that costs one line.
+Two design notes worth stealing for your own code:
+
+- **The inner container is a `dict`, not a `list`.** That makes `has_edge`
+  $O(1)$ *and* keeps `neighbours` at $O(\deg u)$ — the matrix's fast edge test
+  without the matrix's memory.
+- **`add_edge` returns `self`.** Calls can therefore be chained; a small
+  ergonomic touch that costs one line.
 
 ## The visited set is not optional
 
 One more ingredient before we start walking graphs, and it is the ingredient
-that trees let you skip. A tree traversal never revisits a node, because a
-tree has no cycles — there is exactly one path from the root to any node. A
-graph has cycles, so a walk that does not remember where it has been will go
-round and round forever.
+that trees let you skip. A tree traversal never revisits a node, because a tree
+has no cycles — there is exactly one path from the root to any node. A graph
+has cycles, so a walk that does not remember where it has been will go round
+and round forever.
 
 The remembering is done by a `set`, the structure from
-[Chapter 14](../ch14-beyond/01-collections-tour.md), and the reason it is a
-`set` rather than a list is a complexity argument you can now make yourself:
-`x in some_set` is $O(1)$ average, `x in some_list` is $O(n)$. Use a list and
-a linear-time algorithm silently becomes quadratic.
+[Chapter 14](../ch14-beyond/01-collections-tour.md). The reason it is a `set`
+rather than a list is a complexity argument you can now make yourself: `x in
+some_set` is $O(1)$ average, `x in some_list` is $O(n)$. Use a list and a
+linear-time algorithm silently becomes quadratic.
 
 ```python
 import time
@@ -584,8 +590,10 @@ print(f"the set is roughly {t_list / t_set:,.0f}x faster")
 The set finishes in a fraction of a millisecond; the list takes tens of
 milliseconds for the same 20,000 questions, a couple of hundred times slower.
 The exact ratio depends on your machine, but the important part is that it
-*grows with $n$* — which is precisely the difference between $O(1)$ and $O(n)$
-inside a loop that runs $V + E$ times. Every traversal from here on carries a `visited = set()`, and
+*grows with $n$* — precisely the difference between $O(1)$ and $O(n)$ inside a
+loop that runs $V + E$ times.
+
+Every traversal from here on therefore carries a `visited = set()`, and
 [§37.2](02-traversal.md) opens by showing what happens when it does not.
 
 !!! warning "Common mistakes"

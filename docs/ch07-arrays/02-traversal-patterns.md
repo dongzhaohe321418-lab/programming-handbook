@@ -4,10 +4,11 @@ Once your data lives in a list, nearly everything you do with it is a
 **traversal**: a loop that visits the elements one by one. The good news
 is that after fifty years of programming, traversals boil down to a
 handful of patterns that appear over and over — visit, accumulate, search
-for the best, transform. Learn these four as named recipes and most list
-problems become "which pattern is this?" rather than a blank page. We
-finish with *parallel arrays*, the classic technique of linking two lists
-by index.
+for the best, transform.
+
+Learn these four as named recipes and most list problems become "which
+pattern is this?" rather than a blank page. We finish with *parallel arrays*,
+the classic technique of linking two lists by index.
 
 ## Pattern 1 — visit every element
 
@@ -43,11 +44,12 @@ for i in range(len(pets)):
 2 fox
 ```
 
-Which one should you use? The for-each form is shorter and impossible to
-get an off-by-one error in, so prefer it whenever you only need the
-values. Reach for the indexed form when the *position* matters: printing
-numbered output, changing elements in place (`pets[i] = ...`), or working
-with two lists at once (see parallel arrays below).
+Which one should you use?
+
+| Loop form | Reach for it when | Because |
+| --- | --- | --- |
+| **for-each** | you only need the values | it is shorter, and an off-by-one error is impossible |
+| **indexed** | the *position* matters | numbered output, changing elements in place (`pets[i] = ...`), or reading two lists at once |
 
 === "Python"
 
@@ -106,9 +108,14 @@ count  : 5
 average: 87.0
 ```
 
-The shape to memorise: *initialise before the loop, update inside the
-loop, use after the loop*. Putting `total = 0` inside the loop is the
-classic bug — it wipes the running total on every pass.
+The shape to memorise has three steps:
+
+1. **Initialise** the accumulator *before* the loop.
+2. **Update** it *inside* the loop, once per element.
+3. **Use** it *after* the loop has finished.
+
+Putting `total = 0` inside the loop is the classic bug — it wipes the running
+total on every pass.
 
 For plain sums and counts, Python has built-ins that run the same loop
 for you:
@@ -163,10 +170,12 @@ This prints `highest score: 95`. Trace the championship by hand:
 | 95 | yes | 95 |
 | 88 | no | 95 |
 
-Two details deserve attention. First, the champion starts as
-`scores[0]`, **not** 0 — initialising to 0 silently fails on a list of
-negative numbers. Second, this pattern assumes the list is non-empty;
-`scores[0]` on an empty list is an `IndexError`.
+Two details deserve attention:
+
+- **The champion starts as `scores[0]`, not 0.** Initialising to 0 silently
+  fails on a list of negative numbers — nothing ever beats the champion.
+- **The pattern assumes a non-empty list.** `scores[0]` on an empty list is
+  an `IndexError`.
 
 Often you need *where* the best lives, not just what it is. Track the
 champion's **index** instead:
@@ -311,10 +320,13 @@ index retrieves the matching name. This is precisely why the
 index-tracking version of pattern 3 earns its keep.
 
 Parallel arrays work, and you will see them in real code — but they are
-fragile. Nothing in the program *enforces* the link: sort `scores`
-without rearranging `names` and every pairing is silently wrong; append
-to one list and forget the other and the lists drift out of step. The
-robust fix is to bundle each name-score pair into a single object — a
+fragile. Nothing in the program *enforces* the link:
+
+- **Sort `scores` without rearranging `names`** and every pairing is silently
+  wrong.
+- **Append to one list and forget the other** and the two drift out of step.
+
+The robust fix is to bundle each name-score pair into a single object — a
 `Student` with `.name` and `.score` — which is exactly what classes give
 you in [Chapter 12](../ch12-classes/index.md). Until then, treat
 parallel lists as one structure: every change happens to both, at the

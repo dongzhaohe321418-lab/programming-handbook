@@ -2,11 +2,12 @@
 
 There is a moment in every programmer's first year when a list changes
 "by itself" — you modified `b`, and somehow `a` changed too. That moment is
-not a bug in Python; it is the *reference model* announcing itself. This page
-is the one to read slowly, because the mental picture you build here explains
-function arguments, object behaviour, copying, and half of the confusing bugs
-you will ever meet. Once the picture clicks, those bugs stop being mysterious
-and become one-line fixes.
+not a bug in Python; it is the *reference model* announcing itself.
+
+This page is the one to read slowly. The mental picture you build here
+explains function arguments, object behaviour, copying, and half of the
+confusing bugs you will ever meet. Once the picture clicks, those bugs stop
+being mysterious and become one-line fixes.
 
 ## A variable is a name tag, not a box
 
@@ -78,8 +79,10 @@ You met `==` versus `is` briefly in
 [Section 4.3](../ch04-branching/03-equality-identity.md). With lists in
 hand, the distinction finally has teeth:
 
-- `a == b` — **equality**: do the two objects have the same contents?
-- `a is b` — **identity**: are `a` and `b` the very same object?
+| The question | You ask it with | It is `True` when |
+| --- | --- | --- |
+| **Equality** — same contents? | `a == b` | the two objects hold equal values, even if there are two of them |
+| **Identity** — same object? | `a is b` | both names are tied to one single object |
 
 ```python
 a = [1, 2, 3]
@@ -193,12 +196,16 @@ reach for `copy.deepcopy` when you need full independence.
 
 ## Primitives and references — the Java picture
 
-Your Java course splits the world in two. Java has eight **primitive
-types** (`int`, `double`, `boolean`, `char`, …) whose variables really *are*
-little boxes holding the value itself, and **reference types** (arrays,
-`String`, every object) whose variables hold a reference — exactly like
-every Python variable. Assignment copies whatever is in the variable: for a
-primitive that is the value, for a reference type it is the reference.
+Your Java course splits the world in two:
+
+- **Primitive types** — the eight built-ins (`int`, `double`, `boolean`,
+  `char`, …). A primitive variable really *is* a little box holding the
+  value itself.
+- **Reference types** — arrays, `String`, and every object. A reference
+  variable holds a reference, exactly like every Python variable does.
+
+Assignment copies whatever is in the variable: for a primitive that is the
+value, for a reference type it is the reference.
 
 === "Python"
 
@@ -240,12 +247,15 @@ page has said, you should now worry: *can changing `y` change `x`?*
 
 It cannot — and the reason is the deepest sentence in this part of the book:
 
-> **`int` objects are immutable, and immutability is what makes them feel
-> like primitives.** An alias is only observable when someone *mutates* the
-> shared object. There is no operation anywhere in Python that changes an
-> existing int in place — `y = y + 1` builds a *new* int object and rebinds
-> the name `y` to it. So two names may share a number, but you can never
-> catch them doing it.
+!!! note "The sentence to remember"
+    **`int` objects are immutable, and immutability is what makes them feel
+    like primitives.**
+
+    An alias is only observable when someone *mutates* the shared object.
+    There is no operation anywhere in Python that changes an existing int in
+    place — `y = y + 1` builds a *new* int object and rebinds the name `y`
+    to it. So two names may share a number, but you can never catch them
+    doing it.
 
 ```python
 x = 5
@@ -259,13 +269,20 @@ b.append(6)      # ... and now the sharing shows
 print(a, b)      # [5, 6] [5, 6]
 ```
 
-So Python's rule is uniform — *everything* is a reference to an object —
-and the familiar "copied-like-a-value" behaviour of numbers, strings, and
-booleans is not a second mechanism. It is the same mechanism applied to
-objects that no one can mutate. Java bakes the value/reference split into
-its type system; Python gets the same felt behaviour from the
-mutable/immutable split. Keep that one sentence and both languages become
-predictable.
+So Python's rule is uniform: *everything* is a reference to an object. The
+familiar "copied-like-a-value" behaviour of numbers, strings, and booleans is
+not a second mechanism — it is the same mechanism applied to objects that no
+one can mutate.
+
+The two languages reach the same felt behaviour by different routes:
+
+| | Java | Python |
+| --- | --- | --- |
+| Where the split lives | in the *type system*: primitive vs reference | in the *objects*: immutable vs mutable |
+| Assignment copies | the value (primitive) or the reference (object) | always the reference |
+| Sharing becomes visible | only through reference types | only when the shared object can be mutated |
+
+Keep that one distinction and both languages become predictable.
 
 ## Tie-back: this is why function arguments behave that way
 

@@ -11,14 +11,20 @@ up through your function calls until someone catches it.
 
 ## What an exception actually is
 
-When an operation cannot do its job, it does not return a wrong answer or
-a secret error number. It **raises an exception**: it creates an object
-that describes the failure — the *type* names the kind of problem, the
-*message* gives the specifics — and abandons the normal flow of the
-program. That object then flies up the **call chain** (callee to caller to
-caller's caller …) looking for a handler. If nobody catches it, it reaches
-the top, the program stops, and Python prints the object's story as a
-traceback. That is what every crash you have ever seen actually was.
+When an operation cannot do its job, it does not return a wrong answer or a
+secret error number. It **raises an exception**, and four things happen in
+order:
+
+1. **An object is created** describing the failure — its *type* names the
+   kind of problem, its *message* gives the specifics.
+2. **The normal flow is abandoned** at the point of failure: nothing further
+   down the current function runs.
+3. **The object flies up the call chain** — callee, to caller, to caller's
+   caller … — looking for a handler.
+4. **If nobody catches it**, it reaches the top, the program stops, and
+   Python prints the object's story as a traceback.
+
+That last step is what every crash you have ever seen actually was.
 
 You can hold the object in your hands and look at it:
 
@@ -142,11 +148,14 @@ handler, and the loop — crucially — keeps going.
 
 ## `else` and `finally`
 
-Two optional clauses complete the anatomy. `else` runs only when the `try`
-block finished *without* an exception — it is the "success lane", useful
-for keeping the `try` block minimal. `finally` runs **no matter what**:
-success, handled failure, or unhandled failure. It is where cleanup lives
-(closing files, releasing resources):
+Two optional clauses complete the anatomy:
+
+- **`else`** runs only when the `try` block finished *without* an exception.
+  It is the "success lane", and it lets you keep the `try` block down to the
+  lines that can genuinely fail.
+- **`finally`** runs **no matter what** — success, handled failure, or
+  unhandled failure. It is where cleanup lives: closing files, releasing
+  resources.
 
 ```python
 def read_score(text):
@@ -294,8 +303,8 @@ The syntax translates almost word for word (`except` → `catch`,
     }
     ```
 
-One genuine difference deserves two honest paragraphs. Java divides
-exceptions into **checked** and **unchecked**. A checked exception (like
+One genuine difference deserves spelling out. Java divides exceptions into
+**checked** and **unchecked**. A checked exception (like
 `IOException`) is part of a method's official signature: any method that
 might raise one must either handle it or declare it with
 `throws IOException`, and the *compiler refuses to build* code that
@@ -305,12 +314,21 @@ reasonably anticipate become impossible to forget.
 Unchecked exceptions (subclasses of `RuntimeException`, such as
 `NullPointerException` or `ArrayIndexOutOfBoundsException`) carry no such
 obligation — they usually signal bugs, and forcing every line to declare
-"this might have a bug" would be absurd. Python, by contrast, makes *every*
-exception unchecked: nothing in a function's signature says what it might
-raise, and no tool forces you to catch anything. The cost is that the
-compiler cannot remind you; the compensation is documentation, tests, and
-the habit this page has been drilling — handle narrowly what you can,
-let the rest fly loudly.
+"this might have a bug" would be absurd.
+
+Python, by contrast, makes *every* exception unchecked: nothing in a
+function's signature says what it might raise, and no tool forces you to
+catch anything.
+
+| | Java: checked (`IOException`) | Java: unchecked (`RuntimeException`) | Python: all exceptions |
+| --- | --- | --- | --- |
+| Declared in the signature | must be, via `throws` | never | never |
+| Compiler makes you handle it | yes | no | there is no compiler to ask |
+| Usually signals | a foreseeable failure | a bug | either |
+
+The cost of Python's choice is that no tool reminds you; the compensation is
+documentation, tests, and the habit this page has been drilling — handle
+narrowly what you can, let the rest fly loudly.
 
 !!! warning "Common mistakes"
 

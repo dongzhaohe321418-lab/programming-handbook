@@ -2,11 +2,14 @@
 
 [Section 23.1](01-os-processes.md) said every process gets "its own memory."
 This section maps that memory. The map explains things you have already
-bumped into: why deep recursion dies with `RecursionError` while a
-million-element list is fine, why two variables can point at the *same*
-object ([Chapter 9](../ch09-collections/01-references.md)), and what Python
-is doing behind your back so that you never have to say "free this memory" —
-plus the one way programs manage to leak memory anyway.
+bumped into:
+
+- why deep recursion dies with `RecursionError` while a million-element list
+  is fine;
+- why two variables can point at the *same* object
+  ([Chapter 9](../ch09-collections/01-references.md));
+- what Python does behind your back so you never have to say "free this
+  memory" — and the one way programs manage to leak memory anyway.
 
 ## The address space: one process's private map
 
@@ -41,23 +44,28 @@ Reading bottom-up:
   [Chapter 17](../ch17-recursion/01-call-stack.md): one frame per active
   function call, pushed on call, popped on return.
 
-The two dynamic regions grow toward each other through the free space
-between them, which is why the classic picture draws them facing off. This
-is the same stack-versus-heap distinction you first met in
-[Chapter 5](../ch05-under-the-hood/03-stack-heap.md) — now placed on the
-full map. And one process's map is invisible to every other process: the OS
-gives each one its own address space, which is what "isolated memory" in
-the last section physically means.
+The two dynamic regions grow toward each other through the free space between
+them, which is why the classic picture draws them facing off. This is the
+same stack-versus-heap distinction you first met in
+[Chapter 5](../ch05-under-the-hood/03-stack-heap.md) — now placed on the full
+map.
+
+And one process's map is invisible to every other process: the OS gives each
+one its own address space, which is what "isolated memory" in the last
+section physically means.
 
 ## The stack grows with calls
 
 Every function call pushes a **frame** — parameters, locals, and where to
-resume afterwards — and every return pops one. The stack region is fast and
-tidy but deliberately small (a few megabytes is typical), because a healthy
-program never nests calls very deep. Recursion is exactly the thing that
-can: each recursive call adds a frame without popping any. Python therefore
-enforces a hard ceiling long before the OS would have to step in. Let's
-measure it — this probe dives until Python says stop, counting frames:
+resume afterwards — and every return pops one.
+
+The stack region is fast and tidy but deliberately small: a few megabytes is
+typical, because a healthy program never nests calls very deep. Recursion is
+exactly the thing that can, since each recursive call adds a frame without
+popping any. Python therefore enforces a hard ceiling long before the OS
+would have to step in.
+
+Let's measure it — this probe dives until Python says stop, counting frames:
 
 ```python
 import sys
@@ -92,9 +100,10 @@ def countdown(n):
 countdown(10)
 ```
 
-`RecursionError: maximum recursion depth exceeded` is a *stack* diagnosis:
-too many frames alive at once. It has nothing to do with how much RAM the
-machine has — the heap may be nearly empty when it happens.
+!!! note "`RecursionError` is a stack diagnosis, not a memory one"
+    It means too many frames are alive at once. It has nothing to do with
+    how much RAM the machine has — the heap may be nearly empty when it
+    happens.
 
 ## The heap grows with objects
 
@@ -119,13 +128,18 @@ print("empty list     :", sys.getsizeof([]), "bytes")
 print("[0, 1, 2]      :", sys.getsizeof([0, 1, 2]), "bytes")
 ```
 
-Three observations. Even an empty object costs dozens of bytes — every
-Python object carries a header (its type, its reference count) before any
-payload. Integers grow as they need more digits: Python's unlimited-size
-`int` ([Chapter 5](../ch05-under-the-hood/01-numeric-pitfalls.md)) is
-possible precisely because ints live on the heap and can take as many bytes
-as required. And a list's reported size counts the list's own structure —
-its array of *references* to elements — not the elements themselves.
+Three observations:
+
+- **Nothing is free.** Even an empty object costs dozens of bytes — every
+  Python object carries a header (its type, its reference count) before any
+  payload.
+- **Integers grow as they need more digits.** Python's unlimited-size `int`
+  ([Chapter 5](../ch05-under-the-hood/01-numeric-pitfalls.md)) is possible
+  precisely because ints live on the heap and can take as many bytes as
+  required.
+- **A list's size does not include its elements.** The reported number
+  covers the list's own structure — its array of *references* — and nothing
+  the references point at.
 
 ### The over-allocation staircase
 
@@ -148,10 +162,12 @@ for n in range(1, 65):
 ```
 
 The size stays flat for a while, then *jumps*, stays flat, jumps again — a
-staircase. When a list runs out of room, Python does not ask the heap for
-one more slot; it **over-allocates**, grabbing a block bigger than needed
-(roughly proportional to the current length) so that the next many appends
-are free. Plotting it makes the staircase unmistakable:
+staircase.
+
+When a list runs out of room, Python does not ask the heap for one more slot.
+It **over-allocates**, grabbing a block bigger than needed (roughly
+proportional to the current length) so that the next many appends are free.
+Plotting it makes the staircase unmistakable:
 
 ```python
 import sys
@@ -172,11 +188,14 @@ plt.title("List over-allocation: capacity grows in jumps")
 
 This staircase is the physical mechanism behind a claim from
 [Chapter 16](../ch16-complexity/03-complexity-zoo.md): `append` is
-**amortized** $O(1)$. Most appends drop into a pre-paid empty slot
-(constant time); occasionally one append triggers a copy of everything into
-a bigger block ($O(n)$ that one time); averaged over the whole sequence,
-the cost per append stays constant. You are looking at the receipt for
-that bargain.
+**amortized** $O(1)$. Three facts make that true:
+
+- Most appends drop into a pre-paid empty slot — constant time.
+- Occasionally one append triggers a copy of everything into a bigger block
+  — $O(n)$, that one time.
+- Averaged over the whole sequence, the cost per append stays constant.
+
+You are looking at the receipt for that bargain.
 
 ### `id()`: where an object lives
 
@@ -207,11 +226,15 @@ forgetting is a legendary source of bugs. Python (like Java) instead uses
 **garbage collection** (GC): the runtime itself detects objects that can no
 longer be reached and reclaims their memory.
 
-CPython's main mechanism is **reference counting**: every object's header
-stores how many references currently point at it. Assignment increments the
-count; a name going away decrements it; *the instant the count hits zero,
-the object is freed*. We can watch, using a `weakref` — a special reference
-that lets us peek at an object *without* keeping it alive:
+CPython's main mechanism is **reference counting**. Every object's header
+stores how many references currently point at it:
+
+- assignment **increments** the count;
+- a name going away **decrements** it;
+- *the instant the count hits zero, the object is freed*.
+
+We can watch it happen using a `weakref` — a special reference that lets us
+peek at an object *without* keeping it alive:
 
 ```python
 import gc
@@ -243,15 +266,18 @@ print("gc.collect() reclaimed", freed, "objects")
 print("cycle after collect:", peek_x())
 ```
 
-Case 1 shows the elegance: no pauses, no waiting — memory returns the
-moment the last reference disappears. Case 2 shows the famous blind spot.
-`x` and `y` point at *each other*, so even with no outside references,
-each object's count is still 1 — reference counting alone would leak them
-forever. For this, CPython runs a second, occasional **cycle collector**
-that hunts groups of objects reachable only from each other; `gc.collect()`
-invokes it on demand, and you can see it free the pair (the exact reclaimed
-count varies by Python version — it counts our two `Node` objects and, on
-some versions, their attribute dictionaries too).
+**Case 1 shows the elegance.** No pauses, no waiting — memory returns the
+moment the last reference disappears.
+
+**Case 2 shows the famous blind spot.** `x` and `y` point at *each other*, so
+even with no outside references, each object's count is still 1. Reference
+counting alone would leak them forever.
+
+For this, CPython runs a second, occasional **cycle collector** that hunts
+groups of objects reachable only from each other. `gc.collect()` invokes it
+on demand, and you can see it free the pair (the exact reclaimed count varies
+by Python version — it counts our two `Node` objects and, on some versions,
+their attribute dictionaries too).
 
 !!! info "Java corner"
 
@@ -268,10 +294,12 @@ some versions, their attribute dictionaries too).
 ## Leaks in a garbage-collected language
 
 If the collector frees everything unreachable, can Python leak memory?
+
 Yes — by *accidental retention*: memory that is reachable, so the collector
 must keep it, but that the program will never actually use again. The
-collector cannot read your intentions; reachability is all it has. The
-classic culprit is a global cache that only ever grows:
+collector cannot read your intentions; reachability is all it has.
+
+The classic culprit is a global cache that only ever grows:
 
 ```python
 import sys
@@ -292,15 +320,18 @@ print("bytes held by cached pages:",
       sum(sys.getsizeof(page) for page in cache.values()))
 ```
 
-Every entry is reachable through `cache`, so nothing is ever collected —
-yet request 17 will never be asked for again. In a program that runs for
-five seconds, nobody notices; in a server that runs for five months, this
-is the leak that slowly eats the machine. The fix is a policy: bound the
-cache's size and evict old entries (real systems use a
-*least-recently-used* cache, such as the standard library's
-`functools.lru_cache(maxsize=...)`). The lesson generalizes: in a GC'd
-language, a "memory leak" is not memory the runtime lost — it is memory
-your design forgot to let go of.
+Every entry is reachable through `cache`, so nothing is ever collected — yet
+request 17 will never be asked for again. In a program that runs for five
+seconds, nobody notices; in a server that runs for five months, this is the
+leak that slowly eats the machine.
+
+The fix is a policy, not a collector setting: bound the cache's size and
+evict old entries. Real systems use a *least-recently-used* cache, such as
+the standard library's `functools.lru_cache(maxsize=...)`.
+
+!!! note "What a leak means in a garbage-collected language"
+    It is not memory the runtime lost. It is memory your design forgot to
+    let go of.
 
 !!! warning "Common mistakes"
 

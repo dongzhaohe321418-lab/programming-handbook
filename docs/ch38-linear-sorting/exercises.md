@@ -1,10 +1,56 @@
 # Chapter 38 · Exercises
 
-This chapter has two halves and the exercises follow them: the first three are
-about the bound and the arithmetic around it, the rest are about the algorithms
-that step around it. Do the pencil work before running the code — counting sort
-in particular is an algorithm you only really believe once you have pushed the
-counters around by hand.
+## The chapter in brief
+
+- A **comparison sort** is one whose only question about the data is "is $a$
+  less than $b$?" — which is exactly what makes `sorted()` work on any
+  orderable type ([38.1](01-lower-bound.md)).
+- Any such algorithm *is* a **decision tree**: comparisons at the internal
+  nodes, one leaf per complete run.
+- The tree needs at least $n!$ leaves and a binary tree of height $h$ has at
+  most $2^h$, so $h \ge \log_2(n!)$ — the whole proof, done by counting.
+- **Stirling's approximation** turns that into $n\log_2 n - 1.44n$, poor at
+  tiny $n$ and excellent by $n = 1000$.
+- Merge sort lands within about **3%** of the bound, so no comparison sort can
+  ever beat it by more than a few percent.
+- The theorem forbids less than it looks: it is about **comparisons**, about
+  the **worst case**, and about **arbitrary keys** — three separate doors.
+- **Counting sort** walks through the first door by using each key as an
+  index: tally, prefix-sum, then place ([38.2](02-counting-radix-bucket.md)).
+- Its third pass runs **backwards**, and that direction alone is what makes it
+  **stable**.
+- Its cost is $O(n + k)$ where $k$ is the key **range**, not the number of
+  distinct keys — which is why 32-bit keys would need 16 GB of counters.
+- **Radix sort** rescues those cases by counting-sorting one digit at a time,
+  least significant first, and every pass *must* be stable or the result is
+  nonsense.
+- **Bucket sort** scatters values into buckets and sorts within them: $O(n)$ on
+  uniform data, $O(n^2)$ when the data crowds into one bucket.
+- Linear does not mean fast: an interpreted $O(n)$ radix sort loses to C's
+  $O(n \log n)$ Timsort at $n = 100{,}000$, because Big-O hides the constant.
+
+### Key terms
+
+| Term | What it means |
+| --- | --- |
+| [comparison sort](../concept-index.md#c) | a sort whose only question is "is $a < b$?" |
+| [decision tree](../concept-index.md#d) | the model that turns a sort into a countable set of leaves |
+| [lower bound](../concept-index.md#l) | $\log_2(n!)$ comparisons, unavoidable in the worst case |
+| Stirling's approximation | $\log_2(n!) \approx n\log_2 n - 1.44n$ |
+| [stability](../concept-index.md#s) | equal keys leave in the order they arrived |
+| [counting sort](../concept-index.md#c) | tally, prefix-sum, place backwards; $O(n + k)$ |
+| prefix sum | running totals that turn counts into output positions |
+| key range $k$ | the span of possible keys — the number counting sort really costs |
+| [radix sort](../concept-index.md#r) | one stable counting sort per digit, least significant first |
+| [bucket sort](../concept-index.md#b) | scatter by value, sort each bucket, concatenate |
+| [Timsort](../concept-index.md#t) | what `sorted()` really is: stable, adaptive, and written in C |
+| [constant factor](../appendix/B-big-o.md) | what Big-O hides, and what decides the race at your $n$ |
+
+Now put it to work. This chapter has two halves and the exercises follow them:
+the first three are about the bound and the arithmetic around it, the rest are
+about the algorithms that step around it. Do the pencil work before running the
+code — counting sort in particular is an algorithm you only really believe once
+you have pushed the counters around by hand.
 
 ### Exercise 38.1 — Compute the lower bound ●
 

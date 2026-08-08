@@ -12,10 +12,12 @@ This chapter builds branching from the ground up. We start with the raw
 material: **Boolean values** (`True` and `False`), the comparison operators
 that produce them, and the `and`/`or`/`not` operators that combine them. Then
 comes the `if`/`elif`/`else` statement itself — including how Python uses
-indentation where Java uses braces. Two special topics follow: the subtle but
-important difference between *equal values* and *the same object* (`==`
-vs `is`), and Python's `match` statement — the cousin of Java's `switch` —
-along with a toolkit for debugging and writing readable branches.
+indentation where Java uses braces.
+
+Two special topics follow. The first is the subtle but important difference
+between *equal values* and *the same object* (`==` vs `is`). The second is
+Python's `match` statement — the cousin of Java's `switch` — together with a
+toolkit for debugging and writing readable branches.
 
 Throughout, you will see side-by-side Java tabs wherever the two languages
 genuinely differ: chained comparisons, braces vs indentation, `==` vs

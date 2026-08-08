@@ -14,11 +14,17 @@ and how would we know?*
 The chapter's method is experimental. Nearly every claim comes with a
 **comparison counter**: we instrument the algorithms to count exactly how
 many times they compare two elements, then run them on sorted, random, and
-reversed inputs and read the story straight off the numbers. You will watch
-selection sort do precisely the same work on every input, insertion sort
-drop from tens of thousands of comparisons to a few hundred on nearly-sorted
-data, and quicksort collapse from $n \log n$ to $n^2$ the moment we pick
-pivots foolishly. Counting beats believing.
+reversed inputs and read the story straight off the numbers. Three results
+you will watch happen:
+
+- **Selection sort does identical work on every input** — the same count,
+  sorted or shuffled or reversed.
+- **Insertion sort drops from tens of thousands of comparisons to a few
+  hundred** on nearly-sorted data.
+- **Quicksort collapses from $n \log n$ to $n^2$** the moment we pick pivots
+  foolishly.
+
+Counting beats believing.
 
 The arc: first the elementary sorts — transparent, quadratic, and still
 genuinely useful in the right niche. Then the divide-and-conquer pair, merge

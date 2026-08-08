@@ -62,12 +62,17 @@ loop — that is the property that makes large programs extensible.
 ## Dispatch happens per object, at runtime
 
 How does one line of code run three different methods? When Python executes
-`shape.area()`, it does *not* care what the variable was declared as (there
-are no declarations); it looks at the object currently in `shape`, finds
-that object's class, and searches that class (then its parents, in MRO
-order) for `area`. The decision is made freshly on every call — this is
-called **dynamic dispatch** or *runtime method resolution*. You can watch
-the decision being made:
+`shape.area()` it takes three steps, every single time:
+
+1. **Look at the object**, not at the variable. There are no declared types
+   in Python, so the only thing that matters is what is currently in `shape`.
+2. **Find that object's class**, then search it — and its parents, in MRO
+   order — for a method named `area`.
+3. **Call the first `area` it finds**, with the object as `self`.
+
+The decision is made freshly on every call, which is why it is called
+**dynamic dispatch** (or *runtime method resolution*). You can watch the
+decision being made:
 
 ```python
 # continues
@@ -84,10 +89,13 @@ dynamic dispatch *is* polymorphism: the base class fixes the vocabulary
 
 Java reaches the same destination, but its static type system makes you
 declare the "general idea" explicitly. A `List<Shape>` may hold circles and
-rectangles because each *is a* `Shape` — the conversion from `Circle` to
-`Shape` (called **upcasting**) happens implicitly. Going the other way,
-from the general type back down to a specific one (**downcasting**),
-requires an explicit cast, and a wrong cast crashes:
+rectangles because each *is a* `Shape`. Java has a name for each direction of
+that conversion:
+
+- **Upcasting** — specific type to general one, `Circle` to `Shape`. Always
+  safe, so Java performs it implicitly.
+- **Downcasting** — general type back down to a specific one, `Shape` to
+  `Circle`. Requires an explicit cast, and a wrong cast crashes.
 
 === "Python"
 
@@ -157,11 +165,13 @@ for item in menu:
 ```
 
 This style is called **duck typing**, after the saying "if it walks like a
-duck and quacks like a duck, it's a duck": Python code cares about *what an
-object can do*, not *what family it belongs to*. In Java this example is
-impossible — `Pizza` could not enter a `List<Shape>` without declaring a
-relationship to `Shape`. Duck typing makes Python nimble; the price is that
-nothing checks the contract until the method is actually called.
+duck and quacks like a duck, it's a duck". Python code cares about *what an
+object can do*, not *what family it belongs to*.
+
+In Java this example is impossible: `Pizza` could not enter a `List<Shape>`
+without declaring a relationship to `Shape`. Duck typing makes Python
+nimble; the price is that nothing checks the contract until the method is
+actually called.
 
 ## `isinstance`: smell or necessity?
 
@@ -187,11 +197,16 @@ Every new shape forces an edit to `clumsy_area` — exactly the maintenance
 trap the polymorphic loop avoided. The rule of thumb: **if you are choosing
 behaviour based on type, push that behaviour into the classes as a method.**
 
-`isinstance` does have honest jobs, though: validating inputs at a system
-boundary ("this function requires a `Shape`; fail loudly and early
-otherwise"), and handling genuinely different *kinds* of input, as in
-`isinstance(x, str)` vs a list of strings. Checking to fail fast is fine;
-checking to *branch on every subclass* is the smell.
+`isinstance` does have honest jobs, though:
+
+- **Validating input at a system boundary.** "This function requires a
+  `Shape`; fail loudly and early otherwise."
+- **Handling genuinely different *kinds* of argument.** Deciding between
+  `isinstance(x, str)` and "a list of strings" is a real fork in the road,
+  not a subclass ladder.
+
+The dividing line: checking in order to **fail fast** is fine; checking in
+order to **branch on every subclass** is the smell.
 
 ## Everyday polymorphism: `__str__` and `__repr__`
 
@@ -218,10 +233,17 @@ print([half, Fraction(3, 4)])         # lists use each element's __repr__
 
 `print` was written decades before your `Fraction` class existed, yet it
 displays fractions perfectly — because it dispatches to whatever `__str__`
-the object provides. Convention: `__str__` is for people (friendly),
-`__repr__` is for programmers (unambiguous, ideally looks like the code to
-recreate the object). If you define only `__repr__`, `print` falls back to
-it, so when in doubt write `__repr__` first.
+the object provides.
+
+The two methods have different audiences:
+
+| Method | Written for | Should look like | Used by |
+| --- | --- | --- | --- |
+| `__str__` | people | friendly, readable | `print(obj)`, `str(obj)`, f-strings |
+| `__repr__` | programmers | the code that recreates the object | containers, the debugger, the REPL |
+
+If you define only `__repr__`, `print` falls back to it — so **when in doubt,
+write `__repr__` first.**
 
 !!! warning "Common mistakes"
 

@@ -3,12 +3,13 @@
 Inheritance shares *implementation*: real code in a base class flows into
 subclasses. But teams often need to share something thinner — a pure
 *promise*. "Every payment method can `pay`; every shape can report an
-`area`" — never mind how. A named promise like this is called a
-**contract**, and it is what lets one programmer write the checkout code
-while another writes the gift-card class, months apart, and have the pieces
-snap together. Java's tool for contracts is the `interface`; Python offers
-two answers — abstract base classes and duck typing — and knowing when to
-use which is a small badge of Python fluency.
+`area`" — never mind how.
+
+A named promise like this is called a **contract**, and it is what lets one
+programmer write the checkout code while another writes the gift-card class,
+months apart, and have the pieces snap together. Java's tool for contracts is
+the `interface`. Python offers two answers — abstract base classes and duck
+typing — and knowing when to use which is a small badge of Python fluency.
 
 ## Java interfaces vs Python ABCs
 
@@ -69,8 +70,10 @@ promised-but-not-provided methods with `@abstractmethod`.
 
 ## The contract is enforced
 
-What does `@abstractmethod` actually buy you? Enforcement at two points.
-First, the contract itself is not a usable object — an abstract class
+What does `@abstractmethod` actually buy you? Enforcement, at two separate
+moments.
+
+**First: the contract itself is not a usable object.** An abstract class
 refuses to be instantiated:
 
 ```python
@@ -85,8 +88,8 @@ class Measurable(ABC):
 m = Measurable()      # a promise is not a thing — this refuses to run
 ```
 
-Second, a subclass that *signs* the contract but fails to *fulfil* it is
-still abstract, and refuses just the same:
+**Second: a subclass that *signs* the contract but fails to *fulfil* it is
+still abstract**, and refuses just the same:
 
 ```python
 # raises TypeError
@@ -103,10 +106,12 @@ class Blob(Measurable):
 b = Blob()                # caught at construction time, not deep in a loop
 ```
 
-That error location matters. With plain duck typing, a missing `area`
-crashes wherever some distant loop happens to call it; with an ABC, the
-crash happens *at construction*, with a message naming exactly which
-methods are missing. The bug is caught earlier and diagnosed for you.
+!!! note "The point is *where* the error appears"
+
+    With plain duck typing, a missing `area` crashes wherever some distant
+    loop happens to call it. With an ABC, the crash happens *at
+    construction*, with a message naming exactly which methods are missing.
+    The bug is caught earlier and diagnosed for you.
 
 ## Abstract class vs interface: the honest distinction
 
@@ -120,13 +125,17 @@ keeping straight:
 | How many can a class take? | Many (`implements A, B, C`) | One parent class in Java; Python allows more but one is the norm |
 | Best mental model | Pure contract: "what you can do" | Half-built machine: "what you are, partly assembled" |
 
-Python's ABCs can play both roles: a class with *only* abstract methods
-behaves like an interface, while one that mixes abstract methods with real
-code and attributes behaves like Java's `abstract class`. The `Shape` class
-from [section 15.1](01-inheritance.md) was secretly the second kind — it
-provided `describe` for free while *expecting* an `area` it never defined.
-Turning that informal expectation into `@abstractmethod` is a one-line
-upgrade that makes the expectation machine-checked.
+Python's ABCs can play both roles:
+
+- **Only abstract methods** — the class behaves like a Java interface, a
+  pure contract.
+- **Abstract methods mixed with real code and attributes** — the class
+  behaves like Java's `abstract class`, a half-built machine.
+
+The `Shape` class from [section 15.1](01-inheritance.md) was secretly the
+second kind: it provided `describe` for free while *expecting* an `area` it
+never defined. Turning that informal expectation into `@abstractmethod` is a
+one-line upgrade that makes the expectation machine-checked.
 
 ## A worked plug-in system: payment methods
 
@@ -198,10 +207,11 @@ classDiagram
 
 Everything the ABC gave us, duck typing gives informally. Nothing stops you
 from deleting `PaymentMethod` entirely: `checkout` only ever calls
-`method.pay(...)`, so *any* object with a `pay` method already works —
-no registration, no inheritance, no ceremony. You have seen Python's
-built-ins run on this principle all along: `len(x)` works on any object
-with a `__len__` method, whoever wrote it:
+`method.pay(...)`, so *any* object with a `pay` method already works — no
+registration, no inheritance, no ceremony.
+
+You have seen Python's built-ins run on this principle all along. `len(x)`
+works on any object with a `__len__` method, whoever wrote it:
 
 ```python
 class Playlist:                 # inherits from nothing special

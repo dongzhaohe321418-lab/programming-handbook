@@ -1,6 +1,6 @@
 # Part VI · Programming III
 
-[Part III](ch16-complexity/index.md) handed you a toolbox: linked lists,
+[Part III](ch15-inheritance/index.md) handed you a toolbox: linked lists,
 stacks, queues, binary search trees, heaps, and the sorting algorithms that
 made $O(n \log n)$ feel routine. Part VI is the third course in that
 sequence, and it exists because the toolbox has two holes.
@@ -14,11 +14,12 @@ tables with real collision strategies, tries, skip lists, graph algorithms,
 and the sorts that beat the $O(n \log n)$ comparison bound by refusing to
 compare.
 
-The second hole is **everything around the code**. Working programmers
-spend their days in a shell, a build system, a test runner, a regex
-dialect, and a browser — none of which appeared in Parts I–III, and all of
-which are assumed knowledge in every job and every upper-level course. Part
-VI runs that material as a second track, in parallel with the algorithms.
+The second hole is **everything around the code**. Working programmers spend
+their days in a shell, a build system, a test runner, a regex dialect, and a
+browser — none of which appeared in Parts I–III, and all of which are assumed
+knowledge in every job and every upper-level course.
+
+Part VI runs that material as a second track, in parallel with the algorithms.
 
 ## The eight chapters, on two tracks
 
@@ -27,16 +28,17 @@ VI runs that material as a second track, in parallel with the algorithms.
 | 35 | [Balanced Search Trees](ch35-balanced-trees/index.md) | Data structures | Rotations, AVL, red-black, B-trees — $O(\log n)$ *guaranteed*, whatever the input order |
 | 36 | Hashing, Tries, and Skip Lists | Data structures | $O(1)$ average lookup, prefix search, and a randomized alternative to balancing |
 | 37 | Graphs | Algorithms | Representations, BFS/DFS, shortest paths, spanning trees, topological order |
-| 38 | Linear-Time Sorting | Algorithms | Counting, radix, and bucket sort — and why they do not violate the comparison lower bound |
-| 39 | Functional Style and Streams | Toolchain | Lambdas, higher-order functions, immutability, Java's Streams API, pipelines |
+| 38 | Sorting in Linear Time | Algorithms | Counting, radix, and bucket sort — and why they do not violate the comparison lower bound |
+| 39 | Functional Style, Streams, and Pipes | Toolchain | Lambdas, higher-order functions, immutability, Java's Streams API, pipelines |
 | 40 | The Developer Toolchain | Toolchain | The shell in depth, SSH, Make, dependency graphs, JUnit-style testing |
 | 41 | Regular Expressions | Toolchain | Pattern syntax, capture groups, greedy versus lazy, and where regex is the wrong tool |
-| 42 | Web and GUI Programming | Toolchain | HTTP, HTML/CSS/JavaScript, request routing, and event-driven interfaces |
+| 42 | Web and GUI Development | Toolchain | HTTP, HTML/CSS/JavaScript, request routing, and event-driven interfaces |
 
-The two tracks are independent of each other. If you are preparing for a
-data-structures exam, read 35–38 and stop. If you have just been handed a
-codebase and a terminal, read 39–42 first. Nothing in the toolchain
-chapters depends on the algorithms chapters, or the reverse.
+**The two tracks are independent of each other.** Nothing in the toolchain
+chapters depends on the algorithms chapters, or the reverse:
+
+- preparing for a data-structures exam? Read 35–38 and stop.
+- just been handed a codebase and a terminal? Read 39–42 first.
 
 !!! note "Why the numbering jumps"
 
@@ -90,8 +92,9 @@ B-tree, 256-way (Chapter 35)                                         3
 ```
 
 Same data, same operation, same asymptotic *claim* in the textbook — and a
-factor of thirty thousand between the first row and the second. That gap is
-what Part VI is about.
+factor of roughly thirty-five thousand between the first row and the second.
+
+**That gap is what Part VI is about.**
 
 ## How the chapters depend on each other
 
@@ -102,11 +105,11 @@ flowchart TD
     ch35 --> ch36["Ch 36 · Hashing, tries,<br/>skip lists"]
     ch36 --> ch37["Ch 37 · Graphs"]
     ch35 --> ch37
-    ch37 --> ch38
-    ch39["Ch 39 · Functional style<br/>and streams"] --> ch40["Ch 40 · Developer toolchain"]
-    ch40 --> ch41["Ch 41 · Regular expressions"]
-    ch41 --> ch42["Ch 42 · Web and GUI"]
-    ch40 --> ch42
+    ch21["Ch 21 · Heaps<br/>(Part III)"] --> ch37
+    ch39["Ch 39 · Functional style<br/>and streams"] -.-> ch40["Ch 40 · Developer toolchain"]
+    ch40 -.-> ch41["Ch 41 · Regular expressions"]
+    ch41 -.-> ch42["Ch 42 · Web and GUI"]
+    ch40 -.-> ch42
     subgraph DSA["Track 1 — data structures and algorithms"]
         ch35
         ch36
@@ -122,12 +125,17 @@ flowchart TD
 ```
 
 Solid arrows are real dependencies, and there are fewer of them than the
-numbering suggests. Chapter 35 needs only Chapter 20. Chapter 37's graph
-algorithms lean on Chapter 36's hash tables (for adjacency maps) and on the
-priority queue you already built in [Chapter 21](ch21-heaps/index.md).
-Chapter 38 uses Chapter 22's lower-bound argument as the thing it evades.
-On the toolchain side the order is a gentle ramp rather than a chain — you
-can read Chapter 41 on regular expressions the moment you can run Python.
+numbering suggests; the dotted arrows on the toolchain side are a suggested
+reading order, not a requirement.
+
+- **Chapter 35** needs only Chapter 20.
+- **Chapter 37's** graph algorithms lean on Chapter 36's hash tables (for
+  adjacency maps) and on the priority queue you already built in
+  [Chapter 21](ch21-heaps/index.md).
+- **Chapter 38** uses Chapter 22's lower-bound argument as the thing it
+  evades.
+- **The toolchain side is a gentle ramp rather than a chain** — you can read
+  Chapter 41 on regular expressions the moment you can run Python.
 
 ## How to read this part
 

@@ -11,14 +11,17 @@ We begin on the "using" side: every value in Python is an **object** that
 bundles data together with the operations that make sense for it, and you ask
 an object to do something with **dot notation**, like `"hello".upper()`. You
 will spend most of the chapter with the most method-rich object of all — the
-**string** — learning to slice it, search it, and transform it. Then we cross
-to the "defining" side: writing your own functions with `def`, understanding
-the crucial difference between *returning* a value and *printing* it, and
-seeing where variables live and die (scope). We close with the practical craft
-of formatting output beautifully with f-strings. If you are following a Java
-course alongside this handbook, this chapter parallels the classic "using
-objects and defining methods" unit — the side-by-side Java tabs will show you
-exactly where the two languages agree and where they part ways.
+**string** — learning to slice it, search it, and transform it.
+
+Then we cross to the "defining" side: writing your own functions with `def`,
+understanding the crucial difference between *returning* a value and
+*printing* it, and seeing where variables live and die (scope). We close with
+the practical craft of formatting output beautifully with f-strings.
+
+If you are following a Java course alongside this handbook, this chapter
+parallels the classic "using objects and defining methods" unit — the
+side-by-side Java tabs will show you exactly where the two languages agree
+and where they part ways.
 
 ## After this chapter you can …
 

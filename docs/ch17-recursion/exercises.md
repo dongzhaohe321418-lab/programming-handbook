@@ -1,5 +1,53 @@
 # Exercises
 
+## The chapter in brief
+
+- A recursive call is an ordinary function call: it pushes a **stack frame**
+  with its own copy of the parameters, and pops it on return
+  ([17.1](01-call-stack.md)).
+- Every correct recursive function obeys **two laws** — it has a base case,
+  and every call makes progress toward it.
+- A recursive run has a V shape: the frames pile up on the way down, and the
+  pending work finishes on the way back up.
+- Break either law and Python raises `RecursionError` at its frame limit
+  (1000 by default); Java raises `StackOverflowError`.
+- Designing a recursion is three questions: what is the base case, how does
+  the problem shrink, and how do we combine the smaller answer
+  ([17.2](02-classic-recursion.md)).
+- The leap of faith is to **trust the smaller call** rather than trace every
+  frame.
+- Shrinking *harder* changes the family: peeling one factor off $x^n$ costs
+  $O(n)$ calls, halving the exponent costs $O(\log n)$.
+- Naive Fibonacci is exponential because its two subproblems overlap;
+  **memoization** — a dict, or `functools.lru_cache` — collapses it to
+  linear.
+- Caching only pays when subproblems repeat: Hanoi's $2^n - 1$ moves are an
+  *honest* exponential that no cache can rescue.
+- Recursion and iteration are interchangeable, so the choice is engineering:
+  match the code's shape to the data's shape ([17.3](03-vs-iteration.md)).
+- Any recursion converts to a loop by keeping your own **explicit stack** —
+  a call becomes a push, a return becomes a pop.
+- Neither Python nor Java optimizes **tail calls**, so a deep tail-shaped
+  recursion still crashes; write it as a loop.
+
+### Key terms
+
+| Term | Reminder |
+| --- | --- |
+| [recursion](../concept-index.md) | a function defined in terms of a smaller version of itself |
+| [base case](../concept-index.md) | the input answered directly, with no recursive call |
+| progress | the guarantee that each call moves strictly closer to the base case |
+| [stack frame](../concept-index.md) | one call's private workspace of parameters and locals |
+| [call stack](../concept-index.md) | the pile of frames for all calls currently in progress |
+| [`RecursionError`](../concept-index.md) | Python's error when the frame limit is exceeded |
+| [memoization](../concept-index.md) | caching each answer the first time, so repeats are lookups |
+| `functools.lru_cache` | the decorator that supplies that cache for you |
+| divide and conquer | split the input, solve the parts recursively, combine |
+| explicit stack | a list used as a to-do pile, replacing the call stack |
+| [tail call / tail recursion](../concept-index.md) | a recursive call with nothing left to do after it returns |
+
+Now the drills.
+
 Work these in order — they climb from tracing on paper to converting
 recursion into stack-driven iteration. For every function you write, state
 the base case and the progress argument *before* coding; that habit is the

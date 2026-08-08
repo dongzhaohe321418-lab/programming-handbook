@@ -51,13 +51,16 @@ for n in (1_000, 4_000, 16_000, 64_000):
    64000            133.1              0.069
 ```
 
-The absolute microsecond numbers depend on your machine; the *shape* does
-not. Multiply $n$ by four and the list scan takes four times longer, dead
-on — a 64-fold growth from top to bottom. The dict column grows by a factor
-of two over the same range, and that is not the algorithm: it is the CPU
-cache, which stops holding the whole table once it gets big. Algorithmically
-the dict column is flat, and that flat line is the whole subject of this
-section.
+The absolute microsecond numbers depend on your machine; the *shape* does not.
+Multiply $n$ by four and the list scan takes four times longer, dead on — a
+64-fold growth from top to bottom.
+
+The dict column grows by a factor of two over the same range, and that is not
+the algorithm: it is the CPU cache, which stops holding the whole table once
+it gets big. Algorithmically the dict column is flat, and that flat line is
+the whole subject of this section.
+
+### Direct addressing: when the key *is* the index
 
 The base case is easy to believe. If your keys happened to be the integers
 $0, 1, \dots, 9$, you would not search at all — you would index:
@@ -76,17 +79,23 @@ id 3 -> Ada
 id 7 -> Grace
 ```
 
-That is genuinely $O(1)$, and it is useless, because real keys are not
-small integers. They are strings like `"grape"`, or nine-digit student ids,
-or tuples. A direct address table for nine-digit ids needs a billion slots
-to hold thirty students.
+That is genuinely $O(1)$, and it is useless, because real keys are not small
+integers. They are strings like `"grape"`, or nine-digit student ids, or
+tuples. A direct address table for nine-digit ids needs a billion slots to
+hold thirty students.
 
-**A hash table is a direct address table with a translator in front.** The
-translator is a *hash function*: it turns any key into an integer, and a
-modulo squashes that integer into a legal index. Look-up becomes: compute,
-index, done. No path to walk, no comparisons to count — the cost does not
-know how many keys are stored, which is exactly why it does not grow with
-$n$.
+### A hash table is direct addressing with a translator in front
+
+The translator is a *hash function*: it turns any key into an integer, and a
+modulo squashes that integer into a legal index. Look-up becomes three moves —
+compute, index, done.
+
+!!! tip "The one idea behind the whole chapter"
+
+    A hash table does not **search** for the key. It **computes the key's
+    address**. There is no path to walk and no comparisons to count, so the
+    cost never learns how many keys are stored — which is exactly why it does
+    not grow with $n$.
 
 ```mermaid
 flowchart LR
@@ -189,10 +198,12 @@ possibilities for 159 keys is room to spare, and, decisively, its *low* bits
 vary freely: those are the bits the modulo will keep.
 
 The built-in `hash` and `djb2` keep all 159 apart. Notice that we printed
-`(varies)` for the built-in: CPython randomizes string hashing at
-interpreter start-up, so the actual numbers differ every time you press Run.
+`(varies)` for the built-in: CPython randomizes string hashing at interpreter
+start-up, so the actual numbers differ every time you press Run.
 [Section 36.2](02-collisions-resizing.md) explains why that is a security
-feature. **Never write a program that depends on a specific value of
+feature.
+
+**Never write a program that depends on a specific value of
 `hash("some string")`** — and never print one as expected output.
 
 ```python
@@ -216,13 +227,15 @@ table, bleat                 weak: [520, 520]  djb2 all different: True
 
 ## The centrepiece: where do the keys actually land?
 
-A hash value is not an address yet. The last step is the **modulo**: with
-$m$ buckets, key $k$ lives in bucket $h(k) \bmod m$. Now we can ask the
-question that matters — after that squash, how evenly are the 159 words
-spread over 128 buckets?
+A hash value is not an address yet. The last step is the **modulo**: with $m$
+buckets, key $k$ lives in bucket $h(k) \bmod m$. Now we can ask the question
+that matters — after that squash, how evenly are the 159 words spread over 128
+buckets?
 
-The standard yardstick is the **chi-squared statistic**. With $n$ keys in
-$m$ buckets, each bucket expects $\bar c = n/m$ keys, and
+### Two yardsticks: chi-squared and empty buckets
+
+The standard measure is the **chi-squared statistic**. With $n$ keys in $m$
+buckets, each bucket expects $\bar c = n/m$ keys, and
 
 $$ \chi^2 = \sum_{i=0}^{m-1} \frac{(c_i - \bar c)^2}{\bar c} $$
 
@@ -279,19 +292,22 @@ djb2              143      40        8
 built-in hash     140      42        5
 ```
 
-The plot makes the failure visible in one glance. `djb2` and the built-in
-hash produce a ragged but honest scatter across all 128 bars. `weak_hash`
-produces **a wall and a desert**: buckets 0–63 and 115–127 hold everything,
-and buckets 64–114 are completely, structurally empty. That is not bad luck.
-The word sums live in $[499, 575]$; take those mod 128 and you can only ever
-land in $\{115,\dots,127\} \cup \{0,\dots,63\}$. Fifty-one of the 128
-buckets are *unreachable* — a third of the table can never be used, so the
-rest is a third more crowded than it should be.
+The plot makes the failure visible in one glance. `djb2` and the built-in hash
+produce a ragged but honest scatter across all 128 bars. `weak_hash` produces
+**a wall and a desert**: buckets 0–63 and 115–127 hold everything, and buckets
+64–114 are completely, structurally empty.
+
+That is not bad luck. The word sums live in $[499, 575]$; take those mod 128
+and you can only ever land in $\{115,\dots,127\} \cup \{0,\dots,63\}$.
+Fifty-one of the 128 buckets are *unreachable* — two fifths of the table can
+never be used, so the 77 that remain carry $159/77 \approx 2.1$ keys each
+instead of $159/128 \approx 1.2$: about 1.7 times as crowded as they should
+be.
 
 The chi-squared numbers agree: 351 for the weak hash against roughly 128 for
-an ideal one, and 73 empty buckets where uniformity predicts 37. (The
-built-in hash's row shifts a little every run, since its string hashing is
-randomized — another reminder not to hard-code those numbers.)
+an ideal one, and 73 empty buckets where uniformity predicts 37. (The built-in
+hash's row shifts a little every run, since its string hashing is randomized —
+another reminder not to hard-code those numbers.)
 
 !!! tip "A small table hides a bad hash"
 
@@ -301,9 +317,11 @@ randomized — another reminder not to hard-code those numbers.)
     look fine on small tables and fall apart exactly when the table grows —
     the worst possible failure schedule.
 
-Structured keys are where the weak hash stops being merely poor and becomes
-a disaster. Real key sets are rarely a dictionary of English words; they are
-`user_0001`, `order_2024_11_03`, `192.168.1.7`.
+### Structured keys make it far worse
+
+Real key sets are rarely a dictionary of English words. They are `user_0001`,
+`order_2024_11_03`, `192.168.1.7` — families of near-identical strings, and
+that is where the weak hash stops being merely poor and becomes a disaster.
 
 ```python
 # continues
@@ -324,14 +342,14 @@ djb2       64 buckets -> fullest  10 keys, 27 empty, chi2 231
 
 Two hundred keys, **nineteen** distinct hash values. Every key shares a
 prefix, so the sum only varies by the digit sum of the number — and
-`user_0012`, `user_0021`, `user_0102` and `user_0201` are all the same key
-as far as `weak_hash` is concerned. The table degenerates into nineteen
-linked lists.
+`user_0012`, `user_0021`, `user_0102` and `user_0201` are all the same key as
+far as `weak_hash` is concerned. The table degenerates into nineteen linked
+lists.
 
 Look at djb2's row too, though: 231 is a long way from the ideal 64, and 27
-empty buckets is far more than the 3 that uniformity predicts. djb2 gave
-every key a distinct hash and still produced a lumpy table. That is not the
-hash function's fault — it is the number 64's.
+empty buckets is far more than the 3 that uniformity predicts. djb2 gave every
+key a distinct hash and still produced a lumpy table. That is not the hash
+function's fault — it is the number 64's.
 
 ## Why table size matters: powers of two versus primes
 
@@ -355,15 +373,17 @@ table size  61: 61 of 61 buckets used
 ```
 
 Sixty-four keys, and a 64-slot power-of-two table puts them all into four
-buckets, because every key ends in four zero bits. A prime-sized table of
-61 uses every slot, because 61 shares no factor with 16 and the modulo
-therefore mixes the high bits back in. **This is why classic textbook hash
-tables use prime table sizes.**
+buckets, because every key ends in four zero bits. A prime-sized table of 61
+uses every slot, because 61 shares no factor with 16 and the modulo therefore
+mixes the high bits back in. **This is why classic textbook hash tables use
+prime table sizes.**
+
+### A good hash plus a bad table size
 
 The trap is subtler than "avoid round numbers", and djb2 walks straight into
 it. Its multiplier is 33, and $33 \equiv 1 \pmod{32}$ — so modulo 32, the
-multiply does nothing at all and djb2 collapses into the weak sum-of-
-characters hash plus a constant:
+multiply does nothing at all and djb2 collapses into the weak
+sum-of-characters hash plus a constant:
 
 ```python
 # continues
@@ -516,11 +536,15 @@ get with default: not stored
 after overwrite: len 6 value 99
 removed: 5  len now 5
 sorted contents: [('apple', 5), ('grape', 5), ('onset', 5), ('stone', 99), ('table', 5)]
+second remove raises KeyError: 'ocean'
 ```
 
-That is a working dictionary in sixty lines. Now stress it with all 159
-words and look at the chains — the thing that decides whether the $O(1)$
-promise survives.
+That is a working dictionary in sixty lines.
+
+### Stress-testing the chains
+
+Now push all 159 words through it and look at the chains — the thing that
+decides whether the $O(1)$ promise survives.
 
 ```python
 # continues
@@ -565,8 +589,9 @@ every key removable: True  len now 0
 A load factor of 2.48 and a longest chain of 7: a lookup costs one hash plus
 at most seven comparisons, and *that number does not grow with the number of
 keys as long as the table grows too*. Keeping it that way is
-[Section 36.2](02-collisions-resizing.md)'s job. (Your longest-chain number
-may differ by one, since the built-in `hash` is randomized per run.)
+[Section 36.2](02-collisions-resizing.md)'s job. (Your chain numbers will
+differ a little — the built-in `hash` is randomized per run, so the longest
+chain here lands somewhere around five to seven.)
 
 ## Which keys are allowed: hashability
 
@@ -585,11 +610,12 @@ TypeError: unhashable type: 'list'
 This is not Python being fussy. Look again at what `put` does: it computes
 `hash(key) % len(self._buckets)` **once**, at insert time, and files the pair
 in that bucket. If the key later changes, the hash changes, and the pair is
-sitting in a bucket where nobody will ever look for it. The rule follows
-immediately:
+sitting in a bucket where nobody will ever look for it.
 
-> **A key's hash must never change while it is in the table.** Python
-> enforces this the only way it can: only immutable objects are hashable.
+!!! note "The hashability rule"
+
+    **A key's hash must never change while it is in the table.** Python
+    enforces this the only way it can: only immutable objects are hashable.
 
 Tuples of immutables are hashable; lists, dicts, and sets are not. A tuple
 containing a list is not hashable either, because hashing a tuple hashes its
@@ -618,17 +644,20 @@ for candidate in [("a", "b"), ["a", "b"], {"a": 1}, ("a", ["b"])]:
 
 ## The contract: equal keys must have equal hashes
 
-There is a second rule, and unlike the first one Python cannot enforce it
-for you:
+There is a second rule, and unlike the first one Python cannot enforce it for
+you.
 
-$$ a = b \;\Longrightarrow\; h(a) = h(b) $$
+!!! note "The hash/equality contract"
 
-Equal objects **must** hash equally. (The reverse is not required: unequal
-objects may share a hash — that is just a collision, and chaining handles
-it.) Break this rule and nothing raises; the table simply misplaces things.
+    $$ a = b \;\Longrightarrow\; h(a) = h(b) $$
 
-Here is the first way to break it — define value equality but leave the
-default identity-based hash in place:
+    Equal objects **must** hash equally. The reverse is not required: unequal
+    objects may share a hash — that is just a collision, and chaining handles
+    it.
+
+Break this rule and nothing raises. The table simply misplaces things.
+
+### Breaking it, way one: value equality with an identity hash
 
 ```python
 class BadPoint:
@@ -667,11 +696,12 @@ b in {a} ? False
 
 Two keys the program itself calls equal, two separate entries, and a
 dictionary printing what looks like the same key twice. No exception, no
-warning — just a `dict` that quietly stopped being a mapping. If this were a
-cache, you would compute the same expensive result twice; if it were a set
-of visited states, your graph search would revisit everything.
+warning — just a `dict` that quietly stopped being a mapping.
 
-The second way to break it is to hash a field and then mutate it:
+If this were a cache, you would compute the same expensive result twice. If it
+were a set of visited states, your graph search would revisit everything.
+
+### Breaking it, way two: hash a field and then mutate it
 
 ```python
 class Tag:
@@ -705,12 +735,14 @@ but iteration still sees it   : [(Tag('final'), 'chapter one')]
 len(notes) = 1
 ```
 
-The entry never left the table — `len` still says 1 and iteration still
-yields it — but **no key can reach it any more**. The pair is filed in
-bucket `hash("draft") % m`; `Tag("final")` hashes to a different bucket, and
+The entry never left the table — `len` still says 1 and iteration still yields
+it — but **no key can reach it any more**. The pair is filed in bucket
+`hash("draft") % m`. `Tag("final")` hashes to a different bucket, and
 `Tag("draft")` reaches the right bucket only to find a stored key that no
-longer compares equal. Data that exists, occupies memory, and is
-unreachable. This is precisely why lists are unhashable.
+longer compares equal.
+
+Data that exists, occupies memory, and is unreachable. This is precisely why
+lists are unhashable.
 
 ## Doing it correctly
 
@@ -888,5 +920,5 @@ every Java course drills it:
         Every collision now returns the wrong value. Sharing a bucket means
         sharing `h(k) % m`, not being the same key, and with $m$ buckets and
         $n$ keys collisions are routine — with 159 words in 64 buckets above,
-        the fullest bucket held six different keys. The hash narrows the
+        the fullest bucket held seven different keys. The hash narrows the
         search to one bucket; only `==` decides the answer.
