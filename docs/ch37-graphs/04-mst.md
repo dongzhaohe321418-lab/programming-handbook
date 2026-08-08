@@ -9,6 +9,20 @@ the total cost of cable to be as small as possible. The answer is called a
 **minimum spanning tree**, and it is one of the rare places in algorithms where
 two completely different strategies both turn out to be exactly right.
 
+!!! abstract "In plain words"
+
+    - **What it is.** The cheapest set of connections that still ties *every*
+      point into one piece, with nothing wasted.
+    - **Picture it.** A handful of towns you must join with road. You do not care
+      which town reaches which by what route — you only want every town on the
+      network and the total length of tarmac as small as possible. The answer
+      never contains a loop, because a loop always has one road you could remove
+      and still keep everyone connected.
+    - **Why it matters.** Wiring a building, laying fibre to every house,
+      linking every office in a network — all the same problem. And it is one of
+      the rare cases where a simple greedy strategy is not just fast but
+      *provably* gives the exact best answer.
+
 ## Why the answer is a tree
 
 Start with a definition. A **spanning subgraph** is one that includes every
@@ -96,6 +110,19 @@ Naturally you remove the most expensive one, and the cheapest spanning tree of
 this triangle costs 7.
 
 ## The cut property — why greedy works here
+
+!!! abstract "In plain words"
+
+    - **What it is.** Split the points into any two groups. The single cheapest
+      connection that bridges the two groups is always safe to put in the
+      cheapest overall network.
+    - **Picture it.** Imagine a river slicing the towns into a north bank and a
+      south bank. Whatever the ideal road network turns out to be, it *has* to
+      cross the river somewhere — and you can never do better than crossing at
+      the one cheapest bridge.
+    - **Why it matters.** This single guarantee is the reason grabbing cheap
+      edges greedily never backfires here. Both algorithms below are just two
+      different ways of choosing which split (which "river") to look at next.
 
 Both algorithms on this page are greedy: they repeatedly grab the cheapest edge
 that satisfies some condition and never reconsider. Greedy algorithms are
@@ -261,6 +288,20 @@ Asking that with a BFS every time would cost $O(V + E)$ per edge, making the
 whole algorithm $O(E^2)$. We need something far faster.
 
 ### Union-find (disjoint sets)
+
+!!! abstract "In plain words"
+
+    - **What it is.** A tiny structure that answers two questions almost
+      instantly as you keep adding connections: "are these two things already in
+      the same group?" and "merge these two groups into one".
+    - **Picture it.** Islands being joined by new bridges. Each island points at
+      one "captain" island for its cluster; to test whether two islands are
+      connected, follow each up to its captain and see whether it is the *same*
+      captain. Building a bridge just makes one captain report to the other.
+    - **Why it matters.** Kruskal must ask "would this edge close a loop?" for
+      every edge — which is exactly "are these two endpoints already connected?".
+      Answering that with a fresh graph search each time would be crippling;
+      union-find makes it effectively free.
 
 The structure that answers it is **union-find**, also called a
 **disjoint-set union** (DSU). It maintains a collection of disjoint groups and

@@ -113,3 +113,13 @@ demonstrated with code that actually misbehaves, not merely described.
    prediction, cycle hunting, a hand-traced Dijkstra, a hand-built
    Dijkstra counterexample, `has_path` and `all_paths`, union-find by hand,
    and bidirectional BFS with measured savings.
+
+!!! tip "Graphs meet neural networks"
+
+    Once you can represent a graph, you can *learn* on one. A **graph neural
+    network** updates each node by mixing in a summary of its neighbours —
+    the same adjacency structure from this chapter, now carrying learned
+    feature vectors. [Section 25.5.5](../ch25b-neural-networks/05-gnn.md)
+    builds one from scratch on a small graph, and shows that the attention
+    inside a language model is a graph neural network on a fully connected
+    graph of tokens.

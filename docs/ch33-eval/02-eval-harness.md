@@ -312,6 +312,19 @@ regression in one area cannot hide behind a gain in another.
 
 ## Statistical honesty
 
+!!! abstract "In plain words"
+
+    - **What it is.** A way to ask "is this gap real or just luck?" using only the
+      results you already have — by re-drawing your own task scores many times and
+      watching how much the average wobbles.
+    - **Picture it.** You have 50 marked tasks. Deal 50 cards *with replacement*
+      from that same deck, average them, and repeat a few thousand times. The
+      spread of those thousands of averages is your uncertainty — no formula, no
+      distribution assumed.
+    - **Why it matters.** On 50 tasks that spread is about ±12 points, wider than
+      most reported "improvements". A bare number invites a false comparison;
+      quoting the interval tells you whether you have actually found anything.
+
 Here is the number that should change how you read every eval result: on 50
 tasks, a 95% confidence interval on accuracy is about **±12 points wide on each
 side**. Most reported improvements are smaller than that.

@@ -14,6 +14,43 @@ Contract for every content page in `docs/`. Follow it exactly; the site build
   in the browser); Java appears in side-by-side comparisons where the concepts
   genuinely differ (typing, compilation, overloading, interfaces, etc.).
 
+## Intuition-first (the 深入浅出 contract)
+
+The book must be understandable by a beginner, not just correct. Parts V and VI
+especially introduce ideas a first-year student has no prior intuition for
+(gradients, KL divergence, attention, tree-balance invariants, graph
+algorithms). For every such **genuinely hard idea**, put a gentle on-ramp
+*immediately before* the mechanism, in this order:
+
+1. **One plain sentence** — what it is and what problem it solves, no jargon.
+2. **A concrete everyday analogy** — something from ordinary life with the same
+   shape (attention ≈ highlighting the relevant words in a sentence; a gradient
+   ≈ which way is downhill and how steep; KL divergence ≈ how different two
+   opinions are; a hash table ≈ a coat-check that computes your ticket number).
+3. **Why we need it / what breaks without it.**
+
+Package the on-ramp as a standout admonition so readers learn to recognise it:
+
+    !!! abstract "In plain words"
+
+        - **What it is.** one sentence.
+        - **Picture it.** the analogy.
+        - **Why it matters.** the payoff.
+
+Then the existing prose, maths, and code follow. Additional rules:
+
+- **Every formula gets an English reading.** Right after a `$$…$$`, either a
+  one-line "read aloud, this says …" sentence or a short symbol table naming
+  each symbol. A beginner should be able to understand what a formula *claims*
+  without decoding notation.
+- **Motivate before you mechanise.** Never open a hard section with "Recall the
+  closed-form optimum" or a bare equation. Open with the problem and the
+  intuition; bring the machinery in once the reader wants it.
+- **Keep it bulleted and organised** — the on-ramp is bullets, procedures are
+  numbered, comparisons are tables.
+- Use the on-ramp for real difficulty only. Do not stamp `!!! abstract` on
+  something already obvious; overuse makes it noise.
+
 ## Page anatomy
 
 Every **section page** (`NN-*.md`):

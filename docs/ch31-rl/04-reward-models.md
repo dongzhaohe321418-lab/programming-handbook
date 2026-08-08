@@ -12,6 +12,20 @@ number comes from, and it is the part practitioners lose sleep over.
 
 ## Humans compare; they do not score
 
+!!! abstract "In plain words"
+
+    - **What it is.** A reward model is a learned stand-in for human judgement: a
+      small model trained to score responses the way people would, so the RL loop
+      can ask it millions of times instead of asking people.
+    - **Picture it.** Wine judging. Ask one judge to put a number out of 100 on a
+      single glass and the number wobbles by the hour; ask "is this glass better
+      than that one?" and the answer holds steady. So we collect *comparisons*,
+      not scores, and fit the model to those.
+    - **Why it matters.** People are slow, expensive and inconsistent, and they
+      cannot rate every response an RL run generates. A reward model bottles their
+      judgement into something fast enough to optimise against — along with all
+      the risks bottling introduces, which is what the rest of this page is about.
+
 The obvious way to get a reward is to ask someone to rate a response out of ten.
 It does not work. Ask five annotators to score the same answer and you get 6, 7,
 7, 9, and 4 — and the same annotator will drift over a shift, anchor on whatever
@@ -109,6 +123,11 @@ $$
 \Big[\log \sigma\big(r_\phi(x, y_w) - r_\phi(x, y_l)\big)\Big]
 $$
 
+Read aloud: *tune the reward model so the score it gives the winner comes out
+above the score it gives the loser, on every labelled pair.* It is the same "get
+the comparison right" loss as DPO, with a genuine score $r_\phi$ in place of the
+policy's implicit one.
+
 If that looks like the DPO loss with $\beta \log \frac{\pi_\theta}{\pi_{\text{ref}}}$
 swapped for $r_\phi$, that is exactly what it is — DPO's whole trick was
 substituting one for the other.
@@ -195,6 +214,20 @@ annotators did.
     humans themselves only agree about that often.
 
 ## Reward hacking, made visible
+
+!!! abstract "In plain words"
+
+    - **What it is.** Optimise a *proxy* for what you want hard enough and it
+      stops tracking what you wanted — the score soars while the real thing gets
+      worse.
+    - **Picture it.** Teaching to the test. Drill a class only on the practice
+      exam and their practice-exam scores rocket, but they have memorised the
+      answer key, not the subject. Pay a call centre on call volume and the calls
+      get shorter, not better.
+    - **Why it matters.** The reward model is only a proxy for human judgement,
+      and it has gaps. Push on it hard and the policy finds the gaps — which is
+      why a run can look like it is improving (reward climbing) while the model is
+      quietly getting worse (true quality falling).
 
 Now hand that reward model to an optimiser and let it run. The policy is a
 softmax over the twelve responses, we ascend expected reward, and we watch two
@@ -345,6 +378,20 @@ the suspected confounder and subtract it"** is a technique you will use
 repeatedly.
 
 ## Outcome versus process supervision
+
+!!! abstract "In plain words"
+
+    - **What it is.** Two ways to grade multi-step work: an **outcome** reward
+      marks only the final answer; a **process** reward marks each step of the
+      working.
+    - **Picture it.** A maths teacher who checks only the boxed answer versus one
+      who reads every line. The first gives full marks to a right answer reached
+      by two mistakes that cancelled; the second catches the mistakes even when
+      the answer happens to come out right.
+    - **Why it matters.** Grading only the outcome reinforces lucky-but-wrong
+      reasoning — the model learns "$14 \times 3 = 40$" as long as the final
+      number lands. Step-grading catches that, which is why it helps most on long
+      chains of reasoning.
 
 | | Outcome reward model (ORM) | Process reward model (PRM) |
 | --- | --- | --- |

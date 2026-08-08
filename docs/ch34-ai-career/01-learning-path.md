@@ -305,6 +305,20 @@ The last row looks optional and is not. Writing is where you discover which
 parts you did not understand, and it is the only one of these activities that
 also produces something you can show someone.
 
+!!! abstract "In plain words"
+
+    - **What it is.** A way to read research papers cheaply: three passes of
+      increasing depth, where the first two are quick enough to quit if the paper
+      turns out not to be worth more.
+    - **Picture it.** Buying a house. First a drive-by (five minutes: is it even in
+      the right neighbourhood?), then a walkthrough (an hour: does the layout
+      work?), and only for the one you are serious about, a full inspection —
+      *reproducing* the core idea yourself, with the paper closed.
+    - **Why it matters.** You cannot read everything, and skimming abstracts
+      teaches vocabulary without understanding. Reproducing a result — that third
+      pass with a number attached — is the single most instructive exercise here,
+      because rebuilding a claim forces you to confront every term you skimmed.
+
 ## Reading a paper in three passes
 
 You cannot read everything, and skimming abstracts teaches you vocabulary

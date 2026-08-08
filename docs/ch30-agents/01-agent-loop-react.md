@@ -13,6 +13,20 @@ about ninety lines, and then broken it four different ways on purpose.
 
 ## Definition first: an agent is a loop
 
+!!! abstract "In plain words"
+
+    - **What it is.** An agent is a model running in a loop: it looks at the
+      situation, picks an action, sees what happened, and decides again — over
+      and over — instead of producing one answer and stopping.
+    - **Picture it.** A GPS reading out a fixed route recites the turns no
+      matter what; a driver watching the road takes the next turn based on the
+      traffic ahead, reroutes when a street is closed, and stops on arrival. An
+      agent is the driver — it chooses each step from what it just saw.
+    - **Why it matters.** The new thing is *who decides the control flow*. In a
+      pipeline you fix the order in code; in an agent the model chooses it at
+      run time. That flexibility is the whole point — and the reason an agent
+      can also loop forever, so every one needs a budget.
+
 > An **agent** is a program in which a model repeatedly chooses an action,
 > observes the result of that action, and uses the observation to choose the
 > next action, until it decides it is done or a budget runs out.
@@ -103,6 +117,20 @@ Memory and the stopping condition are not optional extras. They are
 load-bearing, and half of this page is about what happens when they are weak.
 
 ## ReAct: reason, then act
+
+!!! abstract "In plain words"
+
+    - **What it is.** ReAct interleaves *thinking* and *doing*: the model writes
+      a short thought, takes one action, reads the result, then thinks again —
+      **Thought → Action → Observation**, repeating until it can answer.
+    - **Picture it.** It is how you cook from a half-remembered recipe. You say
+      "I think it needs salt" (thought), add a pinch (action), taste
+      (observation), and adjust — rather than dumping every ingredient in at
+      once and hoping.
+    - **Why it matters.** Reasoning without acting invents facts; acting without
+      reasoning flails. Alternating the two means every action is justified by a
+      thought and every thought is grounded in a real observation — and the
+      written trail is exactly what you read when you debug the agent.
 
 The dominant text format for agent loops comes from **ReAct** (Yao et al.,
 *ReAct: Synergizing Reasoning and Acting in Language Models*, ICLR 2023).

@@ -51,6 +51,19 @@ together*, without anyone writing the pair down.
 
 ## Meaning as a direction: a hand-made embedding space
 
+!!! abstract "In plain words"
+
+    - **What it is.** An embedding turns a piece of text into a *point in
+      space*, chosen so that texts with similar meaning land close together.
+    - **Picture it.** Imagine a library where books are shelved not by title
+      but by *what they are about*: everything about cars ends up in the same
+      corner, whether its spine reads "automobile", "vehicle", or "motorcar".
+      The shelf position *is* the meaning.
+    - **Why it matters.** Keyword search matches letters, so to it "automobile"
+      and "car" look as unrelated as "automobile" and "avocado". Embeddings put
+      synonyms next to each other *by construction*, so "close together" finally
+      means "similar in meaning" — with no synonym list to maintain.
+
 An **embedding** is a list of numbers — a vector — assigned to a piece of text
 so that similar meanings get similar vectors. That is the entire definition.
 The magic is in *how* the numbers are chosen, but you do not need magic to
@@ -115,6 +128,21 @@ right, and exactly the kind of nuance a synonym list cannot express.
     already fully present in these twelve points.
 
 ## Cosine similarity: comparing directions, not positions
+
+!!! abstract "In plain words"
+
+    - **What it is.** Cosine similarity scores how alike two vectors are by the
+      *angle* between them — pointing the same way scores 1, at right angles
+      scores 0 — and ignores how long each one is.
+    - **Picture it.** Two people pointing at the same distant mountain are
+      "aligned" even if one has a longer arm; what matters is the *direction*,
+      not the reach. A five-page essay and a one-line note on the same topic
+      point the same way, and cosine calls them similar even though one vector
+      is far bigger.
+    - **Why it matters.** Once each vector is scaled to length 1, cosine reduces
+      to a single [**dot product**](../part5-math-primer.md) — multiply matching
+      entries and add them up — so the whole of retrieval becomes one cheap
+      multiply per document.
 
 To *use* the space we need a number for "how similar are these two vectors?".
 The standard answer in retrieval is **cosine similarity**: the cosine of the
@@ -412,6 +440,21 @@ always the right* top-$k$, orders of magnitude faster.
 
 The metric for "almost always" is **recall@k**: of the $k$ true nearest
 neighbours, what fraction did we actually return?
+
+!!! abstract "In plain words"
+
+    - **What it is.** A vector index (an ANN index) organises the stored vectors
+      ahead of time so that a query only has to compare itself against a
+      promising *neighbourhood*, not against all ten million documents.
+    - **Picture it.** To find the nearest coffee shop you do not measure the
+      distance to every café on Earth — you look in your own neighbourhood
+      first. An index pre-sorts the documents into neighbourhoods so the search
+      can do the same.
+    - **Why it matters.** Checking every vector is $O(n)$ and dies at scale;
+      checking one neighbourhood is orders of magnitude faster. The catch is
+      that a true match sitting just over the neighbourhood's edge can be
+      missed. That near-miss risk is the price — measured as *recall* — and
+      every index gives you a knob to trade speed against it.
 
 ### Two families of index
 

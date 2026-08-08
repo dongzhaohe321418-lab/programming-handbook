@@ -9,6 +9,18 @@ vector, a dot product, a softmax, a matrix multiply. By the end you will
 have computed a real attention matrix by hand, in numpy, and be able to read
 it. Nothing here is a metaphor — it is the actual arithmetic.
 
+!!! abstract "In plain words"
+
+    - **What it is.** An *embedding* turns each token ID into a vector — a point
+      in space — positioned so that tokens with similar meaning sit close
+      together.
+    - **Picture it.** A map. Alike things end up near each other, so you can
+      measure "how related?" with a ruler instead of by comparing spellings.
+      Here that ruler is the dot product introduced below.
+    - **Why it matters.** Integers carry no meaning — token 40 is not twice
+      token 20. Turning them into points is what lets the model do arithmetic on
+      *meaning*, and it is the input to everything else in this chapter.
+
 ## Vectors, and why a token becomes one
 
 A **vector** is just a fixed-length list of numbers, e.g. `[0.9, 0.0, 0.0,
@@ -102,6 +114,22 @@ for degrees in [0, 45, 90, 135, 180]:
 Same direction, dot product $+1$. Perpendicular, $0$. Opposite, $-1$. When a
 model asks "how much should token 3 care about token 1?", it computes a dot
 product. That is the entire scoring mechanism.
+
+!!! abstract "In plain words"
+
+    - **What it is.** *Attention* lets every token decide how much to look at
+      every other token, then rebuild itself as a weighted blend of the ones it
+      cared about.
+    - **Picture it.** Reading a sentence and, for the word you are on,
+      highlighting the few earlier words that matter for it — "it" lighting up
+      the noun it refers to. Every token does this highlighting for itself.
+    - **How Q, K, V split the job.** Each token emits three things: a **query**
+      (what am I looking for?), a **key** (what do I offer? — a label others
+      match against), and a **value** (the actual content to hand over). A token
+      scores its query against everyone's keys to set the weights, then collects
+      their values in those proportions.
+    - **Why it matters.** This is the one operation that made modern language
+      models possible; the rest of the chapter simply stacks it.
 
 ## Attention, one step at a time
 
@@ -405,6 +433,17 @@ blocks stack.
     - **Assuming heads see the full width.** Each head works in
       $d_{\text{model}}/h$ dimensions; the *concatenation* restores the
       width. Total compute is roughly the same as one big head.
+
+!!! info "Another way to see attention"
+
+    Everything on this page is one instance of a more general idea. Picture
+    the tokens as **nodes in a graph**, with an edge from every token to every
+    other — a *fully connected* graph. Attention is then each node updating
+    itself by mixing in a weighted summary of its neighbours, where the
+    attention weights decide how much of each neighbour to take. That "mix in
+    your neighbours" operation is a **graph neural network**, and
+    [Section 25.5.5](../ch25b-neural-networks/05-gnn.md) builds one from
+    scratch and shows exactly how it lines up with what you just computed.
 
 ## Check your understanding
 

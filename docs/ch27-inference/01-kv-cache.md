@@ -9,6 +9,20 @@ dozen lines of code, it changes nothing about the model's output, and it turns
 an unusable program into a usable one. It is also the reason your GPU runs out
 of memory at long context lengths, which is the second half of this section.
 
+!!! abstract "In plain words"
+
+    - **What it is.** A per-request scratchpad that saves the key and value
+      vectors the model already computed for earlier tokens, so it never has to
+      recompute them.
+    - **Picture it.** You are reading a long book and jotting notes as you go.
+      When you reach a new sentence you glance at your notes instead of
+      re-reading every previous page. The cache is the model's notes on the
+      tokens it has already seen.
+    - **Why it matters.** Without it, generating the 500th word re-runs the
+      model over all 499 words before it — quadratic, unusably slow. With it,
+      each new token only looks earlier work up, so generation stays cheap. The
+      catch, later in this section, is that those notes take memory.
+
 ## The redundant work, counted
 
 Recall the shape of one attention layer from
@@ -306,6 +320,20 @@ would be with MHA, which the block verifies by printing the ratio.
     anything, how many tokens fit in your GPU.
 
 ## Prefill and decode are different machines
+
+!!! abstract "In plain words"
+
+    - **What it is.** Generation has two phases that stress different parts of
+      the GPU: reading the whole prompt in one shot (**prefill**), then writing
+      the answer one token at a time (**decode**).
+    - **Picture it.** Prefill is skimming a page you were just handed —
+      hundreds of words enter your eyes at once. Decode is writing your reply by
+      hand, one word at a time, pausing after each to think of the next.
+    - **Why it matters.** Prefill has many tokens to chew on at once, so the
+      arithmetic units stay busy — it is *compute-bound*. Decode feeds the model
+      a single token per step, so it spends its time hauling the weights across
+      the memory bus while the multipliers sit idle — it is *memory-bound*.
+      Almost every serving decision downstream follows from this one split.
 
 The split we noticed in the toy loop is the most consequential fact in LLM
 serving, and it is a *hardware* fact:

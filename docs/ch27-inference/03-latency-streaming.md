@@ -12,6 +12,20 @@ carries tokens to a browser one at a time.
 
 ## Three numbers, defined precisely
 
+!!! abstract "In plain words"
+
+    - **What it is.** "Fast" splits into two clocks: **TTFT**, how long until
+      the first token appears, and **TPOT**, how long between each token after
+      that.
+    - **Picture it.** Ordering at a café. TTFT is the wait from ordering until
+      the barista sets down your first item; TPOT is the pace at which the rest
+      of the order keeps arriving. A quick first cup with slow refills feels
+      completely different from a long initial wait followed by a flood.
+    - **Why it matters.** The two respond to different things — TTFT to prompt
+      length and queueing, TPOT to model size and memory bandwidth — and they
+      often move in opposite directions. A single "latency" number hides which
+      one your users are actually feeling.
+
 Loose talk about "latency" causes most confusion in this area, so here are
 the definitions serving teams actually use:
 
@@ -32,6 +46,9 @@ remaining $N-1$ tokens costs one TPOT:
 $$
 \text{E2E} \;=\; \text{TTFT} \;+\; \text{TPOT} \times (N_{\text{out}} - 1)
 $$
+
+Read aloud: the end-to-end time is the wait for the first token, plus one
+per-token time for each of the remaining tokens after it.
 
 !!! note "The $N-1$ matters less than the convention"
     Some tools report a *normalised* time per output token,
@@ -106,6 +123,20 @@ TPOT does not move at all, because decode reads the same weights regardless.
 longer KV cache each step; this model leaves that out.)
 
 ## Throughput versus latency: the curve, not the slogan
+
+!!! abstract "In plain words"
+
+    - **What it is.** Throughput is total tokens per second across *everyone*;
+      per-user latency is the speed *one* person sees. Pushing one up past a
+      point drags the other down.
+    - **Picture it.** A restaurant kitchen. Seating more diners at once gets
+      more meals out the door per hour (throughput), but past the point where
+      the cooks are already flat out, every single diner waits longer for their
+      plate (latency). No table count is best for both at once.
+    - **Why it matters.** Batch size is that dial. This is why serving targets
+      are written as "keep first-token time under 500 ms *and* per-token time
+      under 50 ms, at the most throughput that still meets both" — not "make it
+      fast".
 
 Section 27.2 showed batching buying throughput for free up to the
 compute-bound crossover. Plot both metrics against batch size and you get the

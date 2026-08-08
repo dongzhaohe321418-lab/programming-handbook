@@ -8,6 +8,21 @@ arguments"** and your program can do the rest. That single idea, function
 calling, turns a text box into software that acts. This section builds the
 whole loop from nothing.
 
+!!! abstract "In plain words"
+
+    - **What it is.** Function calling lets the model *ask your program* to run
+      a real function — a calculator, a database lookup, an email sender — and
+      then continue once you hand back the result.
+    - **Picture it.** The model is a sharp colleague locked in a room with no
+      phone and no calculator. It cannot run the errand itself, but it can fill
+      in a request slip — "run `calculate` with a=1499, b=12" — and slide it
+      under the door. Your code runs the errand and passes the answer back.
+    - **Why it matters.** A model only predicts text; it cannot truly compute,
+      check today's date, or read your files. The request-slip trick keeps the
+      model doing what it is good at — deciding *what* to do — while your
+      ordinary code does every real action. That single idea is the whole
+      skeleton of an AI agent.
+
 ## Three things a model genuinely cannot do
 
 Start by being precise about the failure, because "the model is bad at
@@ -89,6 +104,21 @@ Four things in that picture surprise people the first time:
    menu has to be described extremely well — which brings us to schemas.
 
 ## JSON Schema: the contract
+
+!!! abstract "In plain words"
+
+    - **What it is.** A JSON Schema is a small document that spells out the
+      rules for a tool's request slip: which fields exist, what type each must
+      be, which are required, and what each one means.
+    - **Picture it.** A blank paper form with labelled boxes and rules printed
+      beside them — "Amount (number, required)", "Currency (pick one of USD /
+      EUR / GBP / JPY)". The model fills in the boxes; the rules stop it from
+      writing a word where a number belongs.
+    - **Why it matters.** It is the contract between two sides that cannot see
+      each other's code — telling the model exactly what to emit and telling
+      your program exactly what to accept. And the little `description` beside
+      each box is no idle comment: the model reads it, so it is really an
+      instruction you are writing.
 
 You describe each tool to the model with a **JSON Schema** — a JSON document
 that describes the shape of other JSON documents. It is the contract between

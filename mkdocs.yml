@@ -301,6 +301,15 @@ nav:
           - 25.2 Your roadmap: ch25-next/02-roadmap.md
   - V · AI Engineering:
       - Overview: part5-overview.md
+      - The Math You'll Need: part5-math-primer.md
+      - Chapter 25.5 · Neural Networks from Scratch:
+          - Overview: ch25b-neural-networks/index.md
+          - 25.5.1 The neuron and the layer: ch25b-neural-networks/01-neuron-and-layer.md
+          - 25.5.2 Activation functions: ch25b-neural-networks/02-activations.md
+          - 25.5.3 The forward pass: ch25b-neural-networks/03-forward-pass.md
+          - 25.5.4 How a network learns: ch25b-neural-networks/04-learning.md
+          - 25.5.5 Neural networks on graphs — a first GNN: ch25b-neural-networks/05-gnn.md
+          - Exercises: ch25b-neural-networks/exercises.md
       - Chapter 26 · How Language Models Work:
           - Overview: ch26-llm-internals/index.md
           - 26.1 From text to tokens: ch26-llm-internals/01-tokenization.md

@@ -10,6 +10,20 @@ reward is, what a *gradient* is (we will measure one with a ruler before we ever
 write a derivative), and a baseline algorithm so simple that it is genuinely the
 right answer surprisingly often.
 
+!!! abstract "In plain words"
+
+    - **What it is.** A way to learn from *scores* instead of from answer keys:
+      you try something, someone tells you how good it was, and you do more of
+      whatever scored well.
+    - **Picture it.** You can tell one joke is funnier than another without being
+      able to write either, and a coach who can no longer play still knows a good
+      shot from a bad one. Reinforcement learning turns that kind of *judgement*
+      into training signal.
+    - **Why it matters.** For most of what we want from a chat model there is no
+      answer key to copy, but there is almost always someone — or something —
+      that can look at a response and say "this one is better." That judgement is
+      the only thing RL needs.
+
 ## Two kinds of learning signal
 
 Pretraining and supervised fine-tuning both work the same way: you have a
@@ -56,6 +70,29 @@ Two consequences follow immediately, and they shape everything in this chapter:
 
 RL has seven words you must have. Every one of them is easier to see in a grid
 than in a language model, so here is each defined against both.
+
+Before the formal table, meet the seven words in the most ordinary setting there
+is: a child learning a new board game that nobody has explained to them.
+
+!!! example "The same seven words, watching a child learn a game"
+
+    - **state** — the board as it looks right now: whose turn it is and where
+      every piece sits.
+    - **action** — the move the child chooses to make from here.
+    - **policy** — the child's current *habit* for picking moves ("when unsure,
+      advance the front piece"). This is the thing learning changes.
+    - **reward** — the reaction that follows: a parent's "nice one!", a piece
+      captured, the game won or lost.
+    - **trajectory** — the whole sequence of moves in a single game, start to
+      finish.
+    - **return** — how that game turned out overall, added up.
+    - **discount** — how much the child weights winning later against grabbing a
+      small advantage right now.
+
+    Nobody hands the child the *right* move for every position. They play, the
+    game reacts, and the habit shifts towards moves that tended to work out. That
+    is reinforcement learning — and the table below simply says the same thing
+    twice more, once for a grid and once for a language model.
 
 | Term | Grid world | Language model |
 | --- | --- | --- |
@@ -246,6 +283,24 @@ it knows. Knowing the right answer earns nothing if you do not use it.
 
 ## What a gradient is, measured with a ruler
 
+!!! abstract "In plain words"
+
+    - **What it is.** A gradient answers two questions about a dial you can turn:
+      *which way is downhill*, and *how steep*. Turn the dial that way — a little
+      if it is shallow, more if it is steep.
+    - **Picture it.** You are on a hillside in thick fog. You cannot see the
+      valley, but you can feel which way the ground drops away and how sharply,
+      so you step that way. Gradient descent is doing exactly that, over and
+      over.
+    - **Why it matters.** Every method in this chapter improves a model by
+      nudging its dials downhill on a loss. Once you know which way is down, you
+      can train; the rest is bookkeeping.
+
+If the next few pages assume something you do not have — what a gradient is, or
+what KL divergence measures — read the
+[Part V math primer](../part5-math-primer.md) first: it builds both from
+scratch, and this chapter leans on both.
+
 Everything from here on "takes a gradient step". You do not need a calculus
 course to know exactly what that means. You need one idea: **a gradient is a
 slope, and you can measure a slope by wiggling.**
@@ -257,9 +312,13 @@ $$
 L(w) = (w - 3)^2 + 2
 $$
 
+Read aloud: *the loss is the squared distance from 3, plus 2* — a valley whose
+lowest point sits at $w = 3$.
+
 To find its slope at some $w$, nudge $w$ by a tiny amount $h$ in each direction
 and see how much $L$ changed. Rise over run. That is a **finite difference**, and
-it is arithmetic — no symbols, no rules to memorise.
+it is arithmetic — no symbols, no rules to memorise. In one phrase: *wiggle the
+knob a hair each way, and see whether the loss drops.*
 
 ```python
 def loss(w):
@@ -347,6 +406,10 @@ $$
 \frac{dL}{dw} = 2(w - 3)
 $$
 
+Read aloud: *the slope at $w$ is twice how far $w$ sits to the right of 3* — zero
+at the bottom, negative to the left (so go right), positive to the right (so go
+left). It is the same story the ruler told, now in one line.
+
 You can take that on faith — but you should never take it on faith in your own
 code, and researchers do not. The **gradient check** is a real, everyday
 practice, and it is three steps:
@@ -390,6 +453,20 @@ will be checked against finite differences exactly like this before we trust it.
     with — never the machine.
 
 ## Softmax policies and log-probabilities
+
+!!! abstract "In plain words"
+
+    - **What it is.** A policy is the model's current *habit* of what to say
+      next, written as probabilities — say a 60% chance it apologises, 30% it
+      explains, 10% it jokes. "Training the policy" just means nudging those
+      percentages.
+    - **Picture it.** A row of dimmer switches, one per possible next word. The
+      softmax turns each switch's raw setting (its "logit") into a percentage,
+      and the percentages always add up to 100%. Learning slides the dimmers.
+    - **Why it matters.** Because a policy is just numbers we can nudge, every
+      update in this chapter reduces to the same move: turn the dimmer up on the
+      words that paid off — and, for free, because they must sum to 100%, the
+      others dim on their own.
 
 For a policy over a handful of actions, the standard parameterisation is the one
 you already know from [26.4](../ch26-llm-internals/04-sampling.md): keep one real

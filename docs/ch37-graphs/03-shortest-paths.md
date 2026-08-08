@@ -80,6 +80,22 @@ already own the structure that does that.
 
 ## Dijkstra's algorithm: BFS with a priority queue
 
+!!! abstract "In plain words"
+
+    - **What it is.** Find the cheapest route from one starting point to
+      everywhere else by always extending the route out to the *cheapest place
+      you can currently reach* next.
+    - **Picture it.** Water poured onto the lowest point of a landscape. It
+      always seeps into the lowest ground it can next reach, so the first moment
+      the water touches any spot, it has arrived by the cheapest possible way
+      there. Dijkstra floods the graph the same way, cheapest-first.
+    - **Why it matters.** Once edges cost different amounts, "fewest hops" (BFS)
+      is the wrong answer; Dijkstra tracks *cost-so-far* instead. Always taking
+      the cheapest frontier vertex is what keeps it fast — and the reason that
+      greedy grab is *safe* is that, with no negative edges, going further can
+      never make a route cheaper, so the cheapest-reachable place is already as
+      cheap as it will ever be.
+
 Edsger Dijkstra's algorithm is BFS with one substitution: replace the FIFO
 queue with a [priority queue](../ch21-heaps/02-priority-queues.md) keyed on
 distance-so-far. The queue is the only thing that changes; the shape of the
@@ -282,6 +298,21 @@ neighbourhood.
     anything you have not implemented yourself.
 
 ## Where Dijkstra is simply wrong
+
+!!! abstract "In plain words"
+
+    - **What it is.** The moment an edge can *lower* the running total, Dijkstra's
+      habit of declaring a vertex "settled" and never looking at it again can
+      lock in a route that a later bargain would have beaten.
+    - **Picture it.** You commit to the shortest checkout queue and promise
+      yourself you will not switch. Then a brand-new till opens with a discount
+      — but you have already made your promise. Dijkstra makes exactly that
+      promise every time it settles a vertex.
+    - **Why it matters.** With only non-negative edges the promise is always
+      safe, because extending a path can never make it cheaper. A single
+      negative edge breaks that guarantee silently. The fix is **Bellman-Ford**,
+      which refuses to make the promise at all: it just relaxes every edge over
+      and over until nothing can improve.
 
 Now the sentence we were told to remember: *the rest of the route adds more
 length*. Negative edge weights make that false, and when it is false the greedy
@@ -523,6 +554,20 @@ The practical decision tree is short:
 
 ## A\*: Dijkstra with a hunch
 
+!!! abstract "In plain words"
+
+    - **What it is.** Dijkstra plus a *hunch* about which direction the goal lies
+      in, so it stops wasting effort exploring the wrong way.
+    - **Picture it.** Driving to an address across town. Dijkstra searches
+      outward in every direction like ripples on a pond; A\* is you glancing at
+      the map and mostly heading *toward* the destination, only doubling back
+      when a road forces you to.
+    - **Why it matters.** The hunch — a *heuristic*, a guess of the distance
+      still to go — can cut the work dramatically. But it is only safe if it
+      never *over*estimates the true remaining cost; an over-optimistic guess
+      would keep the answer, but an over-confident one can send A\* charging past
+      the real shortest route. That honesty condition is called **admissibility**.
+
 Dijkstra spreads out equally in all directions, because it has no idea where
 the goal is. If you are routing across a city and the destination is east, half
 of Dijkstra's work explores west. A\* fixes that with one change: order the
@@ -674,6 +719,11 @@ or it does not:
 $$
 D_{k+1}[i][j] = \min\bigl(D_k[i][j],\; D_k[i][k] + D_k[k][j]\bigr)
 $$
+
+Read aloud, this says: the cheapest way from $i$ to $j$ that is now allowed to
+pass through vertex $k$ is *either* the best you already had without it, *or*
+the best route into $k$ joined to the best route out of $k$ — whichever is
+smaller.
 
 Do that for every $k$ and every pair, updating in place, and you are done.
 

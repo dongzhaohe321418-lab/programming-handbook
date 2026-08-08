@@ -9,6 +9,21 @@ three. This section changes the cost model and watches the optimal data
 structure change with it — into the **B-tree**, the structure underneath
 essentially every database index and file system on your machine.
 
+!!! abstract "In plain words"
+
+    - **What it is.** A B-tree is a search tree built for storage where
+      *fetching one item costs the same as fetching a whole block* — so it uses
+      fat nodes packed with many keys and stays only a few levels deep.
+    - **Picture it.** Think of a printed phone book. Each page holds hundreds of
+      names, so you find anyone by flipping through a handful of *pages*, not by
+      turning past one name at a time. A B-tree node is a page; a disk block is
+      what the hardware hands you whole, whether you wanted one name or all of
+      them.
+    - **Why it matters.** When a single read is a disk seek — thousands of times
+      slower than a comparison in memory — the only cost worth counting is how
+      many blocks you touch. Fat, shallow nodes turn a lookup over a billion
+      keys from about thirty reads into four.
+
 ## Change the cost model, change the answer
 
 ### What a disk actually charges for

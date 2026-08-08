@@ -8,6 +8,21 @@ occasional nuisance but a mathematical certainty that arrives far earlier
 than intuition suggests, and everything interesting about hash table
 engineering is a strategy for surviving them.
 
+!!! abstract "In plain words"
+
+    - **What it is.** A *collision* is two different keys the hash sends to the
+      same slot; the *load factor* is simply how full the table is — keys
+      divided by slots.
+    - **Picture it.** Back at the coat-check: now and then two tickets point to
+      the same peg. You cannot prevent it — with enough coats it is bound to
+      happen — and the busier the cloakroom, the more often it does. You cope
+      either by hanging both coats on that one peg (*chaining*) or by walking to
+      the next free peg (*probing*).
+    - **Why it matters.** Collisions are not a rare accident to patch later;
+      they are the normal case, and they begin surprisingly early. How full you
+      let the table get is the one knob that decides how often they cost you —
+      which is why this whole section is really about managing the load factor.
+
 ## Collisions are certain, and they arrive early
 
 The easy half of the argument is the **pigeonhole principle**: put 159 words
@@ -341,6 +356,21 @@ double hashing   at alpha=0.90: 2.61 probes per successful search
 ```
 
 ## Deleting from an open-addressed table: the tombstone
+
+!!! abstract "In plain words"
+
+    - **What it is.** A *tombstone* is a small "something used to be here"
+      marker you leave when deleting from an open-addressed table, instead of
+      blanking the slot outright.
+    - **Picture it.** Picture a row of numbered lockers where a search gives up
+      the moment it hits an empty one. If you empty a locker in the *middle* of
+      a run, you have cut the trail — anything filed past that locker is now
+      invisible. A tombstone is a "vacated, keep looking" sign that keeps the
+      trail unbroken.
+    - **Why it matters.** Without the marker, deleting one key silently strands
+      others: a lookup halts at the fresh gap and reports perfectly present keys
+      as missing, with no error to warn you. The demonstration below shows
+      exactly that happening.
 
 Here is a bug that has shipped in real code more than once. In an
 open-addressed table, a search stops at the first empty slot — that is what

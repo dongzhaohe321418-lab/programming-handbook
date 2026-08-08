@@ -13,6 +13,21 @@ sometimes the right amount of planning is none.
 
 ## Why greedy loops fall over on long tasks
 
+!!! abstract "In plain words"
+
+    - **What it is.** Reacting means deciding only the *next* step from what you
+      just saw; planning means sketching the *whole route* up front and then
+      working through it. Long tasks need the plan.
+    - **Picture it.** For a quick errand you walk out the door and figure it out
+      on the way. For a road trip across the country you map the route first —
+      because a wrong turn on step 2 of twenty wastes everything after it, and
+      without a route you have no way to notice you are even lost.
+    - **Why it matters.** Errors *compound*: if each step is right 95% of the
+      time, twenty steps in a row all succeed only about a third of the time. A
+      plan buys you fewer, checkable steps and something to compare progress
+      against — so a derailed run gets caught and repaired instead of running
+      confidently off a cliff.
+
 Three things go wrong at once as tasks get longer:
 
 - **No global view.** A step chosen from the last observation cannot know it
@@ -262,6 +277,20 @@ you want that caught by a five-line check rather than discovered by an agent
 that never finishes.
 
 ## Self-refinement: generate, critique, revise
+
+!!! abstract "In plain words"
+
+    - **What it is.** Reflection means the agent writes a draft, criticises its
+      *own* draft, and revises — a short "look again, then fix" loop around a
+      single answer.
+    - **Picture it.** It is proofreading. Your first draft of an email almost
+      always has a typo or a missing point; reading it back once, before you hit
+      send, catches most of them. The agent is re-reading its own work.
+    - **Why it matters.** A second look helps *only when the critique is
+      grounded* — a test that fails, a requirement left unmet, a number that
+      does not check out. Given a real verifier, revision is close to free
+      reliability; asked merely "do you like your answer?", a model says yes and
+      can even talk itself out of a correct one.
 
 **Self-Refine** (Madaan et al., 2023) adds an inner loop around a *single*
 output: produce a draft, criticise it, revise, repeat. Its across-attempts

@@ -11,6 +11,18 @@ loop, an environment designed to be collected from, a rollout driver, and a
 converter that turns raw trajectories into all three of the training formats
 Part V has used.
 
+!!! abstract "In plain words"
+
+    - **What it is.** A trajectory is the full recording of one attempt at a task —
+      every thought, every tool call, every result that came back — plus a verdict
+      on whether it worked.
+    - **Picture it.** A dashcam for an agent. You do not just keep where it ended
+      up; you keep the whole drive, including the wrong turn and the recovery, so
+      later you can learn from the route and not only the destination.
+    - **Why it matters.** The final answer alone cannot teach *how* to get there,
+      and the most valuable moments — catching a mistake and fixing it — live in
+      the middle of the path, not at the end.
+
 ## What a trajectory is
 
 A trajectory is the complete record of one attempt at one task. Not the answer —

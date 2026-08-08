@@ -10,6 +10,20 @@ This section builds the whole pipeline — chunk, embed, store, retrieve, rerank
 assemble, generate, cite, evaluate — with runnable code at every stage, on top
 of the vector search from [Section 29.1](01-embeddings-vector-search.md).
 
+!!! abstract "In plain words"
+
+    - **What it is.** Retrieval-augmented generation (RAG) looks the answer up
+      *before* asking the model, then pastes what it found into the prompt so
+      the model answers from that text instead of from memory.
+    - **Picture it.** It turns a closed-book exam into an open-book one. A
+      student quoting from memory misremembers dates and invents sources; the
+      same student with the textbook open turns to the right page and copies the
+      fact correctly. RAG hands the model the right page first.
+    - **Why it matters.** A model's memory is frozen at training time, and it
+      will bluff a confident wrong answer rather than admit a gap. Retrieval
+      supplies fresh, private, checkable facts — and because the text is right
+      there in the prompt, the answer can *cite* where each claim came from.
+
 ## Three reasons a model needs a library card
 
 **Knowledge cutoff.** Training data stops at a date. Anything after it does not
@@ -146,6 +160,20 @@ embedded by model A cannot be compared with chunks embedded by model B, as
 [Section 29.1](01-embeddings-vector-search.md) explained.
 
 ## Chunking is the whole ballgame
+
+!!! abstract "In plain words"
+
+    - **What it is.** Chunking cuts a long document into smaller passages, each
+      one small enough to retrieve precisely but whole enough to still make
+      sense on its own.
+    - **Picture it.** Think of slicing a loaf. One giant slab is unwieldy and a
+      pile of crumbs is useless; you want slices you can actually pick up — and
+      you never want the knife to come down through the middle of the one word
+      that carries the answer.
+    - **Why it matters.** The chunk is the unit you embed, retrieve, and cite.
+      Cut a fact in half at a boundary and the retriever can match the question
+      yet hand the model a passage with the number missing — a failure no
+      amount of model quality can repair.
 
 You cannot embed a 400-page manual as one vector: a single vector averaging
 400 pages points in the direction of nothing in particular. So documents are

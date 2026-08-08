@@ -45,6 +45,23 @@ for v, nbrs in graph.items():
     print(f"  {v}: {nbrs}")
 ```
 
+!!! abstract "In plain words"
+
+    - **What it is.** Two ways to visit every vertex you can reach. *Breadth-first
+      search* fans out in rings — everything one step away, then everything two
+      steps away. *Depth-first search* plunges down a single path to its end,
+      then backs up to the last junction and tries the next turning.
+    - **Picture it.** Exploring a building. BFS checks every room on your floor
+      before touching the stairs; DFS follows one corridor as far as it goes,
+      then reverses to the last fork. BFS keeps its to-do list in a **queue**
+      (first noticed, first visited); DFS keeps it in a **stack** (most recently
+      noticed, first visited).
+    - **Why it matters.** They cost the same and are almost the same code — the
+      *only* line that changes is whether you take the next vertex from the
+      front of the list or the back — yet they find different things: BFS the
+      fewest-edges route, DFS the deep structure (cycles, orderings, whole
+      connected regions).
+
 ## Breadth-first search: rings around the start
 
 BFS uses a [queue](../ch19-stacks-queues/03-queues.md) — first in, first out.
@@ -739,6 +756,19 @@ makes this useful in a build tool, where the error message needs to name the
 files involved.
 
 ## Application 4 — topological sort
+
+!!! abstract "In plain words"
+
+    - **What it is.** Arranging tasks in a single line so that everything a task
+      depends on comes *before* it.
+    - **Picture it.** Getting dressed. Socks before shoes, shirt before jacket,
+      underwear before trousers. Some pairs have no rule between them (socks
+      versus shirt), so more than one valid order exists — but you can never put
+      your shoes on before your socks.
+    - **Why it matters.** Course prerequisites, compiler build steps, and
+      spreadsheet cell recalculation all need a safe order to process things in.
+      Topological sort produces one — or proves that none can exist, because the
+      dependencies chase each other in a loop.
 
 Here is the payoff for DAGs. A **topological order** is a listing of the
 vertices such that every edge points forward: if $u \to v$, then $u$ appears

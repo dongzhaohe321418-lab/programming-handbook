@@ -88,6 +88,11 @@ $$
 \sigma^2 = \frac{1}{d}\sum_i (x_i - \mu)^2
 $$
 
+Read aloud: *subtract the row's mean $\mu$, divide by its spread
+$\sqrt{\sigma^2 + \epsilon}$ so every number lands on a standard scale, then let
+the two learned knobs $\gamma$ (scale) and $\beta$ (shift) move them wherever
+training prefers.*
+
 ```python
 import numpy as np
 
@@ -198,6 +203,20 @@ as the attention block it sits next to.
     In most large models **roughly two-thirds of the weights live in
     feed-forward layers.** If you are budgeting memory, that is the term to
     look at first — and Exercise 26.5 makes you compute it for a 70B model.
+
+!!! abstract "In plain words"
+
+    - **What it is.** A *block* is one attention layer plus one small
+      feed-forward network; a model is that same block stacked $N$ times, each
+      copy refining the token vectors a little more.
+    - **Picture it.** An assembly line, or editing an essay in passes. An early
+      block might settle who "it" refers to; a later block, standing on that
+      result, works out the tone of the sentence. Each pass starts from the
+      previous pass's improved version.
+    - **Why it matters.** No single layer understands a sentence. Depth is where
+      simple, local operations compound into behaviour that looks like
+      understanding — and because every block keeps the input's shape, you can
+      stack as many as you can afford.
 
 ## Stacking blocks into a model
 

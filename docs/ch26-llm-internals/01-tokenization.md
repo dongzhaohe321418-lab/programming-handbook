@@ -10,6 +10,18 @@ model can perceive, how long your context is, and what you get billed. Most
 of the famous "the model is stupid" screenshots on the internet are really
 screenshots of tokenization.
 
+!!! abstract "In plain words"
+
+    - **What it is.** A *tokenizer* is the translator that turns your text into
+      a list of ID numbers before the model sees it, and turns the model's
+      numbers back into text afterwards.
+    - **Picture it.** A codebook, like the ones spies used: each word or word
+      piece has an agreed number. Encoding is looking each piece up in the
+      book; decoding is reading the numbers back out through the same book.
+    - **Why it matters.** The model does pure arithmetic — it never sees
+      letters at all. Which pieces of text earn their own number decides what
+      the model can perceive, how long your context is, and what you are billed.
+
 ## Vocabulary and IDs
 
 A tokenizer is two lookup tables. One maps each **token** (a piece of text)

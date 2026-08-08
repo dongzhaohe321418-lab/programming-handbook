@@ -92,6 +92,21 @@ search cannot chain.**
 
 ## Entities, relations, triples
 
+!!! abstract "In plain words"
+
+    - **What it is.** A knowledge graph stores facts as a *web of connections* —
+      dots for things (people, services) and labelled arrows for how they relate
+      — so you can *follow* the arrows to answer a question no single sentence
+      contains.
+    - **Picture it.** It is a subway map. Vector search hands you every station
+      that mentions "downtown"; a graph lets you *trace the line* from where you
+      are to where you need to be, stop by stop, reading off exactly which
+      transfers you made.
+    - **Why it matters.** When the answer is a *relationship* — "who is affected
+      if this database goes down?" — it lives scattered across many sentences,
+      and no pile of similar paragraphs contains it whole. Walking the graph
+      chains the facts together, and the path it walked *is* the explanation.
+
 A **knowledge graph** stores exactly the structure the sentences imply:
 
 - **Entities** are the nodes: people, services, data stores.

@@ -9,6 +9,23 @@ by "some application" and you get the plumbing problem this section is about,
 along with the industry's answer to it: an open protocol, spoken over
 JSON-RPC, called **MCP**.
 
+!!! abstract "In plain words"
+
+    - **What it is.** MCP (the Model Context Protocol) is one shared language
+      that lets any AI app talk to any tool, so nobody has to write a custom
+      connector for every app-and-tool pairing.
+    - **Picture it.** A universal power adapter. Without one, every device needs
+      a different plug for every country — $M$ devices times $N$ countries of
+      custom adapters. A single agreed standard turns that into $M + N$: each
+      device learns the standard once, each socket speaks it once, and
+      everything just fits.
+    - **Why it matters.** It collapses an $M \times N$ explosion of bespoke
+      integrations into $M + N$. A server exposes three kinds of thing —
+      **tools** (verbs the model chooses to run), **resources** (nouns the app
+      attaches, like a file), and **prompts** (templates the user picks, like a
+      slash command) — and any compliant app can use them the moment it
+      connects.
+
 ## The M×N problem
 
 Suppose there are $M$ AI applications — an IDE assistant, a chat client, an
@@ -164,6 +181,20 @@ or to ask the user a question (*elicitation*) — but tools, resources, and
 prompts are the three you will meet first and use most.
 
 ## The wire format: JSON-RPC 2.0
+
+!!! abstract "In plain words"
+
+    - **What it is.** JSON-RPC is a tiny, decades-old convention for one program
+      to call another over a wire: send a small JSON message naming a method and
+      its arguments, get a JSON message back.
+    - **Picture it.** A restaurant order pad with numbered tickets. You write
+      "table 3 wants the soup" on ticket #3; the kitchen sends back a plate
+      tagged #3. The number is the whole trick — several orders can be in flight
+      and the number matches each dish to the table that asked for it.
+    - **Why it matters.** Both sides may have many messages outstanding, and
+      replies can come back in any order. The `id` on each request is what lets
+      a reply be matched to the question that caused it — the same job
+      `tool_call_id` did one layer up in Section 28.1.
 
 MCP does not invent a message format. It uses **JSON-RPC 2.0**, a small, old,
 boring specification, which is exactly what you want in a protocol.

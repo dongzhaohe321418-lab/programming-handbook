@@ -131,6 +131,19 @@ highest-probability *sentence*. A slightly worse first token can open onto a
 much better continuation, and greedy decoding has no lookahead at all with
 which to notice.
 
+!!! abstract "In plain words"
+
+    - **What it is.** *Temperature* is a single dial for how boldly the model
+      gambles: low temperature almost always takes the most likely token, high
+      temperature gives the underdogs a real chance.
+    - **Picture it.** A boldness knob. Turned down, the model plays it safe and
+      predictable; turned up, it takes risks and surprises you — sometimes
+      delightfully, sometimes with nonsense.
+    - **Why it matters.** The logits are the same every time; only this knob
+      changes. It is the difference between a model that is reliable for
+      extraction and one that is lively for brainstorming — a task decision, not
+      a quality setting.
+
 ## Temperature: flattening or sharpening the distribution
 
 The fix is to *sample* instead of maximise. **Temperature** $T$ divides every

@@ -56,6 +56,20 @@ restriction — and, as we are about to see, also its cost.
 
 ## A sort is a decision tree
 
+!!! abstract "In plain words"
+
+    - **What it is.** If the only question your sort is allowed to ask is "is
+      this one bigger than that one?", then no cleverness can push it below about
+      $n \log_2 n$ comparisons.
+    - **Picture it.** Twenty questions. Each yes/no answer can, at best, halve
+      the possibilities still in play. To pin down one arrangement out of the
+      $n!$ possible orderings you therefore need at least $\log_2(n!)$ questions
+      — and $\log_2(n!)$ works out to roughly $n \log_2 n$.
+    - **Why it matters.** This is a wall no future algorithm or faster machine
+      can climb, because it is a fact about *information*, not about code. It
+      also shows exactly where the escape hatch is: stop asking only "which is
+      bigger?".
+
 Fix an algorithm and fix $n$. Now watch the algorithm run, and record only the
 comparisons it makes and their answers.
 
@@ -168,6 +182,10 @@ comparisons, so
 $$
 2^h \ \ge\ n! \qquad\Longrightarrow\qquad h \ \ge\ \log_2(n!)
 $$
+
+Read aloud: for the tree to have at least one leaf for every ordering, its
+height $h$ — which is the worst-case number of comparisons — must be at least
+$\log_2(n!)$.
 
 !!! note "The comparison lower bound"
 
@@ -294,6 +312,22 @@ algorithm will ever beat merge sort by more than a few percent, *provided it
 sorts by comparing*.
 
 ## What the theorem does not forbid
+
+!!! abstract "In plain words"
+
+    - **What it is.** The wall only stops algorithms that *compare*. If your keys
+      are small integers, you can use each key directly as a slot number and
+      never compare two items at all.
+    - **Picture it.** Sorting mail into pigeonholes. You never hold two letters
+      up against each other — you read the apartment number and drop the letter
+      straight into that numbered slot. The number *is* the address. (This is the
+      hash-table idea from
+      [Chapter 36](../ch36-hashing-tries/01-hash-tables.md): *compute* where
+      something belongs instead of searching for it.)
+    - **Why it matters.** One comparison reveals a single yes/no bit; reading a
+      two-digit key reveals far more in one step. That is how the next section's
+      sorts reach linear time — not by beating the theorem, but by stepping
+      outside its one assumption that all you can do is compare.
 
 Read the statement carefully and the loopholes appear.
 

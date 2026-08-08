@@ -14,6 +14,17 @@ This section makes the biases concrete by implementing a judge whose biases you
 can read in the source, measuring each one, and fixing the ones that are
 fixable.
 
+!!! abstract "In plain words"
+
+    - **What it is.** Using a model to grade open-ended answers — summaries, tone,
+      explanations — that have no single right string to match against.
+    - **Picture it.** Hiring a teaching assistant to mark essays. Fast and cheap,
+      but the TA has habits: a soft spot for the longer paper, for the one at the
+      top of the pile, for essays written in a style like their own.
+    - **Why it matters.** It is the only affordable way to grade at scale, and it
+      quietly hands you wrong numbers unless you treat the judge as an instrument
+      to be measured, not an oracle to be trusted.
+
 ## Write the judge prompt like a specification
 
 A judge prompt is a spec. The most common failure is not that the model cannot
@@ -108,6 +119,18 @@ Use pairwise against a **frozen baseline** — the previous release, or a strong
 reference answer — and report a win rate. Use absolute scoring when you need to
 trend a single system over time and cannot keep re-running a baseline, and then
 accept that the absolute level means less than its changes.
+
+!!! abstract "In plain words"
+
+    - **What it is.** Judges have systematic thumbs on the scale. The biggest is
+      *position bias*: whichever answer is shown first tends to win, regardless of
+      which is actually better.
+    - **Picture it.** A taste test where the sample you sip first always seems best.
+      The fix is obvious once named — pour each pair twice, in both orders, and
+      average — so being first cannot decide the winner.
+    - **Why it matters.** If your loop always pastes your own system first, that
+      thumb is a constant that inflates every score. Swapping the order and
+      averaging costs one extra call and removes 25 points of illusion.
 
 ## The bias catalogue, measured
 
@@ -277,6 +300,17 @@ Before you let one gate a release, validate it — in five steps:
 5. **Compute Cohen's kappa**, not raw agreement — as
    [31.4](../ch31-rl/04-reward-models.md) insisted for annotators, agreement has
    to be corrected for chance.
+
+!!! abstract "In plain words"
+
+    - **What it is.** A score for how much two graders agree, *after subtracting
+      the agreement they would have reached by chance alone*.
+    - **Picture it.** If nine in ten answers are "pass", a lazy judge that always
+      says "pass" agrees with you 90% of the time while knowing nothing. Kappa
+      strips out that free agreement and reports only what is left.
+    - **Why it matters.** Raw agreement flatters a judge on lopsided data. Kappa is
+      the honest number: near 0 means "no better than guessing the common answer",
+      near 1 means "genuinely tracks the human".
 
 ```python
 """Validating a judge: agreement with humans, corrected for chance."""

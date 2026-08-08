@@ -372,6 +372,19 @@ Hashing costs one pass over each record plus an expected-$O(1)$ set lookup, so
 there is no reason ever to skip this stage. What it cannot do is notice that two
 records differ by one word.
 
+!!! abstract "In plain words"
+
+    - **What it is.** A fast way to find documents that are *almost* the same,
+      without the impossible task of comparing every pair against every other pair.
+    - **Picture it.** Give each document a short "fingerprint" designed so that two
+      texts with lots of overlap get colliding fingerprints — like sorting books
+      into bins by a few keywords, then only bothering to compare books that landed
+      in the same bin.
+    - **Why it matters.** Exact-copy detection misses a duplicate that changed one
+      word, and comparing all pairs of a million documents is $5 \times 10^{11}$
+      comparisons. Fingerprinting turns that quadratic wall into work that scales
+      with how many near-duplicates you actually have.
+
 ## Near-duplicates: shingles, MinHash, and LSH
 
 Comparing every pair of $n$ documents is $O(n^2)$ — at a million documents that
@@ -388,6 +401,10 @@ the same order. Similarity is the **Jaccard index**
 $$
 J(A, B) = \frac{|A \cap B|}{|A \cup B|}
 $$
+
+Read aloud: the Jaccard index is the share of shingles the two documents have
+*in common* out of all the distinct shingles they use between them — 1 means
+identical sets, 0 means not a single shared shingle.
 
 ### MinHash
 
@@ -894,6 +911,20 @@ you intend to report, not just the headline one. Run it **last**, so that a
 record added by a later stage cannot slip past. And record in the dataset card
 which eval sets were used and at what $n$ — a decontamination claim without
 those two numbers is not checkable.
+
+!!! abstract "In plain words"
+
+    - **What it is.** The funnel report is the running count of how many records
+      each stage kept and threw away, from the raw pile at the top to the clean set
+      at the bottom.
+    - **Picture it.** A stack of gold-panning sieves with progressively finer
+      screens: a lot of gravel goes in the top, each screen catches a different
+      kind of junk, and a little gold falls out the bottom — and you write down how
+      much each screen removed.
+    - **Why it matters.** When quality drops three months later, the funnel is how
+      you answer the only question that matters — *which stage changed?* A yield of
+      one third is normal; the *shape* of the funnel tells you whether the problem
+      was junk, repetition, or wrong answers.
 
 ## The funnel report
 

@@ -11,6 +11,21 @@ three-agent team by hand, and is equally careful about when not to.
 
 ## Why more than one agent
 
+!!! abstract "In plain words"
+
+    - **What it is.** A multi-agent system splits the work across several models
+      with specialised roles — a researcher, a writer, a critic — instead of
+      asking one generalist to do everything.
+    - **Picture it.** It is a newsroom. A reporter digs up facts, an editor
+      shapes the story, a fact-checker challenges it. Each is sharp at one job —
+      but they only work because someone coordinates who does what and when, and
+      that coordination is pure overhead.
+    - **Why it matters.** The moment you have more than one agent you have a
+      *distributed system*: messages to the wrong agent, two agents editing the
+      same data, a team that never agrees it is finished — none of which throw a
+      stack trace. Add a second agent only when you can name what it has that the
+      first does not; otherwise one strong agent with good tools wins.
+
 ### Four honest reasons for
 
 Each of these you can actually test:

@@ -33,6 +33,20 @@ job.
 
 ## The idea: the key is the path
 
+!!! abstract "In plain words"
+
+    - **What it is.** A *trie* is a tree keyed by the letters of the words
+      themselves: each step down spells one more character, so words that share
+      a prefix share the same path until the point they differ.
+    - **Picture it.** Think of a signpost tree where one road is marked "pro-".
+      Everything reachable past that sign — `program`, `project`, `promise` —
+      travels the same road until it forks on the next letter. Following the
+      road *is* spelling the word.
+    - **Why it matters.** Because shared prefixes share a path, a trie answers
+      the very question a hash table cannot: "which stored keys start with
+      `pro`?" You walk to the `pro` fork once, and everything hanging below it
+      is the answer — the basis of autocomplete, spell-check, and IP routing.
+
 A **trie** (from re*trie*val; most people say "try") stores a set of strings
 in a tree where **each edge is labelled with one character, and a key is
 spelled out by the path from the root to a node**. The nodes carry no keys.

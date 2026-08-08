@@ -20,6 +20,37 @@ statistically, constrain it structurally, and design the system around the
 assumption that the component sometimes fails. Part V is the engineering
 that assumption forces.
 
+## How much math do I need?
+
+Less than you fear, and none of it up front. Part V assumes **no machine
+learning background, no calculus, and no linear algebra course** — if you have
+finished Parts I–IV you have the prerequisites. Every mathematical idea a
+chapter uses (vectors, softmax, gradients, KL divergence) is built from scratch
+where it first matters, with a runnable numpy block you can see the numbers in.
+
+To make that painless, this Part opens with a gentle companion page:
+
+[The math you'll actually need](part5-math-primer.md){ .md-button .md-button--primary }
+
+It is the recommended first stop, and a page to keep a finger in — whenever a
+formula in a later chapter bites, flip back to the matching section and it turns
+into arithmetic you can run. Nothing on it is harder than a weighted average.
+
+!!! tip "A 60-second self-check"
+    You are ready for Chapter 26 either way, but if any of these feel
+    unfamiliar, read the primer first — it is quicker than getting stuck later:
+
+    - A **vector** is a fixed-length list of numbers, and a **dot product**
+      says how aligned two of them are.
+    - A **probability distribution** is a list of non-negative numbers that
+      sum to 1.
+    - A **gradient** is just "which way is downhill, and how steep" — the thing
+      training follows.
+    - You can read a formula like $\operatorname{softmax}(z)$ as an English
+      sentence rather than a wall of symbols.
+
+    None of these require prior math — the primer teaches each one from zero.
+
 ## The six skill areas
 
 Job postings vary, but the underlying skills cluster into six areas. Here is

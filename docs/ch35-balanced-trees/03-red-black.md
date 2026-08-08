@@ -11,6 +11,24 @@ Linux kernel. This section states the five properties exactly, checks them
 with code after every single insert, and is honest about the one operation
 that is genuinely hard.
 
+!!! abstract "In plain words"
+
+    - **What it is.** Red-black trees keep balance with a looser, cheaper
+      discipline than AVL: instead of measuring every height, they paint each
+      node red or black and follow a few colouring rules that stop any path
+      from being more than twice as long as any other.
+    - **Picture it.** Think of "good enough" tidying versus perfect tidying. A
+      perfectionist re-shelves the whole bookcase the moment one shelf is
+      slightly off (that is AVL); a pragmatist just follows two quick habits —
+      "never two loose books in a row, and every route to the end passes the
+      same number of bookends" — and never lets things get more than twice as
+      uneven. Far less fussing, still quick to find anything.
+    - **Why it matters.** The looser rule takes less work to restore after each
+      insert or delete, so updates are cheaper. You accept a little more height
+      (paths up to about $2\log_2 n$ instead of AVL's $1.44\log_2 n$) and buy
+      faster churn in return — which is why this, not AVL, is the tree inside
+      Java, C++, and the Linux kernel.
+
 ## The five properties
 
 Every node carries one extra bit: a **colour**, red or black. The empty

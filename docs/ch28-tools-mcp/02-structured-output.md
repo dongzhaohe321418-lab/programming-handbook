@@ -149,6 +149,20 @@ sampling.
 
 ## Constrained decoding: masking the logits
 
+!!! abstract "In plain words"
+
+    - **What it is.** Constrained decoding forces the model to stay inside a
+      grammar as it writes, by forbidding — before each token is chosen — any
+      token that would break the required format.
+    - **Picture it.** Bowling with the bumpers up. The ball can only go where
+      the lane allows, so a gutter ball is impossible. You are not *asking* it
+      to stay on the lane and checking afterward; you have made leaving the lane
+      impossible. The previous section asked nicely and swept up the mess — this
+      puts up the rails.
+    - **Why it matters.** "Please reply in JSON" works in testing and fails at
+      3 a.m., silently. Rails give a *guarantee* of well-formed output that does
+      not depend on the model being cooperative, well-prompted, or even good.
+
 Recall from [Section 26.4](../ch26-llm-internals/04-sampling.md) how a token
 is chosen: the model produces one **logit** per vocabulary entry, softmax
 turns those scores into probabilities, and you sample from that
@@ -166,6 +180,11 @@ $$
 P(\text{token } i) = \frac{\exp(z_i / T) \cdot m_i}
                           {\sum_j \exp(z_j / T) \cdot m_j}
 $$
+
+Read aloud: this is the ordinary softmax over the scores $z_i$ (with temperature
+$T$), except every forbidden token is multiplied by its mask $m_i = 0$ — so its
+probability becomes exactly zero, and the allowed tokens are renormalised to sum
+to one.
 
 The guarantee is structural, not statistical. It does not depend on the
 model being cooperative, well-prompted, or even good. Here it is, running:

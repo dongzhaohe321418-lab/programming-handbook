@@ -11,6 +11,21 @@ a 70-billion-parameter model on a machine you own. We will build a real
 quantizer in numpy, measure exactly what it costs, and then map the format
 landscape you will actually meet: GGUF, GPTQ, AWQ, NF4.
 
+!!! abstract "In plain words"
+
+    - **What it is.** Quantization stores each of the model's numbers using
+      fewer bits — say 4 instead of 16 — accepting a little rounding error to
+      make the model a fraction of its size.
+    - **Picture it.** Writing every price on a menu as a whole dollar instead of
+      dollars-and-cents: "$3" instead of "$2.99" takes less room and is close
+      enough to shop with. You have thrown away the digits past the point where
+      they changed your decision.
+    - **Why it matters.** A model's size is how many numbers it has times how
+      many bits each takes, so halving the bits halves the memory — and that is
+      what moves a 70-billion-parameter model off a rack of datacenter GPUs and
+      onto a machine you own. The price is precision, and the rest of this
+      section measures exactly how much.
+
 ## Numbers have a price list
 
 [Section 0.2](../ch00-machine/02-binary.md) established that everything in a
@@ -94,7 +109,12 @@ q_i = \operatorname{round}\!\left(\frac{w_i}{s}\right), \qquad
 \hat{w}_i = q_i \, s
 $$
 
-with $q_{\max} = 127$ for signed 8-bit and $7$ for signed 4-bit. This is
+Read aloud: pick a scale $s$ so the block's largest-magnitude weight maps onto
+the biggest storable integer $q_{\max}$; turn each weight $w_i$ into the nearest
+integer $q_i$ by dividing by $s$ and rounding; and recover an approximate weight
+$\hat{w}_i$ by multiplying that integer back by $s$.
+
+With $q_{\max} = 127$ for signed 8-bit and $7$ for signed 4-bit. This is
 **symmetric absmax** quantization — the simplest scheme that works, and the
 core of every scheme that works better.
 

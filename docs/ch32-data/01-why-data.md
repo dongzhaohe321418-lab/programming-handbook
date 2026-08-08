@@ -13,6 +13,18 @@ takes on disk, and hands you three runnable tools — a schema validator, a
 mixture sampler, and a contamination detector — that every data engineer
 writes in their first week.
 
+!!! abstract "In plain words"
+
+    - **What it is.** Once the model design and the compute budget are fixed,
+      almost all the quality you have left to gain lives in the data you train
+      on, not in the model.
+    - **Picture it.** Two cooks with the identical oven and the same hour on the
+      clock: the one with better ingredients wins. A fancier oven cannot rescue
+      spoiled milk.
+    - **Why it matters.** Architectures are copied in an afternoon; the corpus is
+      the part nobody hands you. If you want a better model at the same cost, you
+      improve what it eats.
+
 ## The thesis, argued with mechanisms
 
 The slogan is *garbage in, garbage out*, and slogans are worth very little.

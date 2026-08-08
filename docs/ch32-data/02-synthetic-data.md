@@ -12,6 +12,19 @@ implements four real recipes — Self-Instruct, Evol-Instruct, UltraFeedback-sty
 preference synthesis, and persona seeding — and then makes the failure mode
 happen on purpose.
 
+!!! abstract "In plain words"
+
+    - **What it is.** Instead of paying people to write training examples, you
+      let a capable model write them, and spend your human budget on *checking*
+      the output rather than authoring it.
+    - **Picture it.** A strong student writing practice problems for a weaker one
+      to drill on — cheap, endless, and exactly as good as the strong student's
+      own understanding.
+    - **Why it matters.** It is the biggest reason instruction data got cheap, and
+      its risk is subtle: a model is far better at *asking* questions than at
+      *answering* them, so left unchecked the practice set fills with confident
+      wrong answers.
+
 ## Why synthesise: the arithmetic
 
 Nothing about synthetic data is subtle economically. A human writing a careful
@@ -115,6 +128,19 @@ Two technical limits are worth stating up front.
   exactly like their teacher while being noticeably worse at the reasoning
   underneath, because imitating surface form is much easier than reproducing
   the computation.
+
+!!! abstract "In plain words"
+
+    - **What it is.** Grow a big, varied set of tasks out of a tiny handful of
+      hand-written ones, by asking the model for more and keeping only the ones
+      that are genuinely new.
+    - **Picture it.** A few sample exam questions pinned to a board. Each round you
+      write a few more in the same spirit, throw away any that are near-copies of
+      what is already up there, and pin the survivors — which then seed the next
+      round.
+    - **Why it matters.** A pile of near-duplicate tasks looks large but teaches
+      little. The "keep only what is new" filter is what turns a big dataset into
+      a genuinely *diverse* one.
 
 ## Self-Instruct: bootstrapping a task pool from a handful of seeds
 
@@ -397,6 +423,18 @@ entirely about the stronger ones.
     instance generation, and above all the *dynamics* — a pool that grows
     quickly at first and then saturates, with near-duplicates dominating the
     rejections.
+
+!!! abstract "In plain words"
+
+    - **What it is.** Take tasks you already have and rewrite them to be *harder* —
+      add a constraint, demand the reasoning, pin down a vague word — instead of
+      only ever generating fresh easy ones.
+    - **Picture it.** A teacher taking a warm-up question and turning the screw:
+      "now do it without the built-in function, and show every step." Same topic,
+      higher difficulty.
+    - **Why it matters.** Breadth alone leaves every task at the difficulty of the
+      seeds. Evolving them upward is how a dataset gains a difficulty *curriculum* —
+      as long as you throw away rewrites that became unanswerable.
 
 ## Evol-Instruct: making instructions harder on purpose
 
@@ -881,6 +919,17 @@ number that matters is the effective size after near-duplicate removal
 ([32.4](04-filtering.md)), and a template-generated million can collapse to a
 few thousand distinct behaviours.
 
+!!! abstract "In plain words"
+
+    - **What it is.** Train a model on the output of a model, generation after
+      generation with no fresh real data, and the variety slowly drains out of it.
+    - **Picture it.** A photocopy of a photocopy of a photocopy. Each copy looks
+      fine on its own, but the faint details vanish first and never come back,
+      until everything is a washed-out average.
+    - **Why it matters.** The rare cases — unusual phrasings, niche topics,
+      minority dialects — die first and die permanently, and a corpus that has
+      lost them does not look broken. It just looks bland.
+
 ## Model collapse: when synthetic data eats itself
 
 Now the failure mode with a name. If each generation of a model is trained on
@@ -899,7 +948,10 @@ $$
 = \sigma_{\text{true}}^2 \left(\frac{n-1}{n}\right)^{g+1}
 $$
 
-and the spread shrinks geometrically.
+and the spread shrinks geometrically. In words: $\sigma_g^2$ is the variance
+after $g$ rounds of refitting, $\sigma_{\text{true}}^2$ the variance you started
+with, and $n$ the sample size each round; because $\frac{n-1}{n}$ is a hair below
+1, raising it to a growing power marches the spread steadily toward zero.
 
 That is only half the story, though: a Gaussian has no *categories* to lose. The
 block below therefore runs two simulations side by side.

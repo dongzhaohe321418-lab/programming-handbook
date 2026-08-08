@@ -14,6 +14,22 @@ for it.
 
 ## Four memories, one context window
 
+!!! abstract "In plain words"
+
+    - **What it is.** Agents keep four kinds of memory, each with a different
+      job: **working** (what is in front of you right now), **episodic** (a
+      diary of what happened), **semantic** (facts you have boiled down), and
+      **procedural** (skills you have practised).
+    - **Picture it.** Think of your own day. Working memory is the sentence you
+      are reading this instant; episodic is "I debugged an ingestion bug
+      yesterday"; semantic is "Paris is the capital of France", a fact with no
+      memory of when you learned it; procedural is riding a bike — you can do it
+      without narrating it.
+    - **Why it matters.** Only working memory rides in the context window for
+      free. The other three must be *stored* and *fetched back* deliberately —
+      so knowing which bucket a fact belongs in tells you whether to keep it in
+      the prompt, in a diary, in a keyed slot, or in the system prompt.
+
 Human memory research gives us a vocabulary that maps unreasonably well onto
 agent design. The mapping is an analogy, not a claim about cognition, but it
 tells you exactly which store a given fact belongs in.
@@ -31,6 +47,20 @@ and writes them into the prompt. That is the entire subject of this section:
 **everything is a decision about what to put in a fixed-size box.**
 
 ## The context window is a budget, and you pay it every turn
+
+!!! abstract "In plain words"
+
+    - **What it is.** The context window is the fixed number of tokens the model
+      can look at in one call — and every token you spend there costs money,
+      time, and GPU memory, so you have to budget it deliberately.
+    - **Picture it.** It is a carry-on bag with a strict weight limit. You
+      cannot bring your whole house; you pack only what this trip needs, and
+      every extra item you stuff in you pay for at the gate — on *every* flight,
+      because the agent re-packs and re-sends the whole bag each turn.
+    - **Why it matters.** Left unmanaged, a conversation's cost grows
+      *quadratically* with its length, because the entire history is resent
+      every turn. Deciding what to keep, summarize, or drop is most of what
+      agent memory is.
 
 Context is not free memory. Every token you put in it is charged three times:
 

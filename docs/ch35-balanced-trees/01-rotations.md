@@ -14,6 +14,20 @@ Throughout Part VI we keep Chapter 20's measure of **height**: the number
 of *edges* on the longest root-to-leaf path. A single node has height 0,
 the empty tree has height $-1$, and a chain of $n$ nodes has height $n-1$.
 
+!!! abstract "In plain words"
+
+    - **What it is.** *Balance* means keeping the tree short and bushy instead
+      of long and stringy, so a search never has far to walk down.
+    - **Picture it.** Think of a filing cabinet with one drawer per letter. If
+      every new folder somehow lands in the *same* drawer, finding one means
+      flipping through the whole pile and the other drawers might as well not
+      exist. A balanced tree spreads the folders out so every drawer stays
+      thin.
+    - **Why it matters.** A search tree's speed comes entirely from its height.
+      Let the tree grow lopsided and the $O(\log n)$ promise quietly rots back
+      into the $O(n)$ linear scan we were trying to escape — which is exactly
+      the injury the next few lines measure.
+
 ## The wound, measured
 
 First, reopen the injury with numbers rather than adjectives. Build the
@@ -164,6 +178,20 @@ the invariant intact.
     code, not with confidence.
 
 ## The right rotation
+
+!!! abstract "In plain words"
+
+    - **What it is.** A *rotation* is a small, local rearrangement that lifts
+      one side of a subtree up and lets the other side down, changing the
+      tree's shape without changing which keys it stores or their sorted order.
+    - **Picture it.** Think of a mobile hanging from the ceiling. If one arm
+      droops too low, you slide the pivot so the heavy arm rises and the light
+      arm dips. Every toy is still there, still hanging in the same
+      left-to-right order — only the balance point moved.
+    - **Why it matters.** This is the one repair move every self-balancing tree
+      in this chapter makes. Because it leaves the in-order sequence untouched,
+      we can nudge a tree back toward "short and bushy" whenever we like,
+      without ever breaking its search-tree meaning.
 
 Take a subtree whose root is `y` and whose left child is `x`. Name the
 three subtrees hanging off them $A$, $B$, $C$:

@@ -75,6 +75,22 @@ reason PagedAttention exists, and we come back to it below.
 
 ## Static batching and the head-of-line problem
 
+!!! abstract "In plain words"
+
+    - **What it is.** Batching runs several users' requests through the model
+      together; the design question is *when* riders may get on and off.
+    - **Picture it.** A shared taxi. **Static batching** waits at the curb until
+      four riders are aboard, drives until the last one's stop, and only then
+      picks up the next four — early finishers sit in the parked cab.
+      **Continuous batching** (next section) lets a rider hop out the moment
+      they arrive and picks up whoever is waiting at the very next corner, so a
+      seat is never idle.
+    - **Why it matters.** Requests finish at wildly different times — three
+      tokens for "what is 2+2?" versus eight hundred for an essay. The taxi that
+      waits leaves seats, and the GPU those seats stand for, burning fuel on
+      nobody. Refilling seats every step is the single change that turns a
+      wasteful server into a full one.
+
 The obvious way to batch is the way you would batch anything:
 
 1. Collect $B$ requests.
@@ -222,6 +238,21 @@ Two details in the timeline repay a close look:
     admission is what stops that from happening.
 
 ## PagedAttention: virtual memory for the KV cache
+
+!!! abstract "In plain words"
+
+    - **What it is.** A way to store each request's KV cache in small,
+      fixed-size blocks scattered around GPU memory, instead of one big
+      contiguous reservation per request.
+    - **Picture it.** It is the exact trick your operating system uses for RAM
+      ([Chapter 23](../ch23-os/02-memory-layout.md)): hand out memory in uniform
+      *pages* wherever they happen to be free, and keep a little table that makes
+      the scattered pages look like one unbroken run. Here the pages are called
+      *blocks* and they hold tokens of the cache.
+    - **Why it matters.** Reserving a worst-case slab per request wastes most of
+      it and leaves the free memory in holes too small to reuse. Small blocks
+      cut that waste to almost nothing, let far more requests share one GPU, and
+      even let two requests point at the *same* block for a shared prefix.
 
 Continuous batching creates a memory problem. If sequences come and go every
 step, and each one needs a KV cache that grows unpredictably, how do you lay

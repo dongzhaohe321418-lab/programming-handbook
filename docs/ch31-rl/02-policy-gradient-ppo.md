@@ -21,6 +21,18 @@ parameters.
 
 ## REINFORCE, symbol by symbol
 
+!!! abstract "In plain words"
+
+    - **What it is.** REINFORCE is the rule "do more of what led to reward, less
+      of what didn't," written as a weight update.
+    - **Picture it.** After each attempt you replay your moves: the ones that led
+      to a good outcome you make a little more likely next time, the ones that
+      led to a bad outcome a little less. Over many attempts the moves that pay
+      off float to the top.
+    - **Why it matters.** This one idea — *turn up the probability of the moves
+      that paid off* — is the honest core of every method in this chapter. PPO,
+      DPO and GRPO are all patches bolted onto it.
+
 The formal statement is one line. We write it as a **loss** (something to
 minimise) so the descent rule of 31.1 applies unchanged:
 
@@ -151,6 +163,19 @@ the code but not the algorithm.
 
 ## The variance problem, and the fix that is one subtraction
 
+!!! abstract "In plain words"
+
+    - **What it is.** A baseline judges each move against the *average* move
+      instead of against zero, so "everything was mildly good" cannot fool you.
+    - **Picture it.** A teacher who marks every essay 8, 9 or 10 tells you almost
+      nothing. Subtract the class average and the same marks turn informative:
+      $+1$, $0$, $-1$. That gap — reward minus the average — is the **advantage**,
+      and it is what actually says which move beat expectations.
+    - **Why it matters.** Without it, a reward that is positive across the board
+      pushes *every* action up and the real signal drowns in the shared offset.
+      Subtracting the average keeps the signal and cancels the noise — and,
+      remarkably, without biasing the answer.
+
 REINFORCE is *unbiased* — average enough samples and you get the true gradient
 — but it is extremely noisy, and there is a specific reason.
 
@@ -165,6 +190,10 @@ the action:
 $$
 \nabla_\theta \mathcal{L} = -\,\mathbb{E}\left[(G_t - b)\, \nabla_\theta \log \pi_\theta(a_t \mid s_t)\right]
 $$
+
+Read aloud: *this is the REINFORCE update with the reward replaced by
+reward-above-baseline.* Beat $b$ and the action gets pushed up; fall short of $b$
+and it gets pushed down; land exactly at $b$ and nothing moves.
 
 Subtracting $b$ does two things:
 
@@ -294,6 +323,19 @@ this section, and it is precisely what GRPO in [31.3](03-dpo-grpo.md) deletes.
 
 ## PPO as four fixes
 
+!!! abstract "In plain words"
+
+    - **What it is.** PPO keeps taking improvement steps, but refuses to leap so
+      far in any one step that it breaks what was already working.
+    - **Picture it.** A leash. You let the policy walk towards higher reward, but
+      only so far from where it started before the leash goes taut; then you
+      re-sample and let it walk again. A string of small safe steps beats one
+      reckless jump.
+    - **Why it matters.** Plain REINFORCE will happily take a giant step off a
+      single lucky batch and wreck the policy. On a model that costs thousands of
+      GPU-hours, "never let one batch destroy the run" is worth trading a little
+      speed for.
+
 **Proximal Policy Optimization** (Schulman et al., 2017) is REINFORCE plus
 answers to four practical problems:
 
@@ -354,6 +396,11 @@ $$
 \min\big(r_t(\theta) A_t,\;
 \text{clip}(r_t(\theta), 1-\epsilon, 1+\epsilon)\, A_t\big)\Big]
 $$
+
+Read aloud: *score each sample by ratio $\times$ advantage, then again with the
+ratio pinned into a narrow band around 1, and keep whichever score is smaller.*
+Keeping the smaller one is the leash: once the ratio leaves the band on the
+profitable side, pushing it further stops adding any reward.
 
 | Symbol | Meaning |
 | --- | --- |
@@ -423,6 +470,21 @@ More than that and most samples clip out anyway, so you are spending compute to
 produce zero gradient.
 
 ### Fix 4 — a KL penalty to the reference model
+
+!!! abstract "In plain words"
+
+    - **What it is.** A rubber band tying the model being trained to a frozen
+      copy of where it started, so it can chase reward but cannot wander off into
+      gibberish.
+    - **Picture it.** KL divergence is a number for *how far two habits have
+      drifted apart*. The penalty charges the policy for every unit of drift, so
+      moving away from the starting model has to be paid for out of reward.
+    - **Why it matters.** A reward model has blind spots, and a policy left free
+      will sprint straight into them — strings that score wonderfully and read
+      like nothing a person would write. The rubber band is what holds it back.
+
+    New to KL divergence? The [Part V math primer](../part5-math-primer.md)
+    builds it from scratch as "how different are two opinions."
 
 The last fix is specific to language models, and it is the one with the most
 character.

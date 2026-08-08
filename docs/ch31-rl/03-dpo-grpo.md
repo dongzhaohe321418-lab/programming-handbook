@@ -16,6 +16,24 @@ implement both.
 
 ## DPO's insight: the answer was already written down
 
+!!! abstract "In plain words"
+
+    - **What it is.** DPO trains a model straight from "answer A is better than
+      answer B" pairs — no separate reward model, no sampling loop.
+    - **Picture it.** PPO builds a judge (the reward model) and then has the
+      student chase the judge's scores. DPO notices that the student *already
+      contains a judge*: how much more probable it makes one answer than another
+      already says which it prefers. So cut out the middleman and teach that
+      built-in preference directly, from the human-labelled pairs.
+    - **Why it matters.** Deleting the reward model and the generation loop turns
+      alignment back into ordinary supervised training — the exact setup every
+      fine-tuning team already runs. That convenience is why DPO spread so fast.
+
+    The algebra below is just the careful version of "the model already contains
+    a judge." We take the equation for the *ideal* policy and, instead of chasing
+    it, solve it for the reward — which turns out to be written in the policy's
+    own probabilities. Read the derivation for that one payoff.
+
 Recall the closed-form optimum from the end of [31.2](02-policy-gradient-ppo.md).
 For the KL-regularised RLHF objective, the best possible policy is
 
@@ -23,6 +41,10 @@ $$
 \pi^{*}(y \mid x) = \frac{1}{Z(x)}\, \pi_{\text{ref}}(y \mid x)\,
 \exp\!\left(\frac{r(x, y)}{\beta}\right)
 $$
+
+Read aloud: *the ideal policy is the reference model, re-weighted to favour
+high-reward answers.* The factor $\exp(r/\beta)$ tilts probability towards good
+responses, and $Z(x)$ is just the divisor that makes the result sum to one.
 
 Everyone had been treating this as a *goal*: train a reward model $r$, then run
 PPO for a long time hoping to approach $\pi^{*}$. Rafailov et al. (2023) asked
@@ -32,6 +54,11 @@ $$
 r(x, y) = \beta \log \frac{\pi^{*}(y \mid x)}{\pi_{\text{ref}}(y \mid x)}
 + \beta \log Z(x)
 $$
+
+Read aloud: *a response's reward is $\beta$ times how much more likely the
+trained policy makes it than the reference does, plus a term ($\beta \log Z(x)$)
+that is identical for every response to the same prompt.* That second term is the
+nuisance we are about to make vanish.
 
 Read that carefully, because it is the whole paper.
 
@@ -68,6 +95,11 @@ $$
 - \beta \log \frac{\pi_\theta(y_l \mid x)}{\pi_{\text{ref}}(y_l \mid x)}
 \right)\right]
 $$
+
+Read aloud: *for every labelled pair, make the policy prefer the winner over the
+loser by a comfortable margin.* The two log-ratios are the policy's own implicit
+scores for the two answers, and $-\log\sigma$ of the gap between them is nothing
+more than the ordinary "get this comparison right" classification loss.
 
 | Term | What it is |
 | --- | --- |
@@ -281,6 +313,18 @@ now prefers over the reference and negative for the rest.
 
 ## What $\beta$ does
 
+!!! abstract "In plain words"
+
+    - **What it is.** $\beta$ is a single dial: how tightly to hold the model near
+      its starting point versus how freely to let it chase the preference data.
+    - **Picture it.** The tension in the KL rubber band. Large $\beta$ is a stiff
+      band — the model barely moves and learns little; small $\beta$ is a slack
+      band — the model lunges after the preferences and can end up far from where
+      it should be. The sweet spot is in between.
+    - **Why it matters.** It is the main knob you tune on a DPO run, and the two
+      extremes fail in opposite, recognisable ways — which the numbers below make
+      concrete.
+
 $\beta$ converts log-ratio into reward. To express an implicit-reward margin of
 one nat, the policy's log-probability gap must be $1/\beta$ — and a log gap of
 $1/\beta$ is a *probability* ratio of $e^{1/\beta}$. That number gets out of
@@ -383,6 +427,20 @@ Being offline is DPO's strength and its ceiling:
   coin-flip preference produce identical labels.
 
 ## GRPO: the group is the baseline
+
+!!! abstract "In plain words"
+
+    - **What it is.** Instead of training a whole separate network to guess "how
+      good is this situation," GRPO samples several answers to the same question
+      and grades each one against the group's average.
+    - **Picture it.** A pop quiz marked on a curve. You do not need a *prediction*
+      of the class average — you have the class. An answer that beats the other
+      attempts at the same question gets pushed up; one that trails them gets
+      pushed down.
+    - **Why it matters.** It deletes the value network — its optimiser state and
+      its ~104 GB with it — and it suits tasks where you can *check* an answer
+      (maths, code), because there the group can be graded by a rule, with
+      nothing to hack.
 
 The other expensive model in PPO is the **value network**, whose only job is to
 predict "how good is this state, on average" so we can subtract it as a

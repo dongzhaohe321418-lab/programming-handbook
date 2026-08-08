@@ -250,6 +250,21 @@ what it costs.
 
 ## Observability: traces and spans
 
+!!! abstract "In plain words"
+
+    - **What it is.** A trace is a nested timeline of everything the agent did —
+      each step, tool call, and model call is a "span" recording what ran, how
+      long it took, and whether it failed — so you can replay the run and see
+      where it went wrong.
+    - **Picture it.** It is the itemised receipt for a run. Instead of "the
+      agent failed" you get a line-by-line breakdown — step 4 called the wrong
+      tool, that call came back empty, the retry quietly used stale data — with
+      the steps nested to show which one called which.
+    - **Why it matters.** Agent failures are almost always *sequence* failures,
+      and the worst ones are silent: a swallowed error leaves the agent looking
+      healthy while it builds answers on nothing. A trace makes the invisible
+      step visible, which is the only way to debug it.
+
 You cannot debug what you cannot see, and an agent's failures are almost always
 *sequence* failures — the wrong tool at step 4, the observation that was empty,
 the retry that silently succeeded with stale data.

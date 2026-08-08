@@ -12,6 +12,19 @@ attention head, a multi-layer transformer forward pass, and a full sampling
 loop — every one of them in plain Python and numpy, every one of them small
 enough to print every number it produces.
 
+!!! abstract "In plain words"
+
+    - **What it is.** A language model is one function: hand it a list of
+      numbers standing for the text so far, and it returns a score for every
+      word that could come next.
+    - **Picture it.** A phone's autocomplete that has read most of the
+      internet. It only ever guesses the next piece — but it guesses so well
+      that, by feeding each guess back in and asking again, you get whole
+      essays.
+    - **Why it matters.** Answering, coding, refusing, "reasoning" — all of it
+      is that one guess-the-next-token step, repeated. Nothing in this chapter
+      is more mysterious than that, and every later chapter is built on it.
+
 The honest headline is this: **a language model is a function that takes a
 list of integers and returns a list of scores, one score per possible next
 token.** That is the entire interface. Everything the model appears to do —
@@ -69,6 +82,20 @@ mathematical object used here — vector, matrix product, dot product, softmax
 where it first matters. If you have met numpy before, you have a small head
 start; if not, the arrays in this chapter are small enough to read entry by
 entry.
+
+!!! tip "Two gentler on-ramps first"
+
+    A language model is a kind of **neural network**, so this chapter reads
+    far more easily if you meet the network first. Two short pages open
+    Part V for exactly that:
+
+    - [The math you'll actually need](../part5-math-primer.md) — vectors, dot
+      products, softmax, and (later, for training) gradients, each with a
+      one-line analogy and a runnable example. No calculus.
+    - [Chapter 25.5 · Neural Networks from Scratch](../ch25b-neural-networks/index.md)
+      — build a neuron, a layer, and a working network by hand before you
+      meet attention. Its last section shows attention *is* a graph neural
+      network in disguise.
 
 ## Sections
 

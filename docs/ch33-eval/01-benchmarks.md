@@ -10,6 +10,19 @@ engineering problem in Part V, and this section is about the part of it other
 people have already built for you: public benchmarks, what each one really
 tests, and the ways a number produced by one can be flatly untrue.
 
+!!! abstract "In plain words"
+
+    - **What it is.** Judging whether a model is any good, when nothing
+      automatically tells you an answer is wrong.
+    - **Picture it.** Grading a stack of essays instead of a maths quiz. The quiz
+      has an answer key; the essays force you first to decide what "good" even
+      means, then measure every paper against it — and reasonable graders will
+      disagree.
+    - **Why it matters.** Every other chapter had a referee: a crash, a failing
+      test, a red error. A language model answers everything fluently, including
+      what it is wrong about, so measuring it well is the hardest engineering
+      problem in Part V.
+
 ## The shape of the problem
 
 A benchmark is four things bolted together:
@@ -23,6 +36,19 @@ A benchmark is four things bolted together:
 Change any one of the four and the number changes. Most disputes about "model A
 beats model B" are really disputes about the third and fourth, which is why this
 section spends more time on metrics and protocols than on datasets.
+
+!!! abstract "In plain words"
+
+    - **What it is.** A benchmark is a standardised exam for models — a fixed set
+      of questions plus a way to mark the answers — so two models can be compared
+      on the same terms.
+    - **Picture it.** Standardised school tests, each measuring something
+      different: MMLU is a broad written exam, HumanEval a coding test graded by
+      running the code, SWE-bench a real-repair job on an actual codebase, GAIA a
+      practical assistant task that needs tools.
+    - **Why it matters.** Each exam tests one slice of ability and is blind to the
+      rest, so a single leaderboard number never means "better" outright — it
+      means "better at this particular test, marked this particular way."
 
 Here is the landscape, described by what each benchmark actually asks a model
 to do. Treat the *descriptions* as durable and any leaderboard position you see
@@ -48,6 +74,18 @@ names.
 - **Single-turn versus agentic.** An MMLU item is one forward pass. A SWE-bench
   instance is a whole episode with a budget, a scaffold, and dozens of tool
   calls — which means SWE-bench measures your agent, not just your model.
+
+!!! abstract "In plain words"
+
+    - **What it is.** The simplest possible grader — does the output string equal
+      the reference string? — and the surprising number of hidden choices buried
+      inside that word "equal".
+    - **Picture it.** Marking `"3.14"` against `"3.140"`, or `"Paris."` against
+      `"Paris"`. The same answer to a human; different bytes to a computer. Someone
+      has to decide which differences to forgive.
+    - **Why it matters.** Those forgiveness rules — lowercasing, trimming
+      punctuation, dropping "the" — swing the very same model's score by tens of
+      points, and they hand out undeserved credit as silently as deserved credit.
 
 ## Exact match is not one metric — it is a family
 
@@ -133,6 +171,17 @@ sample of them. That five-minute habit catches this class of bug permanently.
     a score, find the normalizer before you believe it. This is exactly why the
     real harnesses in [33.2](02-eval-harness.md) ship the scoring code rather
     than describing it in a README.
+
+!!! abstract "In plain words"
+
+    - **What it is.** If the model gets $k$ tries at a problem, pass@k is how often
+      at least one of those tries works.
+    - **Picture it.** Basketball free throws. A 40%-per-shot player almost never
+      sinks the first attempt, but given ten attempts will usually make at least
+      one — so "one shot" and "best of ten" measure genuinely different things.
+    - **Why it matters.** More tries can only raise the number, so pass@1 and
+      pass@10 can rank two models in opposite orders. If your product samples once,
+      a headline pass@10 is measuring a product you are not shipping.
 
 ## pass@k, and the estimator that makes it honest
 

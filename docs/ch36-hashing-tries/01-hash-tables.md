@@ -7,6 +7,19 @@ a working `dict` out of a plain list and one arithmetic idea, and the idea
 is so blunt it feels like cheating: **stop searching for the key and compute
 where it must be instead**.
 
+!!! abstract "In plain words"
+
+    - **What it is.** A hash table stops *searching* for a key and instead
+      *computes* the one spot the key must live in, then looks only there.
+    - **Picture it.** A theatre coat-check does not walk the racks hunting for
+      your coat. Your ticket number *is* the peg number — the attendant reads
+      "42" and steps straight to peg 42. The *hash function* is whatever turns a
+      key like `"grape"` into that peg number.
+    - **Why it matters.** Because the work is just "compute an address, look
+      there," it never depends on how many keys are already stored. Ten keys or
+      ten million, the cost is the same — the $O(1)$ lookup this section is
+      about.
+
 ## The $O(1)$ promise, measured first
 
 Start with the claim, because it is the strangest one in this book. Looking
@@ -107,6 +120,19 @@ flowchart LR
 ```
 
 ## What makes a hash function good
+
+!!! abstract "In plain words"
+
+    - **What it is.** A *hash function* is the translator that turns any key — a
+      string, a tuple, an id — into a number you can use as a slot index.
+    - **Picture it.** Think of assigning every guest a locker by a fixed recipe
+      run on their name: the same name always gives the same locker, and a
+      *good* recipe scatters different names evenly across all the lockers
+      instead of cramming everyone into the first row.
+    - **Why it matters.** The whole $O(1)$ promise rests on that scatter. If the
+      function keeps sending many keys to the same slot, those keys pile up and
+      the lookup slows to a walk — so the four requirements below are really
+      four ways of asking "does it spread the keys out?"
 
 Four requirements, and they pull against each other.
 

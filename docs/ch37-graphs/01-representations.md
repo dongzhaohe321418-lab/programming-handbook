@@ -10,6 +10,19 @@ representation wrong and a graph that fits comfortably in memory as a
 dictionary will demand four gigabytes as a matrix, or a lookup that should
 cost one array access will cost a linear scan.
 
+!!! abstract "In plain words"
+
+    - **What it is.** A graph is just *dots joined by lines*: the dots are the
+      things you care about, and a line means two of them are related somehow.
+    - **Picture it.** People joined by friendships, towns joined by roads,
+      courses joined by "you must take this one first". Draw the things as dots
+      and each relationship as a line, and you have drawn a graph — no more, no
+      less.
+    - **Why it matters.** A startling range of problems is secretly this same
+      shape. The instant you notice "these things are connected like *this*",
+      every algorithm in this chapter becomes available to you for free — which
+      is why the first job is simply choosing how to store the dots and lines.
+
 ## Five graphs you already know
 
 Before any code, look at five graphs from five unrelated fields and notice
@@ -197,6 +210,23 @@ undirected graph the same argument gives the *handshake lemma* — the sum of
 all degrees is $2E$, because each edge is counted from both ends.
 
 ## Representation 1 — the adjacency matrix
+
+!!! abstract "In plain words"
+
+    - **What it is.** Two ways to write down who-connects-to-whom: a per-vertex
+      *list* of the neighbours each vertex actually has, or a full *grid* with
+      every vertex down the side and across the top, ticking each connected
+      pair.
+    - **Picture it.** The adjacency list is a **contacts book** — each person's
+      page names only the people they actually know. The adjacency matrix is a
+      giant **spreadsheet** with everyone listed on both axes and a tick in a
+      cell for every pair, including all the empty cells for pairs who have
+      never met.
+    - **Why it matters.** The contacts book stays small when connections are few
+      (almost always the case) and instantly answers "who does X know?"; the
+      grid instantly answers "are X and Y connected?" but spends a cell on every
+      *possible* pair whether or not it exists. Which question you ask most
+      decides which one wins.
 
 The most literal storage is a $V \times V$ grid of booleans, where cell
 `(i, j)` answers "is there an edge from $i$ to $j$?" This is a

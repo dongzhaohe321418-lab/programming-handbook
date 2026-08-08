@@ -9,6 +9,20 @@ the way back up from every insert and delete. It is the oldest
 self-balancing tree (Adelson-Velsky and Landis, 1962) and still the one to
 reach for when lookups vastly outnumber updates.
 
+!!! abstract "In plain words"
+
+    - **What it is.** The AVL rule is a single promise kept at *every* node: its
+      two sides may differ in height by at most one level, never more.
+    - **Picture it.** Imagine two stacks of books rising under a shelf, one on
+      the left and one on the right. The rule says you may never let one stack
+      get more than a single book taller than the other — the instant it does,
+      you shift a book across to even them out.
+    - **Why it matters.** That one tiny, purely *local* check — comparing a
+      node's two children — is enough to keep the *whole* tree short. To grow
+      tall, an AVL tree would need explosively more nodes at every level, so its
+      height can never be worse than about $\log n$. The rest of this section
+      states the rule exactly and proves that bound.
+
 ## The invariant, stated precisely
 
 Write $h(v)$ for the height of the subtree rooted at $v$, counted in edges,
@@ -89,8 +103,9 @@ insertion path. A node's height depends only on its children's heights:
 
 $$ h(v) = 1 + \max\bigl(h(v.\mathit{left}),\ h(v.\mathit{right})\bigr) $$
 
-so refreshing one node is $O(1)$, and refreshing every node on a
-root-to-leaf path is $O(h)$ — work the insert was already doing.
+Read aloud, that says a node sits one level above whichever of its two
+children is taller. So refreshing one node is $O(1)$, and refreshing every
+node on a root-to-leaf path is $O(h)$ — work the insert was already doing.
 
 ```python
 # continues

@@ -19,6 +19,18 @@ the keys cooperate, is $O(n)$.
 
 ## Counting sort
 
+!!! abstract "In plain words"
+
+    - **What it is.** Sort by *tallying* how many items have each possible key,
+      then reading the tallies back out in key order.
+    - **Picture it.** Sorting a stack of exam papers by grade. You deal each
+      paper onto a labelled pile — all the A's here, all the B's there — then
+      stack the piles A-first. The papers come out in order without your ever
+      comparing two papers against each other.
+    - **Why it matters.** No comparisons means the $n \log n$ floor does not
+      apply — but you need one pile (a counter) for *every possible key*, so it
+      only stays cheap when the range of keys is small.
+
 Suppose you have $n$ items whose keys are integers in the range $0 \dots k-1$.
 Counting sort works in three passes, and the middle one is the clever bit.
 
@@ -227,6 +239,20 @@ Radix sort exists precisely to rescue the cases where it does not.
 
 ## Radix sort: sort by one digit at a time
 
+!!! abstract "In plain words"
+
+    - **What it is.** Sort numbers one digit at a time, starting with the *least
+      significant* digit, leaning on a stable sort for each pass.
+    - **Picture it.** Putting a shuffled deck into full order by suit, then by
+      rank within each suit. You sort by the *less* important key (rank) first,
+      then make a second, *stable* pass by suit. Because the stable pass never
+      disturbs the rank order among cards of the same suit, the deck ends up
+      ordered by suit-then-rank.
+    - **Why it matters.** This sidesteps counting sort's need for one giant
+      counter: a 32-bit number becomes four small digit-passes instead of one
+      four-billion-slot tally. And the stability of each pass is precisely what
+      stops a later pass from undoing an earlier one.
+
 If the key range is too big for one counting sort, chop the key into digits and
 counting-sort by each digit separately. A 32-bit integer has four base-256
 digits, so instead of one pass over a 4-billion-entry table, you make four
@@ -361,6 +387,20 @@ because the whole algorithm rests on "the previous passes' order survives".
     stops sorting at all.
 
 ## Bucket sort
+
+!!! abstract "In plain words"
+
+    - **What it is.** Split the value range into equal bands, drop each item into
+      its band's bucket, sort each small bucket, then read the buckets out in
+      order.
+    - **Picture it.** Sorting a jar of coins by weight. First toss each coin into
+      a labelled tray — 0–1 g here, 1–2 g there — then put each tray in order by
+      hand. If the coins are spread across many trays, every tray is tiny and
+      quick to finish.
+    - **Why it matters.** When the values are spread evenly, each bucket holds
+      about one item and the whole sort is linear. But if the data is lopsided
+      and almost everything crowds into one bucket, that bucket balloons and you
+      are back to a slow sort — so an even spread is the whole gamble.
 
 Radix sort handles integers. **Bucket sort** handles values spread over a
 continuous range, in three steps:

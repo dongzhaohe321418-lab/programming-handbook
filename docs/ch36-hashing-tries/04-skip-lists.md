@@ -10,6 +10,21 @@ no rebalancing, no cases — insertion is "splice a node into a few lists" —
 and the structure is short enough to hold in your head and get right on the
 first try.
 
+!!! abstract "In plain words"
+
+    - **What it is.** A *skip list* is a sorted linked list with extra "express"
+      lanes stacked on top, so a search can leap ahead in big hops before
+      dropping down to step through keys one at a time.
+    - **Picture it.** Think of a subway line with express and local trains. The
+      express skips most stops to cover ground fast; when you are near your
+      station you hop down to the local for the final stretch. Each higher lane
+      in a skip list is a faster express — and a coin flip on each insert
+      decides who earns an express stop, with no committee and no rebalancing.
+    - **Why it matters.** Those express lanes turn the hopeless $O(n)$ crawl of
+      a plain linked list into an $O(\log n)$ search — matching a balanced tree
+      — yet with no rotations and no tricky cases, because the randomness of the
+      coin flips does the balancing for free.
+
 ## Start from a sorted linked list
 
 A sorted singly linked list ([Chapter 18](../ch18-linked-lists/02-singly-linked.md))
