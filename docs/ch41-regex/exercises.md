@@ -48,14 +48,16 @@
 | Verbose mode | `re.VERBOSE` — whitespace and `#` comments allowed inside a pattern |
 
 The one-page pattern card is in
-[Appendix F](../appendix/F-toolchain-reference.md#regex). Now put it to work.
+[Appendix F](../appendix/F-toolchain-reference.md#regex).
 
-Regex is learned at the keyboard: write the pattern, run it against text you
-chose, and be wrong a few times. Every solution here is runnable, and several
-of them print the *failing* version alongside the fixed one, because seeing
-what a broken pattern does is more instructive than being told. Start with
-the prediction exercise before you touch the Run button — the gap between
-what you expected and what happened is where the learning is.
+Now put it to work. Regex is learned at the keyboard: write the pattern, run
+it against text you chose, and be wrong a few times. Every solution here is
+runnable, and several of them print the *failing* version alongside the fixed
+one, because seeing what a broken pattern does is more instructive than being
+told.
+
+Start with the prediction exercise before you touch the Run button — the gap
+between what you expected and what happened is where the learning is.
 
 ### Exercise 41.1 — Predict what these patterns match ●
 

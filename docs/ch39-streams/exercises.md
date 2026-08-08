@@ -53,13 +53,13 @@
 | Terminal operation | the Java Stream call that finally runs the chain |
 
 Full command reference for the pipe side of this chapter:
-[Appendix F](../appendix/F-toolchain-reference.md). Now put it to work.
+[Appendix F](../appendix/F-toolchain-reference.md).
 
-The functional style is learned by translation. Most of these exercises hand
-you code in one shape and ask for it in another — a loop into a
-comprehension, a Java Stream chain into Python, a nested loop into a
-pipeline — because that is exactly the skill you need when you meet this
-style in somebody else's codebase. Two of them are bug hunts, one asks you to
+Now put it to work. The functional style is learned by translation: most of
+these exercises hand you code in one shape and ask for it in another — a loop
+into a comprehension, a Java Stream chain into Python, a nested loop into a
+pipeline — because that is exactly the skill you need when you meet this style
+in somebody else's codebase. Two of them are bug hunts, one asks you to
 predict before running, and the last one builds a piece of machinery that
 `itertools` normally hands you.
 

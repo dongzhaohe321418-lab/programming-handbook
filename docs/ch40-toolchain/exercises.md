@@ -60,12 +60,14 @@
 | Flaky test | one whose verdict depends on order, timing, or leftover state |
 
 Every command named above is tabulated in
-[Appendix F](../appendix/F-toolchain-reference.md). Now put it to work.
+[Appendix F](../appendix/F-toolchain-reference.md).
 
-Toolchain exercises are different from algorithm exercises: the skill being
-practised is *reading* — reading a script and spotting the quoting bug,
-reading a pipeline and predicting its output, reading a dependency graph and
-predicting a rebuild, reading a test suite and spotting the shared state.
+Now put it to work. Toolchain exercises are different from algorithm
+exercises: the skill being practised is *reading* — reading a script and
+spotting the quoting bug, reading a pipeline and predicting its output,
+reading a dependency graph and predicting a rebuild, reading a test suite and
+spotting the shared state.
+
 Two of these ask you to **predict before you run**, which is the whole point:
 if you can only find out by running it, you cannot debug it in a terminal on
 a server at midnight. Every solution is runnable, so you can check yourself

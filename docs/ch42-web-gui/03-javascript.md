@@ -395,8 +395,10 @@ flowchart TD
     W["Web APIs: timers, network,<br/>disk — run outside the thread"] -.->|"when done, enqueue"| T
 ```
 
-Three rules govern that picture, and they explain every ordering puzzle you
-will ever meet:
+### The event loop, in three rules
+
+They govern that picture, and they explain every ordering puzzle you will ever
+meet:
 
 1. **Synchronous code runs to completion.** Nothing interrupts it.
 2. **The microtask queue is drained completely** — including microtasks added

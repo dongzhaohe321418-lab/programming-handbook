@@ -61,16 +61,15 @@
 | UI thread | the one thread allowed to touch widgets — never block it |
 | Hit testing | finding the deepest, topmost widget under a click |
 
-Now put it to work.
+Now put it to work. Web and GUI work is learned by breaking things and looking
+at what happened. Two of these exercises ask you to **predict output before
+running anything** — do that honestly, because the gap between your prediction
+and the printed answer is the whole lesson.
 
-Web and GUI work is learned by breaking things and looking at what happened.
-Two of these exercises ask you to **predict output before running anything** —
-do that honestly, because the gap between your prediction and the printed
-answer is the whole lesson. The HTML, CSS, and JavaScript here should be saved
-to files and opened in a browser; every solution also contains a runnable
-Python model so you can check your reasoning without leaving this page. The
-last exercise adds real login sessions to the server you built in
-[42.2](02-http-server.md).
+**The HTML, CSS, and JavaScript here should be saved to files and opened in a
+browser.** Every solution also contains a runnable Python model so you can
+check your reasoning without leaving this page, and the last exercise adds real
+login sessions to the server you built in [42.2](02-http-server.md).
 
 ### Exercise 42.1 — Fix broken, inaccessible HTML ●
 
