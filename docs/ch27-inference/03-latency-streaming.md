@@ -138,6 +138,15 @@ longer KV cache each step; this model leaves that out.)
       under 50 ms, at the most throughput that still meets both" — not "make it
       fast".
 
+!!! note "The same trade, one layer down in hardware"
+
+    This throughput-versus-latency split is not unique to model serving — it is
+    the *identical* idea behind a CPU pipeline
+    ([23.5.5](../ch23b-architecture/05-pipelining.md)): overlapping five stages
+    finishes one instruction per cycle (throughput) without shortening any single
+    instruction's five-cycle trip (latency), exactly as batching lifts tokens/s
+    without speeding up one user's response.
+
 Section 27.2 showed batching buying throughput for free up to the
 compute-bound crossover. Plot both metrics against batch size and you get the
 picture that every capacity-planning conversation is really about.

@@ -182,6 +182,9 @@ then cover $-128$ to $+127$: still 256 patterns, just relabelled.
     Under two's complement, *addition needs no special cases* — the same
     circuit that adds positive numbers adds negative ones correctly, with
     overflow bits simply falling off the end.
+    [Section 23.5.3](../ch23b-architecture/03-arithmetic.md) builds that very
+    adder and shows subtraction reusing it (flip the bits, add one), plus how
+    the ALU multiplies, divides, and stores the floating-point fractions below.
 
 ### Negating by hand: flip, then add one
 

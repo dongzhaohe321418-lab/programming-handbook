@@ -269,6 +269,39 @@ GUI). The reader has finished Parts I–IV. Part V is **not** a prerequisite.
   that the reader should save the file locally and open it in a browser —
   the Run button cannot render a page.
 
+## Computer-architecture chapter (23.5) — grounding and style
+
+Chapter 23.5 renders the standard undergraduate architecture course —
+**Patterson & Hennessy, _Computer Organization and Design_ (RISC-V edition)**
+("COD") — in the handbook's beginner voice, everything runnable in the
+browser. Rules specific to it:
+
+- **Faithful to COD, gentle in delivery.** Match COD's framing and facts (the
+  CPU performance equation, Amdahl's law, the RISC-V instruction formats,
+  IEEE-754, the classic 5-stage pipeline, the memory hierarchy). Cite COD by
+  name in an `!!! info` or further-reading line on each page as the place to
+  go deeper. Never invent encodings, numbers, or benchmark results.
+- **Bullet-first.** This material is dense, so lean hard on bullet lists,
+  numbered procedures, and comparison tables. A wall of prose is a failure
+  here; a scannable page of bullets with one runnable model per idea is the
+  target. (This is an explicit reader request.)
+- **Interconnect everything.** Every page must link outward to the rest of the
+  book where the idea already lives — e.g. two's complement and "bits have no
+  meaning" in `../ch00-machine/02-binary.md`, the instruction taste and tiny
+  CPU in `../ch00-machine/04-machine-instructions.md`, float pitfalls in
+  `../ch05-under-the-hood/01-numeric-pitfalls.md`, Big-O in
+  `../ch16-complexity/`, the memory hierarchy in
+  `../ch23-os/04-memory-hierarchy.md`, and GPUs/inference in
+  `../ch27-inference/`. The chapter is a hub, not an island.
+- **Runnable model per concept.** Hardware can't run in Pyodide, so teach each
+  mechanism with a small numpy/stdlib simulation the reader executes: a
+  performance/Amdahl calculator, an instruction encoder/decoder, a shift-add
+  multiplier, an IEEE-754 inspector, a single-cycle datapath, a pipeline
+  simulator with hazards, a SIMD-vs-scalar timing. Assembly/RISC-V and any
+  hardware pseudo-code go in ```text/```asm fences, never ```python.
+- Intuition-first on-ramps (`!!! abstract "In plain words"`) before every hard
+  idea, exactly as the rest of the book.
+
 ## What not to do
 
 - No placeholder text, no "TODO", no "coming soon".

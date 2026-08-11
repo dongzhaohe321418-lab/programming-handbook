@@ -20,7 +20,12 @@ reveals an algorithm's growth family from the outside, and log-log plots
 where the slope literally *is* the exponent. Finally we assemble the whole
 zoo in one table and one picture, including the honest fine print —
 amortized costs, and when a "slower" algorithm wins in practice because
-constants matter.
+constants matter. Big-O deliberately throws those constant factors away, but
+they are real, and they come from the machine: the **CPU performance equation**
+in [23.5.1](../ch23b-architecture/01-performance.md) is exactly the
+instructions × cycles-per-instruction × cycle-time that a Big-O class hides.
+Complexity counts *operations*; architecture counts *cycles* — the two halves of
+"how long will this take?"
 
 After this chapter you can:
 

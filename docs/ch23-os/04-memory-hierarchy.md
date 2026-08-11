@@ -9,7 +9,12 @@ notice. This section is the layer *beneath* the address space — the physical
 memory hierarchy, the caches that make it fast, and the trick (virtual memory)
 that turns the messy hardware back into that clean row. It is the beginner's
 tour of one of computing's deepest chapters: Patterson & Hennessy's
-*Computer Organization and Design*, Chapter 5.
+*Computer Organization and Design*, Chapter 5. This is the *memory* side of that
+book; the *compute* side — the processor this hierarchy exists to keep fed — is
+[Chapter 23.5 · Computer Architecture](../ch23b-architecture/index.md), and its
+[parallelism section](../ch23b-architecture/06-parallelism.md) ends back here at
+the **memory wall**, where even thousands of compute lanes stall waiting on the
+bandwidth this section is about.
 
 ## Why a hierarchy at all
 
@@ -185,7 +190,10 @@ $$\text{AMAT} = t_{\text{hit}} + \text{miss rate} \times \text{miss penalty}$$
 Read aloud: *every access pays the fast hit time; the unlucky fraction that
 miss pay the big penalty on top.* Here `t_hit` is the time to check the cache
 and get a hit, `miss rate` is the fraction that miss, and `miss penalty` is the
-extra time a miss costs to fetch from the slower level.
+extra time a miss costs to fetch from the slower level. AMAT is an *averaged*
+cost — the same average-case-versus-worst-case thinking behind the amortized
+analysis of [Chapter 16](../ch16-complexity/03-complexity-zoo.md): individual
+accesses vary wildly, but the average is what governs how a program feels.
 
 The formula hides a brutal surprise — a *few* percent of misses dominate the
 average, because the penalty is so large:

@@ -149,6 +149,10 @@ precision**, the near-universal standard behind Python's `float`, Java's
 
 Together they store a number as *binary* scientific notation,
 $\pm\, 1.\text{fraction} \times 2^{\text{exponent}}$.
+[Section 23.5.3](../ch23b-architecture/03-arithmetic.md) opens this format at the
+bit level — a runnable inspector that splits any float into its sign, exponent,
+and fraction and rebuilds it — so you can watch exactly where the rounding below
+gets baked into the hardware.
 
 Sixty-four bits can represent only finitely many numbers, so almost every
 decimal you type gets rounded to the *nearest representable* double. That

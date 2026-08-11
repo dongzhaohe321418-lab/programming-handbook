@@ -28,6 +28,13 @@
   ([0.3](03-programs.md)).
 - **Tracing** — one row per line, one column per variable — lets you predict
   a program's output before running it.
+- Every program is ground down into an **instruction set**: a few kinds of
+  tiny numbered orders the CPU understands ([0.4](04-machine-instructions.md)).
+- A **machine instruction** is just a number in memory; **assembly** is its
+  human-readable name. One line of high-level code becomes several machine
+  instructions, decodable into opcode and register fields.
+- A CPU is a fetch–decode–execute loop over those instructions — and a loop in
+  your code is really a backward **branch** that overwrites the program counter.
 
 ### Key terms
 
@@ -45,6 +52,10 @@
 | [**interpreter**](../concept-index.md#i) | Reads a program and carries out its instructions as it goes |
 | [**bytecode**](../concept-index.md#b) | Instructions for a virtual machine, not for real hardware |
 | **tracing** | Running a program by hand, keeping a table of every variable |
+| **instruction set** | The fixed vocabulary of tiny orders a CPU understands |
+| **machine instruction** | One such order, stored as a bit pattern (a number) |
+| **assembly** | The human-readable name for a machine instruction |
+| **register** | An ultra-fast storage slot inside the CPU |
 
 Now put all of it to work. Work these in order — they are arranged easiest
 first. Do the "by hand" parts on paper *before* touching the Run button; the
@@ -246,3 +257,125 @@ which do you expect to win, and why?
     Exact times vary by machine, but the ranking should not. This is the
     speed hierarchy and the interpreter story in one experiment: the work
     is identical, only the *layer* doing it changes.
+
+### Exercise 0.9 — Decode a machine instruction ●●
+
+The 32-bit pattern below is one real RISC-V instruction, in the "I-type"
+layout from [0.4](04-machine-instructions.md): from the top bit down, the
+fields are `imm` (12 bits), `rs1` (5), `funct3` (3), `rd` (5), and `opcode`
+(7). Pull out the opcode (the low 7 bits), the destination register `rd` (the
+next 5), the source register `rs1`, and the immediate. Which register ends up
+holding which value?
+
+```text
+00000010101000000000001010010011
+```
+
+??? success "Solution"
+
+    Splitting from the right: opcode `0010011` (the `addi` family), `rd` =
+    `00101` = register 5, `funct3` = `000`, `rs1` = `00000` = register 0, and
+    `imm` = `000000101010` = 42. So the instruction is `addi x5, x0, 42`. In
+    RISC-V, register `x0` is permanently wired to 0, so this means
+    `x5 = 0 + 42` — a common trick for loading a small constant.
+
+    ```python
+    word = int("00000010101000000000001010010011", 2)
+    print("word as a number:", word)
+    print("opcode:", format(word & 0x7F, "07b"))
+    print("rd    : x%d" % ((word >> 7) & 0x1F))
+    print("funct3:", format((word >> 12) & 0x7, "03b"))
+    print("rs1   : x%d" % ((word >> 15) & 0x1F))
+    print("imm   :", (word >> 20) & 0xFFF)
+    ```
+
+    The masks (`& 0x7F` keeps 7 bits, `& 0x1F` keeps 5) and the shifts (`>>`)
+    are exactly what the CPU's decode step does in hardware.
+
+### Exercise 0.10 — Hand-trace the tiny CPU ●●●
+
+Here is a program for the mini-ISA from [0.4](04-machine-instructions.md)
+(`LI` loads a constant, `ADDI` adds a constant, `BNE rs, rt, target` jumps to
+`target` when the two registers differ, `STORE rs, addr` writes a register to
+memory). Trace it by hand, keeping a small table of `r0`, `r1`, `r2` after
+each instruction. What are the final `r0` and `mem[0]`? Predict *before* you
+run it.
+
+```text
+0: LI    r0, 0
+1: LI    r1, 3
+2: LI    r2, 0
+3: ADDI  r0, r0, 4     # <- loop top
+4: ADDI  r1, r1, -1
+5: BNE   r1, r2, 3
+6: STORE r0, 0
+7: HALT
+```
+
+??? success "Solution"
+
+    The loop adds 4 to `r0` and subtracts 1 from the counter `r1` until `r1`
+    reaches 0 — that is, three times. So `r0` climbs `0 → 4 → 8 → 12` while
+    `r1` falls `3 → 2 → 1 → 0`. It is multiplication by repeated addition:
+    $4 \times 3 = 12$. The final `r0` is 12 and `mem[0]` is 12.
+
+    ```python
+    reg = [0, 0, 0, 0]
+    mem = [0] * 4
+    pc = 0
+    program = [
+        ("LI",    0, 0),
+        ("LI",    1, 3),
+        ("LI",    2, 0),
+        ("ADDI",  0, 0, 4),
+        ("ADDI",  1, 1, -1),
+        ("BNE",   1, 2, 3),
+        ("STORE", 0, 0),
+        ("HALT",),
+    ]
+    running = True
+    while running:
+        op, *a = program[pc]
+        pc += 1
+        if op == "LI":
+            reg[a[0]] = a[1]
+        elif op == "ADDI":
+            reg[a[0]] = reg[a[1]] + a[2]
+        elif op == "BNE":
+            if reg[a[0]] != reg[a[1]]:
+                pc = a[2]
+        elif op == "STORE":
+            mem[a[1]] = reg[a[0]]
+        elif op == "HALT":
+            running = False
+    print("r0 =", reg[0], " mem[0] =", mem[0])
+    ```
+
+    It prints `r0 = 12  mem[0] = 12`. The `BNE` is doing all the looping: a
+    conditional backward jump is how the hardware builds a `while` out of
+    straight-line instructions.
+
+### Exercise 0.11 — One pattern, two meanings ●●
+
+The four bytes `[0x43, 0x4F, 0x44, 0x45]` are one 32-bit pattern. Read as a
+big-endian unsigned integer, what number are they? Read one byte per character
+as ASCII (capital letters start at 65 = `0x41`), what word do they spell?
+Guess the word by hand first, then check both readings with code.
+
+??? success "Solution"
+
+    `0x43` = 67 = `C`, `0x4F` = 79 = `O`, `0x44` = 68 = `D`, `0x45` = 69 =
+    `E`: the word is `CODE`. As one unsigned integer the same bits are
+    `1129268293`. Identical bits, two completely different meanings — the
+    reader supplies the interpretation, exactly as in
+    [0.2](02-binary.md#bits-have-no-inherent-meaning-the-program-decides-the-type).
+
+    ```python
+    four = bytes([0x43, 0x4F, 0x44, 0x45])
+    print("as unsigned int:", int.from_bytes(four, "big"))
+    print("as characters  :", four.decode("ascii"))
+    ```
+
+    `int.from_bytes` treats the bytes as places in a base-256 number;
+    `decode("ascii")` treats each byte as a character code. Same bytes, and
+    the only difference is the question you ask.

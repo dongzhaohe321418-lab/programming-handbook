@@ -349,7 +349,13 @@ about, seen from the bottom:
 The whole tower — your source code, the assembly it compiles to, the machine
 code that encodes it, and the datapath that executes it — is exactly what
 [Chapter 23](../ch23-os/index.md) reopens once you have more programming under
-your belt, tracing a real program from text all the way to the electrons.
+your belt, tracing a real program from text all the way to the electrons. The
+one-`addi` decode above becomes all six RISC-V instruction formats in
+[23.5.2](../ch23b-architecture/02-instruction-set.md), the `execute()` `if/elif`
+above becomes real wires and control signals in
+[23.5.4 the datapath](../ch23b-architecture/04-datapath.md), and the "one
+instruction at a time" model here gives way to the overlapped assembly line of
+[23.5.5 pipelining](../ch23b-architecture/05-pipelining.md).
 
 !!! info "Where to go deeper — Patterson & Hennessy"
 
