@@ -13,7 +13,8 @@ thing**, skip straight to
 [Where do I find…?](#where-do-i-find), which answers about thirty concrete
 questions with a link to the exact section that answers each one.
 
-Forty-three chapters, six parts, ten projects, six appendices. Every Python
+Forty-three chapters (plus the optional Chapter 23.5 on computer
+architecture), six parts, ten projects, six appendices. Every Python
 block on every page runs in your browser — see
 [How to use this handbook](how-to-use.md) for the Run button, the
 `# continues` marker, and the exercise solutions.
@@ -63,7 +64,7 @@ you:
 | **I · The Machine** | 0–1 | [Part I](part1-overview.md) | The floor below the language: hardware, bits, what a program is, the terminal, Git. Assumes nothing at all |
 | **II · Programming I** | 2–14 | [Part II](part2-overview.md) | The first full arc — values through loops, lists, grids, references, exceptions, files, and your own classes. A dependency chain; read in order |
 | **III · Programming II** | 15–22 | [Part III](part3-overview.md) | The second arc, where syntax stops and judgement starts: inheritance, Big-O, recursion, and the data structures and sorts themselves |
-| **IV · Systems and Practice** | 23–25 | [Part IV](part4-overview.md) | The shortest part: what actually runs your code, and the Git/testing/style habits a team assumes |
+| **IV · Systems and Practice** | 23–25 (+ 23.5) | [Part IV](part4-overview.md) | The shortest part: what actually runs your code, and the Git/testing/style habits a team assumes — plus an optional architecture deep-dive (23.5) |
 | **V · AI Engineering** | 26–34 | [Part V](part5-overview.md) | Language models from the inside — attention, serving, tools and MCP, retrieval, agents, RL, data, evaluation — all in numpy, all runnable |
 | **VI · Programming III** | 35–42 | [Part VI](part6-overview.md) | The third course, on two tracks: advanced structures (balanced trees, hashing, graphs, linear sorting) and the working toolchain (streams, bash, Make, regex, web, GUI) |
 
@@ -95,6 +96,7 @@ you:
 | 21 | [Heaps and Priority Queues](ch21-heaps/index.md) | III | The heap property versus the BST invariant; a complete tree stored in a list; sift-up and sift-down; `heapq`; heapsort; the top-$k$ pattern |
 | 22 | [Sorting and Searching](ch22-sorting/index.md) | III | Selection, insertion, and bubble sort under comparison counters; stability; merge sort and quicksort; binary search and its famous bugs; `bisect` |
 | 23 | [Memory, Processes, and the OS](ch23-os/index.md) | IV | What an OS does; processes, threads, and race conditions; a program's memory layout; CPython's reference counting; bytecode and `dis`; the virtual-machine tower under this page |
+| 23.5 | [Computer Architecture](ch23b-architecture/index.md) | IV | *(Optional deep-dive)* The CPU performance equation and Amdahl's law; the six RISC-V instruction formats and the calling convention; hardware add/multiply/divide and IEEE-754; the single-cycle datapath and control; pipelining, hazards, and forwarding; parallelism, SIMD, GPUs, TPUs, and the memory wall |
 | 24 | [Engineering Practice](ch24-practice/index.md) | IV | Branches, merges, conflicts, pull requests, and commit messages; arrange–act–assert and table-driven tests; coverage; naming, small functions, and code review |
 | 25 | [The Road Ahead](ch25-next/index.md) | IV | A guided taste of balanced trees, hash tables, and graphs, then a roadmap of next steps organised by goal |
 | 26 | [How Language Models Work](ch26-llm-internals/index.md) | V | Tokenization; embeddings and an attention head in numpy; the decoder-only stack; sampling, temperature, top-$k$ and top-$p$ |
@@ -144,6 +146,11 @@ Each row points at the one section that answers the question properly.
 | Compiler or interpreter — what is the difference? | [0.3 What is a program](ch00-machine/03-programs.md) |
 | How does Python actually run my code? | [23.3 Interpreters and virtual machines](ch23-os/03-interpreters-vms.md) |
 | What is a process, a thread, a race condition? | [23.1 What an operating system does](ch23-os/01-os-processes.md) |
+| How does a CPU actually run my code, instruction by instruction? | [23.5.4 The datapath and control](ch23b-architecture/04-datapath.md), built on [23.5.2 The instruction set](ch23b-architecture/02-instruction-set.md) |
+| What is pipelining, and why doesn't it make one instruction faster? | [23.5.5 Pipelining](ch23b-architecture/05-pipelining.md) |
+| How does the ALU add, multiply, divide, and store floats? | [23.5.3 How hardware does arithmetic](ch23b-architecture/03-arithmetic.md) |
+| Why did CPUs stop getting faster and go multicore? | [23.5.1 What makes a computer fast](ch23b-architecture/01-performance.md) (the power wall) and [23.5.6 Parallelism](ch23b-architecture/06-parallelism.md) |
+| Where do the constant factors Big-O throws away come from? | [23.5.1 The CPU performance equation](ch23b-architecture/01-performance.md) |
 | What is a regular expression? | [41.1 Regex fundamentals](ch41-regex/01-fundamentals.md), with a card in [Appendix F](appendix/F-toolchain-reference.md) |
 | How do I write a bash script? | [40.1 Bash scripting](ch40-toolchain/01-bash.md) |
 | What is a lambda, or a higher-order function? | [39.1 Lambdas and higher-order functions](ch39-streams/01-lambdas.md) |

@@ -18,7 +18,11 @@ ends by cashing in a promise the handbook has been making since Chapter 0: the
 Run button on this page works because a real CPython interpreter has been
 compiled to WebAssembly and is executing inside your browser — a virtual
 machine, inside a virtual machine, inside a sandboxed process, on a time-sliced
-kernel, on silicon.
+kernel, on silicon. If that bottom layer leaves you wanting the silicon itself,
+the optional [Chapter 23.5 · Computer Architecture](ch23b-architecture/index.md)
+rebuilds the processor from the ground up — the performance equation, the RISC-V
+instruction formats, hardware arithmetic, the datapath, pipelining, and the
+parallel hardware behind GPUs — everything runnable in the browser.
 
 [Chapter 24](ch24-practice/index.md) opens the box sideways, toward the team.
 Branches, merges, conflicts, pull requests, and commit messages that explain
@@ -61,6 +65,12 @@ handbook and worth stating plainly.
   [queues](ch19-stacks-queues/index.md),
   [binary search trees](ch20-bst/index.md), and
   [heaps](ch21-heaps/index.md).
+- **Chapter 23.5** (Computer Architecture) is an optional deep-dive extending
+  [Chapter 23](ch23-os/index.md): it needs only
+  [Chapter 0](ch00-machine/index.md) (the fetch–decode–execute loop and the
+  tiny CPU), and rewards [Chapter 16](ch16-complexity/index.md) (Big-O). It
+  *feeds* Part V's GPU and inference material but is a prerequisite for nothing
+  later.
 
 If you have finished Parts I–III, all of Part IV is open. If you are partway
 through, Chapter 23 becomes readable as soon as you have met the call stack, and
@@ -108,12 +118,16 @@ flowchart TD
     c24["24 · Engineering<br/>practice"]
     c25["25 · The road ahead"]
     c25 --> nxt["Parts V and VI"]
+    c23 --> a235["23.5 · Computer Architecture<br/>(optional deep-dive)"]
+    a235 -. "feeds Part V" .-> nxt
 ```
 
-Notice what is missing: there are no arrows *between* the three chapters. Part
-IV is the one part of this handbook that is genuinely a menu. Read 23, 24, and
-25 in any order, or read one and come back for the others months later. Every
-arrow into the part comes from somewhere earlier in the book.
+Notice what is missing: there are no arrows *between* the three core chapters.
+Part IV is the one part of this handbook that is genuinely a menu. Read 23, 24,
+and 25 in any order, or read one and come back for the others months later.
+Every arrow into the part comes from somewhere earlier in the book. The one
+extension is **Chapter 23.5**, an optional architecture deep-dive that hangs off
+Chapter 23 and that nothing later in the book requires.
 
 ## How to read Part IV
 

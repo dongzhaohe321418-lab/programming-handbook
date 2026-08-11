@@ -46,6 +46,12 @@ agent loop
 aliasing
 :   [9.1 Values vs references](ch09-collections/01-references.md) — in depth · first met in [4.3 Equality vs identity](ch04-branching/03-equality-identity.md)
 
+ALU (arithmetic logic unit)
+:   [23.5.3 How hardware does arithmetic](ch23b-architecture/03-arithmetic.md)
+
+Amdahl's law
+:   [23.5.1 What makes a computer fast](ch23b-architecture/01-performance.md) · returns for multicore in [23.5.6 Parallelism](ch23b-architecture/06-parallelism.md)
+
 amortized cost
 :   [16.3 The complexity zoo](ch16-complexity/03-complexity-zoo.md) — in depth · first met with `append` in [9.2 Dynamic lists — ArrayList and list](ch09-collections/02-dynamic-lists.md)
 
@@ -168,6 +174,9 @@ Bradley–Terry model
 branch (Git)
 :   [24.1 A real Git workflow](ch24-practice/01-git-workflow.md) — in depth · introduced in [1.3 Git and the staging model](ch01-tools/03-git.md)
 
+branch prediction
+:   [23.5.5 Pipelining](ch23b-architecture/05-pipelining.md) — 1-bit vs 2-bit predictors and the control hazard they hide
+
 branching factor
 :   [35.4 B-trees and the disk](ch35-balanced-trees/04-b-trees.md)
 
@@ -196,6 +205,12 @@ bytecode
 
 call stack
 :   [5.3 The stack and the heap](ch05-under-the-hood/03-stack-heap.md) — first look · traced through recursion in [17.1 The call stack](ch17-recursion/01-call-stack.md) · [Appendix C](appendix/C-glossary.md#c)
+
+caller-saved and callee-saved registers
+:   [23.5.2 The instruction set up close](ch23b-architecture/02-instruction-set.md) — the ABI promise about which registers survive a call
+
+calling convention
+:   [23.5.2 The instruction set up close](ch23b-architecture/02-instruction-set.md) — the procedure protocol in hardware, over the [17.1 call stack](ch17-recursion/01-call-stack.md)
 
 capturing group
 :   [41.2 Groups, greediness, and real parsing](ch41-regex/02-groups-parsing.md)
@@ -278,6 +293,9 @@ context window
 continuous batching
 :   [27.2 Batching, PagedAttention, chunked prefill](ch27-inference/02-batching.md) · [Appendix E](appendix/E-ai-glossary.md#c)
 
+control signal (datapath)
+:   [23.5.4 The datapath and control](ch23b-architecture/04-datapath.md) — RegWrite, ALUSrc, MemRead/Write, Branch, MemToReg
+
 cookie
 :   [42.2 HTTP and a web server from scratch](ch42-web-gui/02-http-server.md)
 
@@ -296,8 +314,14 @@ counting sort
 coverage (test)
 :   [24.2 Testing beyond the basics](ch24-practice/02-testing.md)
 
+CPI (cycles per instruction)
+:   [23.5.1 What makes a computer fast](ch23b-architecture/01-performance.md) — from an instruction mix · the pipeline's effective CPI in [23.5.5 Pipelining](ch23b-architecture/05-pipelining.md)
+
 CPU
 :   [0.1 What is a computer, really](ch00-machine/01-hardware.md) · [Appendix C](appendix/C-glossary.md#c)
+
+CPU performance equation
+:   [23.5.1 What makes a computer fast](ch23b-architecture/01-performance.md) — CPU time = instructions × CPI × cycle time
 
 credit assignment
 :   [31.4 Reward models — PRM, RLHF, RLAIF](ch31-rl/04-reward-models.md)
@@ -318,6 +342,9 @@ DAG (directed acyclic graph)
 
 data binding
 :   [42.4 Desktop GUIs — JavaFX and tkinter](ch42-web-gui/04-desktop-gui.md)
+
+datapath
+:   [23.5.4 The datapath and control](ch23b-architecture/04-datapath.md) — the single-cycle datapath built and run
 
 decision tree (sorting)
 :   [38.1 The comparison lower bound](ch38-linear-sorting/01-lower-bound.md)
@@ -458,6 +485,9 @@ Floyd–Warshall algorithm
 `for` loop
 :   [6.2 for loops and ranges](ch06-loops/02-for.md) · what `for` really does in [19.1 Iterators](ch19-stacks-queues/01-iterators.md)
 
+forwarding (pipeline bypassing)
+:   [23.5.5 Pipelining](ch23b-architecture/05-pipelining.md) — routes a result straight to the ALU, avoiding a data-hazard stall
+
 frame (stack)
 :   [5.3 The stack and the heap](ch05-under-the-hood/03-stack-heap.md) · traced in [17.1 The call stack](ch17-recursion/01-call-stack.md) · [Appendix C](appendix/C-glossary.md#f)
 
@@ -489,6 +519,9 @@ Goodhart's law
 
 GPTQ
 :   [27.4 Quantization and deployment](ch27-inference/04-quantization-deploy.md) · [Appendix E](appendix/E-ai-glossary.md#g)
+
+GPU (graphics processing unit)
+:   [23.5.6 Parallelism and modern hardware](ch23b-architecture/06-parallelism.md) — thousands of data-parallel lanes · why models run on it in [Chapter 27](ch27-inference/index.md)
 
 GQA (grouped-query attention)
 :   [26.3 The decoder-only stack](ch26-llm-internals/03-decoder-stack.md) · [Appendix E](appendix/E-ai-glossary.md#g)
@@ -530,6 +563,9 @@ hash map
 
 hash table
 :   [36.1 Hash tables from scratch](ch36-hashing-tries/01-hash-tables.md) · preview in [25.1 A preview of Programming III](ch25-next/01-cs400-preview.md) · [Appendix C](appendix/C-glossary.md#h)
+
+hazard (pipeline: structural, data, control)
+:   [23.5.5 Pipelining](ch23b-architecture/05-pipelining.md) — the three reasons the next instruction cannot always run next cycle
 
 header (HTTP)
 :   [42.2 HTTP and a web server from scratch](ch42-web-gui/02-http-server.md)
@@ -575,8 +611,14 @@ hybrid search
 identity
 :   [4.3 Equality vs identity](ch04-branching/03-equality-identity.md) · [Appendix C](appendix/C-glossary.md#i)
 
+IEEE-754 (floating-point format)
+:   [23.5.3 How hardware does arithmetic](ch23b-architecture/03-arithmetic.md) — sign, exponent, fraction at the bit level · the pitfalls in [5.1 Numeric pitfalls](ch05-under-the-hood/01-numeric-pitfalls.md)
+
 `if` statement
 :   [4.2 if, elif, else](ch04-branching/02-if-else.md)
+
+immediate (instruction constant)
+:   [23.5.2 The instruction set up close](ch23b-architecture/02-instruction-set.md) — constants carried in the word, sign-extended before use
 
 `import`
 :   [5.4 Overloading, chaining, and imports](ch05-under-the-hood/04-overloading-imports.md)
@@ -601,6 +643,12 @@ insertion sort
 
 instance
 :   [12.1 Anatomy of a class](ch12-classes/01-class-anatomy.md) · [Appendix C](appendix/C-glossary.md#i)
+
+instruction format (RISC-V)
+:   [23.5.2 The instruction set up close](ch23b-architecture/02-instruction-set.md) — the six layouts R, I, S, B, U, J
+
+instruction set architecture (ISA)
+:   [0.4 From code to machine instructions](ch00-machine/04-machine-instructions.md) — first look · all six RISC-V formats in [23.5.2 The instruction set](ch23b-architecture/02-instruction-set.md)
 
 interface
 :   [15.3 Interfaces and abstract classes](ch15-inheritance/03-interfaces.md) · [Appendix C](appendix/C-glossary.md#i)
@@ -736,6 +784,9 @@ MCP (Model Context Protocol)
 memoization
 :   [17.2 Classic recursive problems](ch17-recursion/02-classic-recursion.md)
 
+memory wall
+:   [23.5.6 Parallelism and modern hardware](ch23b-architecture/06-parallelism.md) — where compute lanes starve · the memory side in [23.4 The memory hierarchy](ch23-os/04-memory-hierarchy.md)
+
 merge conflict
 :   [24.1 A real Git workflow](ch24-practice/01-git-workflow.md)
 
@@ -780,6 +831,9 @@ multi-agent system
 
 multi-head attention
 :   [26.2 Embeddings and attention](ch26-llm-internals/02-attention.md) · the KV-cost variants in [26.3 The decoder-only stack](ch26-llm-internals/03-decoder-stack.md)
+
+multicore
+:   [23.5.6 Parallelism and modern hardware](ch23b-architecture/06-parallelism.md) — thread-level parallelism, and the Amdahl ceiling on it
 
 mutation vs rebinding
 :   [8.2 Arrays and functions together](ch08-grids/02-arrays-functions.md) · the reference model behind it in [9.1 Values vs references](ch09-collections/01-references.md) · [Appendix C](appendix/C-glossary.md#m)
@@ -844,6 +898,9 @@ PagedAttention
 parallel arrays
 :   [7.2 Traversal patterns and parallel arrays](ch07-arrays/02-traversal-patterns.md)
 
+parallelism (ILP, DLP, TLP, RLP)
+:   [23.5.6 Parallelism and modern hardware](ch23b-architecture/06-parallelism.md) — the four kinds, at four scales
+
 parameter
 :   [3.3 Writing your own functions](ch03-functions/03-writing-functions.md) · [Appendix C](appendix/C-glossary.md#p)
 
@@ -861,6 +918,12 @@ path compression
 
 PEP 8
 :   [24.3 Style, reviews, and readable code](ch24-practice/03-style-review.md)
+
+performance equation (CPU)
+:   [23.5.1 What makes a computer fast](ch23b-architecture/01-performance.md) — see also **CPU performance equation**
+
+pipelining
+:   [23.5.5 Pipelining](ch23b-architecture/05-pipelining.md) — the five-stage overlap, hazards, forwarding, and branch prediction
 
 pivot (quicksort)
 :   [22.2 Merge sort and quicksort](ch22-sorting/02-merge-quick.md)
@@ -1135,6 +1198,9 @@ shortest path
 sift up / sift down
 :   [21.2 Priority queues and heapsort](ch21-heaps/02-priority-queues.md)
 
+SIMD (single instruction, multiple data)
+:   [23.5.6 Parallelism and modern hardware](ch23b-architecture/06-parallelism.md) — data-level parallelism; numpy's vectorization is SIMD
+
 skip list
 :   [36.4 Skip lists](ch36-hashing-tries/04-skip-lists.md)
 
@@ -1177,6 +1243,9 @@ stack trace
 staging area (Git)
 :   [1.3 Git and the staging model](ch01-tools/03-git.md)
 
+stall (pipeline bubble)
+:   [23.5.5 Pipelining](ch23b-architecture/05-pipelining.md) — the idle cycle a load-use hazard forces when forwarding cannot help
+
 statelessness (HTTP)
 :   [42.2 HTTP and a web server from scratch](ch42-web-gui/02-http-server.md)
 
@@ -1215,6 +1284,9 @@ synthetic data
 
 system call
 :   [23.1 What an operating system does](ch23-os/01-os-processes.md)
+
+systolic array
+:   [23.5.6 Parallelism and modern hardware](ch23b-architecture/06-parallelism.md) — the TPU's grid of multiply-accumulate cells and its data reuse
 
 ## T
 
@@ -1268,6 +1340,9 @@ topological sort
 
 TPOT (time per output token)
 :   [27.3 Latency, throughput, and streaming](ch27-inference/03-latency-streaming.md)
+
+TPU (Tensor Processing Unit)
+:   [23.5.6 Parallelism and modern hardware](ch23b-architecture/06-parallelism.md) — a domain-specific chip built around a systolic array
 
 traceback
 :   [10.3 Reading stack traces](ch10-exceptions/03-stack-traces.md)
