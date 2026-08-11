@@ -107,6 +107,7 @@ flowchart LR
     H -- "git push" --> R
     R -- "git pull" --> W
     H -- "git checkout" --> W
+    S -- "git restore" --> W
 ```
 
 Read the arrows as the six moves that make up almost everything you will

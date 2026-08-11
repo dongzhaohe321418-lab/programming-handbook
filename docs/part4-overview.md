@@ -100,7 +100,7 @@ flowchart TD
     e00["Ch 0 · hardware and<br/>fetch–decode–execute"] --> c23
     e05["5.3 · stack and heap"] --> c23
     e17["17.1 · the call stack"] --> c23
-    e13["1.3 · Git, first taste"] --> c24
+    e13["1.3 · Git staging model"] --> c24
     e84["8.4 · unit testing"] --> c24
     e19["19.2 · the Stack ADT"] --> c24
     e16["16, 19–21 · Big-O, queues,<br/>trees, heaps"] --> c25

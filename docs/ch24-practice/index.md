@@ -46,8 +46,8 @@ always do.
 - rename, split, and comment code so a stranger can follow it, and run a
   self-review checklist before every commit.
 
-**Prerequisites:** [Chapter 1](../ch01-tools/03-git.md) (first taste of
-Git), [Chapter 8](../ch08-grids/04-unit-testing.md) (asserts and unit-test
+**Prerequisites:** [Chapter 1](../ch01-tools/03-git.md) (the Git staging
+model), [Chapter 8](../ch08-grids/04-unit-testing.md) (asserts and unit-test
 thinking), [Chapter 10](../ch10-exceptions/02-exceptions.md) (exceptions —
 we test error paths), and for the worked test suite,
 [Chapter 19](../ch19-stacks-queues/02-stacks.md) (the Stack ADT).

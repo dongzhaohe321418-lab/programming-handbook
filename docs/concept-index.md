@@ -166,7 +166,7 @@ Bradley–Terry model
 :   [31.4 Reward models — PRM, RLHF, RLAIF](ch31-rl/04-reward-models.md) · [Appendix E](appendix/E-ai-glossary.md#b)
 
 branch (Git)
-:   [24.1 A real Git workflow](ch24-practice/01-git-workflow.md) — in depth · first taste in [1.3 Git and the staging model](ch01-tools/03-git.md)
+:   [24.1 A real Git workflow](ch24-practice/01-git-workflow.md) — in depth · introduced in [1.3 Git and the staging model](ch01-tools/03-git.md)
 
 branching factor
 :   [35.4 B-trees and the disk](ch35-balanced-trees/04-b-trees.md)
@@ -482,7 +482,7 @@ GGUF
 :   [27.4 Quantization and deployment](ch27-inference/04-quantization-deploy.md) · [Appendix E](appendix/E-ai-glossary.md#g)
 
 Git
-:   [1.3 Git and the staging model](ch01-tools/03-git.md) — first taste · the daily workflow in [24.1 A real Git workflow](ch24-practice/01-git-workflow.md) · commands in [Appendix F · Toolchain quick reference](appendix/F-toolchain-reference.md)
+:   [1.3 Git and the staging model](ch01-tools/03-git.md) — the staging model · the daily workflow in [24.1 A real Git workflow](ch24-practice/01-git-workflow.md) · commands in [Appendix F · Toolchain quick reference](appendix/F-toolchain-reference.md)
 
 Goodhart's law
 :   [33.1 Benchmarks and what they measure](ch33-eval/01-benchmarks.md) · the same failure as reward hacking in [31.4 Reward models — PRM, RLHF, RLAIF](ch31-rl/04-reward-models.md)

@@ -15,7 +15,7 @@ machine: the processor, memory, storage, the fetch–decode–execute loop the
 CPU repeats forever, the bits that are the only alphabet it knows, and the
 translation step — compiler or interpreter — between the text you type and
 the electrons that move. [Chapter 1](ch01-tools/index.md) is the workshop:
-the command line, a real Python installation, and a first taste of Git. Two
+the command line, a real Python installation, and the Git staging model. Two
 chapters, six sections, no prior knowledge assumed anywhere.
 
 The payoff is not philosophical, it is compound interest. A reader who knows
@@ -85,7 +85,7 @@ flowchart TD
     s03["0.3 · What a program is —<br/>compilers and interpreters"]
     s11["1.1 · The command line"]
     s12["1.2 · Installing and<br/>running Python"]
-    s13["1.3 · Git, first taste"]
+    s13["1.3 · Git staging model"]
     s01 --> s02 --> s03 --> s11
     s11 --> s12
     s11 --> s13

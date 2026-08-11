@@ -357,3 +357,126 @@ diff from the first version to the last.
     function from Section [1.3](03-git.md)), parents, branches, and very
     clever storage, but the idea in these thirty lines is the same one
     underneath all of it.
+
+### Exercise 1.9 — Predict the `git status` (●)
+
+A file passes through the three local areas from Section
+[1.3](03-git.md). *Without running anything*, predict the state Git would
+report for `data.csv` after each numbered step:
+
+1. Create a brand-new file `data.csv`, then `git add data.csv`.
+2. Edit `data.csv` again (do **not** `git add` it a second time).
+3. `git commit -m "add data"`.
+
+Is the file untracked, staged, modified, both staged and modified, or clean
+after each step? Then run the model below to check.
+
+??? success "Solution"
+    The predicted sequence is **staged → staged, modified → modified**. The
+    same status classifier from Section [1.3](03-git.md) proves it by
+    comparing the three areas directly:
+
+    ```python
+    def status(working, index, head):
+        names = sorted(set(working) | set(index) | set(head))
+        for name in names:
+            w, i, h = working.get(name), index.get(name), head.get(name)
+            tags = []
+            if i is not None and i != h:
+                tags.append("staged")
+            if name in working and name not in index and name not in head:
+                tags.append("untracked")
+            elif name in working and i is not None and w != i:
+                tags.append("modified")
+            print(f"  {name}: {', '.join(tags) or 'clean'}")
+
+    working, index, head = {}, {}, {}
+    working["data.csv"] = "v1"; index["data.csv"] = "v1"   # 1. create + add
+    print("after add:");    status(working, index, head)
+    working["data.csv"] = "v2"                             # 2. edit again
+    print("after edit:");   status(working, index, head)
+    head = dict(index)                                     # 3. commit (snapshots index)
+    print("after commit:"); status(working, index, head)
+    ```
+
+    The subtlety is step 3: `git commit` snapshots the **index** (the `v1`
+    you staged), not your `v2` edit on disk — so the file is *still*
+    `modified` afterwards. Re-`add` it to fold `v2` into the next commit.
+
+### Exercise 1.10 — Which area does each command touch? (●)
+
+For each command, name the area(s) it changes: the **working directory**, the
+**staging area (index)**, the **local repository** (`HEAD`/history), or the
+**remote**. This is the one-sentence summary of the whole staging model.
+
+| Command | | Area(s) it changes |
+| --- | --- | --- |
+| `git add <file>` | | A. the working directory |
+| `git commit` | | B. the staging area (index) |
+| `git restore <file>` | | C. the local repository (`HEAD`) |
+| `git restore --staged <file>` | | D. the remote |
+| `git reset --hard <commit>` | | E. `HEAD` + index + working directory |
+| `git push` | | |
+
+??? success "Solution"
+    ```python
+    touches = {
+        "git add <file>":              "staging area (index)",
+        "git commit":                  "local repository (history / HEAD)",
+        "git restore <file>":          "working directory",
+        "git restore --staged <file>": "staging area (index)",
+        "git reset --hard <commit>":   "HEAD + index + working directory",
+        "git push":                    "the remote",
+    }
+    for cmd, area in touches.items():
+        print(f"{cmd:<30} -> {area}")
+    ```
+
+    So `git add` and `git restore --staged` both change the index (in
+    opposite directions), `git restore` and `git reset --hard` both change
+    the working directory (the second also rewinds `HEAD` and the index and
+    is destructive), and only `git push` reaches the remote.
+
+### Exercise 1.11 — Add `reset --hard` to the simulator (●●)
+
+Extend the `MiniGit` model from Section [1.3](03-git.md) with a method
+`reset_hard()` that mimics `git reset --hard HEAD`: throw away *both* the
+staged version and the working-tree edits, resetting the index and the
+working tree to the latest commit. Then demonstrate that a staged `v2` and an
+edited `v3` are both discarded back to the committed `v1`.
+
+??? success "Solution"
+    `reset_hard` copies `HEAD` over both the index and the working tree —
+    which is exactly why the real command is the one that can lose work:
+
+    ```python
+    class MiniGit:
+        def __init__(self):
+            self.working, self.index, self.history = {}, {}, []
+        def _head(self):
+            return self.history[-1] if self.history else {}
+        def write(self, name, text):
+            self.working[name] = text
+        def stage(self, name):
+            self.index[name] = self.working[name]
+        def commit(self):
+            self.history.append(dict(self.index))
+        def reset_hard(self):            # HEAD -> index AND working (destructive)
+            head = self._head()
+            self.index = dict(head)
+            self.working = dict(head)
+
+    g = MiniGit()
+    g.write("app.py", "v1"); g.stage("app.py"); g.commit()
+    g.write("app.py", "v2"); g.stage("app.py")   # staged a new version
+    g.write("app.py", "v3")                       # edited further on the desk
+    print("before reset --hard: working", g.working["app.py"],
+          "/ staged", g.index["app.py"])
+    g.reset_hard()
+    print("after  reset --hard: working", g.working["app.py"],
+          "/ staged", g.index["app.py"])
+    ```
+
+    It prints `v3 / v2` before and `v1 / v1` after: both the staged `v2` and
+    the working-tree `v3` are gone for good, because neither was ever
+    committed. A plain `git reset` (`--mixed`) would have kept `v3` on disk.
