@@ -33,6 +33,17 @@
 - The Run buttons on this site are **CPython compiled to WebAssembly** — a
   virtual machine inside a virtual machine inside a sandboxed process on a
   time-sliced kernel on silicon.
+- Real memory is a **hierarchy** — registers, L1/L2/L3 cache, RAM, SSD, disk —
+  each level bigger, cheaper, and roughly 10× slower than the one above
+  ([23.4](04-memory-hierarchy.md)).
+- Caches work because programs have **locality**: they reuse recent data
+  (temporal) and nearby data (spatial). Access *pattern*, not amount of work,
+  often decides speed.
+- **AMAT** = hit time + miss rate × miss penalty; because the penalty is large,
+  the last few percent of **hit rate** dominate effective speed.
+- **Virtual memory** is another level of the hierarchy — a cache for disk. The
+  page table maps virtual pages to physical frames, the TLB caches that map,
+  and a page not in RAM is a **page fault**.
 
 ### Key terms
 
@@ -360,3 +371,128 @@ Close the book (well, the tab) and answer from memory, then check:
     "program" is CPython itself), and the physical CPU (over machine
     code). Only the kernel commands the hardware — every layer above it
     must ask, via system calls, from inside its scheduled time slices.
+
+### Exercise 23.10 — Compute the AMAT ●●
+
+A cache serves a hit in 3 cycles; a miss costs an extra 120 cycles to fetch
+from RAM. Using $\text{AMAT} = t_{\text{hit}} + \text{miss rate} \times
+\text{miss penalty}$ from [Section 23.4](04-memory-hierarchy.md), compute the
+average memory access time at hit rates of 90%, 97%, and 99.5%. Predict which
+jump — 90→97 or 97→99.5 — removes more cycles before running it.
+
+??? success "Solution"
+
+    ```python
+    def amat(t_hit, miss_rate, penalty):
+        return t_hit + miss_rate * penalty
+
+    t_hit, penalty = 3, 120
+    for hit_rate in (0.90, 0.97, 0.995):
+        print(f"hit rate {hit_rate:6.1%} -> AMAT {amat(t_hit, 1 - hit_rate, penalty):6.2f} cycles")
+    ```
+
+    It prints 15.00, 6.60, and 3.60 cycles. The 90→97 jump saves 8.4 cycles;
+    97→99.5 saves only 3.0 — but 97→99.5 is a *smaller* change in hit rate
+    (2.5 points versus 7) doing most of that work, which is why chip designers
+    fight for the last fraction of a percent: with a large miss penalty, every
+    point of hit rate near the top is expensive to earn and hugely valuable.
+
+### Exercise 23.11 — Predict the hit rates ●●
+
+The cache simulator from [Section 23.4](04-memory-hierarchy.md) is reproduced
+below with 16-byte blocks. *Before running it*, predict which stream — the
+in-order sweep or the shuffled one over the same range — has the higher hit
+rate, and roughly what the in-order rate will be.
+
+```text
+BLOCK = 16
+cache = Cache(num_sets=32, ways=1, block_size=BLOCK)
+for addr in range(8000):
+    cache.access(addr)            # in-order sweep
+# ... versus visiting range(8000) in a shuffled order
+```
+
+??? success "Solution"
+
+    ```python
+    import random
+
+    class Cache:
+        def __init__(self, num_sets, ways, block_size):
+            self.num_sets, self.ways, self.block_size = num_sets, ways, block_size
+            self.sets = [[] for _ in range(num_sets)]
+            self.hits = self.misses = 0
+        def access(self, addr):
+            block = addr // self.block_size
+            index = block % self.num_sets
+            tag = block // self.num_sets
+            line = self.sets[index]
+            if tag in line:
+                self.hits += 1; line.remove(tag); line.append(tag)
+            else:
+                self.misses += 1
+                if len(line) >= self.ways:
+                    line.pop(0)
+                line.append(tag)
+        @property
+        def hit_rate(self):
+            total = self.hits + self.misses
+            return self.hits / total if total else 0.0
+
+    BLOCK = 16
+    addrs = list(range(8000))
+
+    in_order = Cache(32, 1, BLOCK)
+    for a in addrs:
+        in_order.access(a)
+
+    random.seed(1)
+    shuffled_addrs = addrs[:]
+    random.shuffle(shuffled_addrs)
+    shuffled = Cache(32, 1, BLOCK)
+    for a in shuffled_addrs:
+        shuffled.access(a)
+
+    print(f"in-order : {in_order.hit_rate:.2%}")
+    print(f"shuffled : {shuffled.hit_rate:.2%}")
+    ```
+
+    The in-order sweep hits **93.75%** — exactly $(16 - 1)/16$, one miss per
+    block then 15 hits from spatial locality. The shuffled version, touching
+    the *same* 8000 addresses, hits far less: consecutive accesses jump to
+    unrelated blocks, and a 32-set, 16-byte cache holds only 512 bytes at a
+    time, so most blocks are gone before they are revisited. Same work, same
+    addresses — only the order changed, and order is what a cache rewards.
+
+### Exercise 23.12 — Translate a virtual address ●●●
+
+With 4 KB pages (the low 12 bits are the offset), a process has this page
+table: virtual page 0 → frame 8, page 1 → *on disk*, page 2 → frame 3. Translate
+the virtual address `0x2048`: give its page number, offset, and physical
+address. Then translate `0x1000` and say what happens.
+
+??? success "Solution"
+
+    ```python
+    PAGE_SIZE = 4096
+    page_table = {0: 8, 1: None, 2: 3}     # None = page is on disk
+
+    def translate(va):
+        page = va >> 12
+        offset = va & (PAGE_SIZE - 1)
+        frame = page_table.get(page)
+        if frame is None:
+            return f"VA {va:#06x}: page {page}, offset {offset:#05x} -> PAGE FAULT (fetch from disk)"
+        pa = frame * PAGE_SIZE + offset
+        return f"VA {va:#06x}: page {page}, offset {offset:#05x} -> frame {frame} -> PA {pa:#07x} = {pa}"
+
+    print(translate(0x2048))
+    print(translate(0x1000))
+    ```
+
+    `0x2048` is **page 2, offset `0x048`** (72). Page 2 maps to frame 3, so the
+    physical address is $3 \times 4096 + 72 = \texttt{0x03048}$ (12360) — the
+    offset rides through translation untouched; only the page number is
+    remapped. `0x1000` is **page 1, offset 0**, and page 1 is on disk: a
+    **page fault**, which the OS handles by loading the page into a free frame
+    and retrying — slow, but invisible to the program.

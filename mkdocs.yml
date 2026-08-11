@@ -142,6 +142,7 @@ nav:
           - 0.1 What is a computer, really: ch00-machine/01-hardware.md
           - 0.2 Bits, binary, and how data is stored: ch00-machine/02-binary.md
           - 0.3 What is a program — compilers and interpreters: ch00-machine/03-programs.md
+          - 0.4 From code to machine instructions: ch00-machine/04-machine-instructions.md
           - Exercises: ch00-machine/exercises.md
       - Chapter 1 · Tools of the Trade:
           - Overview: ch01-tools/index.md
@@ -289,6 +290,7 @@ nav:
           - 23.1 What an operating system does: ch23-os/01-os-processes.md
           - 23.2 The memory layout of a program: ch23-os/02-memory-layout.md
           - 23.3 Interpreters and virtual machines: ch23-os/03-interpreters-vms.md
+          - 23.4 The memory hierarchy and caches: ch23-os/04-memory-hierarchy.md
           - Exercises: ch23-os/exercises.md
       - Chapter 24 · Engineering Practice:
           - Overview: ch24-practice/index.md

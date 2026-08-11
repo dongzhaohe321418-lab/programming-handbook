@@ -35,7 +35,11 @@ will serve you for the rest of the book.
   Unicode code points;
 - explain the difference between a compiler and an interpreter, and what
   Python actually does with your source code;
-- trace a short program by hand, line by line, and predict its output.
+- trace a short program by hand, line by line, and predict its output;
+- explain what an **instruction set** is, read a line of **assembly**, and
+  decode a single machine instruction into its opcode and register fields;
+- run a tiny CPU that fetches, decodes, and executes machine instructions in
+  a loop — and watch it build a `while` loop out of a branch.
 
 ## Prerequisites
 
@@ -51,5 +55,8 @@ the Run buttons.
   base 16, negative numbers, and text as numbers.
 - [0.3 What is a program — compilers and interpreters](03-programs.md) —
   from source code to machine code, and how to trace code by hand.
-- [Exercises](exercises.md) — conversions, predictions, and a race against
-  the interpreter.
+- [0.4 From code to machine instructions](04-machine-instructions.md) — the
+  instruction set, assembly versus machine code, decoding one instruction into
+  its fields, and a tiny CPU you can run.
+- [Exercises](exercises.md) — conversions, predictions, decoding an
+  instruction, and a race against the interpreter.

@@ -7,6 +7,28 @@ machine, programming stops being magic and becomes engineering: you are
 writing instructions for a device you understand. This section gives you
 that picture.
 
+!!! abstract "In plain words"
+
+    - **What it is.** Every computer ever built — a phone, a laptop, a
+      supercomputer — is organised into the same **five classic components**:
+      *input*, *output*, *memory*, and the two halves of the processor,
+      *datapath* (the part that does arithmetic) and *control* (the part that
+      decides what happens next).
+    - **Picture it.** A tiny office. Mail arrives (input) and goes out
+      (output); a filing cabinet holds the paperwork (memory); a clerk does
+      the sums (datapath) while a supervisor reads the next task off a list
+      and tells the clerk what to do (control).
+    - **Why it matters.** These five names are the map for the whole chapter —
+      and for a whole textbook (see the reading note in
+      [0.4](04-machine-instructions.md)). Everything below is one of the five.
+
+This five-part split is the standard framing in Patterson & Hennessy's
+*Computer Organization and Design*. The **datapath** and **control** together
+make up the CPU (the *processor*); memory, input, and output are the other
+three. The everyday table below groups them the way you would when shopping
+for a computer, but keep the five components in mind — we will meet the
+datapath and control again by name in [0.4](04-machine-instructions.md).
+
 ## The parts you can point to
 
 Open up any computer — laptop, phone, games console — and you find the same
@@ -71,6 +93,14 @@ flowchart LR
 Then it fetches the next instruction, and the next, billions of times per
 second. A "3 GHz" processor ticks through roughly three billion cycles every
 second.
+
+This cycle is exactly where two of the five components come alive: the
+**control** unit runs *fetch* and *decode* (it reads the next instruction and
+works out what it asks for), while the **datapath** — the arithmetic/logic
+unit and the registers — does the *execute*. Memory feeds them instructions
+and data, and input and output connect the whole thing to you. What the
+control unit is actually decoding, and what the datapath actually executes,
+is the subject of [0.4](04-machine-instructions.md).
 
 The best way to believe this is to *build* a toy CPU. The program below is a
 list of instructions; the loop plays the role of the CPU, fetching one

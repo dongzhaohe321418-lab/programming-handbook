@@ -38,6 +38,30 @@ code** — is patterns of bits encoding its primitive instructions, and every
 CPU family (Intel/AMD's x86, Apple's and phones' ARM) has a different one.
 Source code must be translated. There are two broad strategies.
 
+What those primitive machine instructions actually *look* like — the tiny
+numbered orders the CPU fetches, and how a line of your code becomes a handful
+of them — is the subject of the next section,
+[0.4](04-machine-instructions.md). This page is about the layer just above it:
+*when* and *how* the translation to those instructions happens. Keep 0.4 in
+the back of your mind as the floor everything here eventually stands on.
+
+!!! abstract "In plain words"
+
+    - **What it is.** Two ways to bridge from human-readable source code to the
+      machine instructions a CPU runs: **compiling** translates the whole
+      program *ahead of time*, while **interpreting** translates and performs
+      it *as it goes*.
+    - **Picture it.** A book in a foreign language. A **compiler** is a
+      translator who renders the entire book into your language once, so you
+      can read the finished copy at full speed forever after. An
+      **interpreter** is a live human interpreter standing beside a speaker,
+      translating each sentence on the spot — flexible and immediate, but
+      re-translating every single time.
+    - **Why it matters.** This one choice explains why your Java course makes
+      you *compile* before running while Python seems to just go, why compiled
+      programs are usually faster, and why a Python script needs Python
+      installed wherever it runs.
+
 ## Two strategies: compile ahead of time, or interpret as you go
 
 The two strategies differ in *when* the translation happens, and everything

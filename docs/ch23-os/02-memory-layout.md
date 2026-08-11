@@ -13,6 +13,17 @@ bumped into:
 
 ## The address space: one process's private map
 
+!!! abstract "In plain words"
+
+    - **What it is.** A process's **address space** is the single, private,
+      numbered row of bytes that its code sees as "memory."
+    - **Picture it.** A hotel where every guest is handed the *same* room
+      numbers — 1, 2, 3, … — for their own private floor; no guest can even
+      name another's rooms.
+    - **Why it matters.** This private map is what "isolated memory" from
+      [Section 23.1](01-os-processes.md) physically means, and it is the
+      canvas the rest of this page draws on.
+
 To a process, memory looks like a single enormous numbered row of bytes —
 its **address space** — and the process's contents are laid out in it in a
 few conventional regions, called **segments**:
@@ -53,6 +64,13 @@ map.
 And one process's map is invisible to every other process: the OS gives each
 one its own address space, which is what "isolated memory" in the last
 section physically means.
+
+One caveat worth planting now: every address on this page — including the
+`id()` numbers below — is a **virtual** address, part of this comforting
+private row. Underneath, the hardware stores your data across a hierarchy of
+caches and physical RAM, and translates each virtual address to a physical
+one a page at a time. [Section 23.4](04-memory-hierarchy.md) lifts this floor
+and shows the physical hierarchy these addresses actually map onto.
 
 ## The stack grows with calls
 

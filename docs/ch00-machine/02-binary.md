@@ -255,6 +255,68 @@ as bytes. That single fact explains a lot of everyday behaviour — for
 instance, comparing strings compares code points, which is why Python
 considers `"Zebra"` smaller than `"apple"` (90 < 97).
 
+## Bits have no inherent meaning — the program decides the type
+
+You have now seen the *same kind of bit pattern* stand for several different
+things: a plain positive number, a two's-complement negative number, a
+character. That is not a coincidence to gloss over — it is one of the deepest
+facts about computers, and *Computer Organization and Design* makes a whole
+point of it.
+
+!!! abstract "In plain words"
+
+    - **What it is.** A bit pattern carries no built-in meaning. Whether
+      `01100101` is the number 101, or the letter `e`, or part of a colour, is
+      decided *entirely by the program that reads it* — never by the bits.
+    - **Picture it.** The tally mark `IIII`. Is it the number four, four fence
+      posts, or four days in jail scratched on a wall? The marks don't say;
+      the *context* does. Bits are the same: identical marks, meaning supplied
+      by whoever reads them.
+    - **Why it matters.** It is why a **type** exists in every programming
+      language. A type is the label that tells the computer how to *interpret*
+      a pattern. Get the label wrong and the bits are read as something you
+      never intended — a classic source of bugs and security holes.
+
+Let us take one 32-bit pattern — four bytes — and deliberately read it three
+different ways. Python's `int.from_bytes` interprets a group of bytes as an
+integer (signed or unsigned), and `bytes.decode` reads them as text:
+
+```python
+pattern = bytes([0x63, 0x6F, 0x64, 0x65])      # one 32-bit pattern, four bytes
+print("the raw bits:", " ".join(format(b, "08b") for b in pattern))
+
+# Reading 1: an unsigned 32-bit integer (big-endian: first byte most significant)
+print("as unsigned int:", int.from_bytes(pattern, "big", signed=False))
+
+# Reading 2: a signed 32-bit two's-complement integer
+print("as signed int  :", int.from_bytes(pattern, "big", signed=True))
+
+# Reading 3: four ASCII characters, one byte each
+print("as characters  :", pattern.decode("ascii"))
+```
+
+The identical 32 bits `01100011 01101111 01100100 01100101` come back as the
+number `1668244581` *and* as the word `code`. Nothing changed but the
+question we asked. (The unsigned and signed readings agree here only because
+the top bit is 0, so the value is positive — recall from two's complement
+above that the top bit is the sign.) Turn the top bit on and the two number
+readings split apart:
+
+```python
+allones = bytes([0xFF, 0xFF, 0xFF, 0xFF])      # every bit set to 1
+print("as unsigned int:", int.from_bytes(allones, "big", signed=False))
+print("as signed int  :", int.from_bytes(allones, "big", signed=True))
+```
+
+Same 32 bits, read as `4294967295` unsigned or `-1` signed — the two's
+complement rule from earlier, in action. This "bits plus an interpretation"
+idea is the whole reason your programs declare types; it is also why a file
+that is secretly a JPEG opens as garbage in a text editor, and why the *next*
+section's puzzle — `0.1 + 0.2` — is really a question about *which*
+interpretation the hardware puts on 32 or 64 bits. That floating-point
+interpretation is involved enough to have its own home in
+[Chapter 5](../ch05-under-the-hood/01-numeric-pitfalls.md).
+
 ## A first look at fractions: why 0.1 + 0.2 is not 0.3
 
 One puzzle before we close, because you will trip over it soon. Run this:

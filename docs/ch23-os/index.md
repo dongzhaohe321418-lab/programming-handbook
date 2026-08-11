@@ -43,6 +43,13 @@ machine.
   read simple `dis` output;
 - place C, Java, and Python correctly on the compiled-versus-interpreted
   spectrum, and explain what a virtual machine is;
+- explain why machines stack fast-small memory over slow-big memory, name the
+  levels of the **memory hierarchy**, and say what **temporal** and **spatial
+  locality** are;
+- define a cache **hit**, **miss**, and **hit rate**, compute **average memory
+  access time** (AMAT), and explain why a few percent of misses dominate speed;
+- describe **virtual memory** — pages, the page table, the TLB, and page
+  faults — and translate a virtual address into a physical one;
 - describe the full stack of software that runs the code on this page, from
   your Python down to the hardware.
 
@@ -65,5 +72,9 @@ for one aside about amortized cost.
   source to bytecode to execution in CPython and on the JVM; the
   compiled/interpreted spectrum; and the virtual-machine tower under this
   very page.
+- [23.4 The memory hierarchy and caches](04-memory-hierarchy.md) — the layer
+  beneath the address space: registers to caches to RAM to disk; locality;
+  cache hits, misses, and AMAT; and virtual memory as a cache for disk.
 - [Exercises](exercises.md) — match responsibilities to the right layer,
-  read bytecode, predict memory growth, and explain the tower.
+  read bytecode, predict memory growth, compute AMAT, translate an address,
+  and explain the tower.
