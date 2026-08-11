@@ -166,7 +166,7 @@ Bradley–Terry model
 :   [31.4 Reward models — PRM, RLHF, RLAIF](ch31-rl/04-reward-models.md) · [Appendix E](appendix/E-ai-glossary.md#b)
 
 branch (Git)
-:   [24.1 A real Git workflow](ch24-practice/01-git-workflow.md) — in depth · first taste in [1.3 Git and version control, first taste](ch01-tools/03-git.md)
+:   [24.1 A real Git workflow](ch24-practice/01-git-workflow.md) — in depth · first taste in [1.3 Git and the staging model](ch01-tools/03-git.md)
 
 branching factor
 :   [35.4 B-trees and the disk](ch35-balanced-trees/04-b-trees.md)
@@ -243,7 +243,7 @@ command line
 :   [1.1 The command line](ch01-tools/01-command-line.md) · writing programs for it in [10.1 Command-line programs and arguments](ch10-exceptions/01-cli-programs.md) · [Appendix F · Toolchain quick reference](appendix/F-toolchain-reference.md)
 
 commit (Git)
-:   [1.3 Git and version control, first taste](ch01-tools/03-git.md) · commit messages in [24.1 A real Git workflow](ch24-practice/01-git-workflow.md)
+:   [1.3 Git and the staging model](ch01-tools/03-git.md) · commit messages in [24.1 A real Git workflow](ch24-practice/01-git-workflow.md)
 
 comparison lower bound
 :   [38.1 The comparison lower bound](ch38-linear-sorting/01-lower-bound.md)
@@ -482,7 +482,7 @@ GGUF
 :   [27.4 Quantization and deployment](ch27-inference/04-quantization-deploy.md) · [Appendix E](appendix/E-ai-glossary.md#g)
 
 Git
-:   [1.3 Git and version control, first taste](ch01-tools/03-git.md) — first taste · the daily workflow in [24.1 A real Git workflow](ch24-practice/01-git-workflow.md) · commands in [Appendix F · Toolchain quick reference](appendix/F-toolchain-reference.md)
+:   [1.3 Git and the staging model](ch01-tools/03-git.md) — first taste · the daily workflow in [24.1 A real Git workflow](ch24-practice/01-git-workflow.md) · commands in [Appendix F · Toolchain quick reference](appendix/F-toolchain-reference.md)
 
 Goodhart's law
 :   [33.1 Benchmarks and what they measure](ch33-eval/01-benchmarks.md) · the same failure as reward hacking in [31.4 Reward models — PRM, RLHF, RLAIF](ch31-rl/04-reward-models.md)
@@ -1041,7 +1041,7 @@ replanning
 :   [30.2 Planning and reflection](ch30-agents/02-planning-reflection.md)
 
 repository (Git)
-:   [1.3 Git and version control, first taste](ch01-tools/03-git.md)
+:   [1.3 Git and the staging model](ch01-tools/03-git.md)
 
 `__repr__`
 :   [12.1 Anatomy of a class](ch12-classes/01-class-anatomy.md) · alongside `__str__` in [15.2 Polymorphism and casting](ch15-inheritance/02-polymorphism.md)
@@ -1175,7 +1175,7 @@ stack trace
 :   [10.3 Reading stack traces](ch10-exceptions/03-stack-traces.md) · [Appendix C](appendix/C-glossary.md#s)
 
 staging area (Git)
-:   [1.3 Git and version control, first taste](ch01-tools/03-git.md)
+:   [1.3 Git and the staging model](ch01-tools/03-git.md)
 
 statelessness (HTTP)
 :   [42.2 HTTP and a web server from scratch](ch42-web-gui/02-http-server.md)

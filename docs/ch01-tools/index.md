@@ -25,10 +25,11 @@ Every professional tool you will meet later — compilers, test runners,
 package managers, deployment systems — assumes you can use them.
 
 A practical note on how to read this chapter: sections
-[1.1](01-command-line.md) and [1.3](03-git.md) teach concepts you can
-practice right here in the browser, while [1.2](02-python-setup.md) is partly
-a setup guide for your own computer — read it once now, then come back to it
-the day you install Python for real.
+[1.1](01-command-line.md), [1.3](03-git.md), and [1.4](04-git-remotes.md)
+teach concepts you can practice right here in the browser — the Git sections
+even let you run a small model of Git's staging areas — while
+[1.2](02-python-setup.md) is partly a setup guide for your own computer —
+read it once now, then come back to it the day you install Python for real.
 
 ## After this chapter you can …
 
@@ -42,10 +43,12 @@ the day you install Python for real.
   the REPL, a script file, a notebook, and this site's Run buttons.
 - Explain what a virtual environment is for and create one with
   `python -m venv`.
-- Create a Git repository, stage and commit changes, and read `git log`
-  and `git diff` output.
-- Explain how GitHub relates to Git, and what a `README` and a `.gitignore`
-  are for.
+- Create a Git repository, and name — for any command — which of Git's areas
+  (working directory, staging area, local repository, remote) it changes.
+- Stage and commit changes, undo safely with `restore` and `reset`, and read
+  `git log` and `git diff` output.
+- Sync with a remote using `clone`, `push`, `fetch`, and `pull`, and explain
+  how GitHub relates to Git and what a `README` and `.gitignore` are for.
 
 ## Prerequisites
 
@@ -61,7 +64,10 @@ program*.
 2. [1.2 Installing and running Python](02-python-setup.md) — getting Python
    onto your machine, the four ways to run code, virtual environments, and
    the Java parallel.
-3. [1.3 Git and version control, first taste](03-git.md) — snapshots,
-   staging, commits, and GitHub.
-4. [Exercises](exercises.md) — path puzzles, command matching, and a mini
+3. [1.3 Git and the staging model](03-git.md) — the working directory,
+   staging area, and local repository; how `add`, `commit`, `restore`, and
+   `reset` move work between them, with a runnable stage simulator.
+4. [1.4 Working with remotes](04-git-remotes.md) — the fourth area: `clone`,
+   `push`, the `fetch`-versus-`pull` distinction, and how GitHub fits in.
+5. [Exercises](exercises.md) — path puzzles, command matching, and a mini
    version-control system you can build yourself.

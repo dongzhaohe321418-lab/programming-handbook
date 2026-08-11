@@ -23,12 +23,20 @@
 - **Git** stores your project as a chain of **commits** — snapshots with an
   author, a date, a message, and a content-derived hash ID
   ([1.3](03-git.md)).
-- Work flows through three areas: working directory → staging area →
-  repository history, via `git add` and `git commit`.
-- `git log` shows the history and `git diff` shows what changed, in the
-  unified-diff format you will read for the rest of your career.
-- **GitHub** hosts copies of repositories; nothing you commit locally goes
-  there until you `git push`.
+- Work flows through areas: working directory → staging area (index) → local
+  repository → remote. `git add` and `git commit` move it forward; `git
+  restore` and `git reset` move it back, each changing a specific area.
+- A file is **untracked**, **modified**, or **staged** — and can be *both*
+  staged and modified at once, which is why a commit captures the version you
+  `add`-ed, not the one on disk.
+- `git log` shows the history; `git diff` shows working-vs-index changes and
+  `git diff --staged` shows index-vs-`HEAD`, in the unified-diff format you
+  will read for the rest of your career.
+- The fourth area is a **remote** ([1.4](04-git-remotes.md)): `git push`
+  uploads, `git fetch` downloads into `origin/main` only, and `git pull` =
+  `fetch` + merge into your branch.
+- **GitHub** hosts copies of repositories; nothing you commit locally is
+  backed up or shared until you `git push`.
 
 ### Key terms
 
@@ -43,8 +51,10 @@
 | **virtual environment** | A private per-project package set, created with `python -m venv` |
 | [**Git**](../concept-index.md#g) | The version-control tool that stores your project's full history |
 | [**commit**](../concept-index.md#c) | One snapshot of the whole project, with a message and a hash ID |
-| [**staging area**](../concept-index.md#s) | The drafting table where you assemble the *next* commit |
+| [**staging area**](../concept-index.md#s) | The drafting table (the *index*) where you assemble the *next* commit |
 | [**repository**](../concept-index.md#r) | The project plus its history, kept in the hidden `.git` folder |
+| **HEAD** | The commit you are currently on — the last page of the album |
+| **remote** | A full copy of the repository on another machine, nicknamed `origin` by default |
 | **GitHub** | A website that hosts repositories — Git works fine without it |
 
 Tools become skills only through use. Work through these in order — they
